@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '17 6 * * *' # daily wide run with fresh random seeds
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Self-test, editor and security tests
+        run: npm test
+      - name: Built page matches the source
+        run: |
+          node build.mjs
+          git diff --exit-code -- docs/index.html || (echo "docs/index.html is out of date: run node build.mjs and commit it" && exit 1)
+      - name: Random seeds (quick)
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        run: node test/fuzz.mjs 40
+      - name: Random seeds (wide)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: node test/fuzz.mjs 400

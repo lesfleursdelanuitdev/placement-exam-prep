@@ -111,7 +111,7 @@
   // Finds sign changes (rejecting poles), zeros where the domain ends (√, log), and touching roots (x - 3)^2.
   // sample grid for root finding and region checks: fine steps near 0 (where answers live), coarse steps
   // farther out. The exam builder uses a lighter grid (it is the safety net; the tests are the audit).
-  V.opts = { fine: 0.01, coarse: 0.2, near: 30 };
+  V.opts = { fine: 0.02, coarse: 0.5, near: 30 };
   V.grid = function (lo, hi, n) {
     if (n) { const xs = []; for (let k = 0; k <= n; k++) xs.push(lo + ((hi - lo) * k) / n); return xs; }
     const { fine, coarse, near } = V.opts, xs = [];
@@ -178,10 +178,12 @@
         for (const x of [e, e - 1e-12, e + 1e-12]) if (isFinite(f(x))) { add(x, 1e-9); break; }
       }
       // touching root, like (x - 3)^2 = 0 or |3x + 2| = 0: |f| dips toward 0 between samples without
-      // changing sign. Every strict local minimum of |f| is refined (flat stretches are not minima).
+      // changing sign. Every local minimum of |f| deeper than rounding noise is refined (a root exactly midway
+      // between samples gives two equal neighbors, so one side may tie).
       if (k > 0 && fin[k - 1] && fin[k + 1] && ds[k - 1] * ds[k] > 0 && ds[k] * ds[k + 1] > 0) {
         const g0 = Math.abs(ds[k - 1]), g1 = Math.abs(ds[k]), g2 = Math.abs(ds[k + 1]);
-        if (g1 < g0 && g1 < g2) {
+        const noise = 1e-9 * Math.max(1, g0, g1, g2);
+        if (g1 <= g0 && g1 < g2 && Math.max(g0, g2) - g1 > noise) {
           let p = xs[k - 1], q = xs[k + 1];
           for (let i = 0; i < 120; i++) {
             const m1 = q - gr * (q - p), m2 = p + gr * (q - p);
