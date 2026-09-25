@@ -412,7 +412,7 @@ select.units { max-width: 100%; height: 36px; border: 1px solid var(--rule); bor
 .m { font-family: var(--f-math); font-size: 1.06em; }
 .prompt .m, .steps .m, .sol .m, .lesson .m { font-size: 1em; }
 .mi { font-style: italic; }
-.mfn { font-style: normal; margin-right: 0.06em; }
+.mfn { font-style: normal; margin-right: 0.17em; }
 .mo.b { margin: 0 0.2em; }
 .mo.r { margin: 0 0.28em; }
 .mp.cm { margin-right: 0.22em; }

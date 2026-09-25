@@ -252,13 +252,30 @@
       { label: 'Growth and decay', source: 'Added', pool: ['population', 'doubling', 'halflife'] },
       { label: 'Log scales', source: 'Added', pool: ['ph', 'decibel', 'richter'] },
     ],
-    lesson: T`<p><strong>Growth formulas</strong> (rates as decimals: 5% = 0.05):</p>
-<ul><li>Compound interest: \(A = P\left(1 + \frac{r}{n}\right)^{nt}\), with \(n\) = times per year (12 for monthly).</li>
-<li>Continuous growth or interest: \(A = Pe^{rt}\).</li>
-<li>Doubling every \(d\): \(A = A_{0}\cdot 2^{t/d}\). Half-life \(h\): \(A = A_{0}\left(\frac{1}{2}\right)^{t/h}\).</li></ul>
-<p><strong>Finding the amount</strong>: substitute and evaluate. <strong>Finding the time</strong>: isolate the power, then take \(\ln\) of both sides:</p>
-\[2000 = 1000e^{0.05t} \Rightarrow e^{0.05t} = 2 \Rightarrow 0.05t = \ln 2 \Rightarrow t \approx 13.9\]
-<p><strong>Log scales</strong> turn huge ranges into small numbers: \(\text{pH} = -\log\left[\text{H}^{+}\right]\), decibels \(L = 10\log\frac{I}{I_{0}}\), magnitude \(M = \log\frac{I}{I_{0}}\). One pH unit or one magnitude = a factor of 10; 10 decibels = a factor of 10.</p>`,
+    lesson: T`<p>Money in a savings account, a growing town and a decaying radioactive sample all change by the same <em>percent</em> in each time period. Such quantities follow <strong>exponential models</strong>. Logs let you solve these models for time. Logs also give <strong>log scales</strong>, which measure things like sound and earthquakes whose sizes range over many powers of 10.</p>
+<h3>Growth formulas</h3>
+<div class="box rule"><h4>Formula <b>Compound and continuous interest</b></h4><p>Compound interest: \(A = P\left(1 + \dfrac{r}{n}\right)^{nt}\)<br>Continuous compounding or growth: \(A = Pe^{rt}\)</p><p>\(P\) is the starting amount, \(A\) is the amount after \(t\) years, \(r\) is the yearly rate <strong>as a decimal</strong> (5% = 0.05), and \(n\) is the number of times per year interest is added: 1 annually, 2 semiannually, 4 quarterly, 12 monthly. A population that grows continuously uses the same form, \(P = P_{0}e^{kt}\).</p></div>
+<div class="box rule"><h4>Formula <b>Doubling and half-life</b></h4><p>Doubles every \(d\) time units: \(A = A_{0}\cdot 2^{t/d}\)<br>Half-life \(h\): \(A = A_{0}\left(\frac{1}{2}\right)^{t/h}\)</p><p>\(A_{0}\) is the starting amount. The exponent \(t/d\) (or \(t/h\)) counts how many doublings (or halvings) have happened.</p></div>
+<h3>Two kinds of questions</h3>
+<p>To find the <strong>amount</strong>, substitute the numbers and evaluate. To find the <strong>time</strong>, the unknown is in the exponent, so you need logs.</p>
+<div class="ex"><h4>Example</h4><p>You deposit $2,000 at 4% compounded quarterly. How much is there after 5 years?</p><table class="st">
+<tr><td>List the values.</td><td>\(P = 2000,\ r = 0.04,\ n = 4,\ t = 5\)</td></tr>
+<tr><td>Substitute.</td><td>\(A = 2000\left(1 + \frac{0.04}{4}\right)^{4\cdot 5} = 2000\left(1.01\right)^{20}\)</td></tr>
+<tr><td>Evaluate and round to the cent.</td><td>\(A \approx 2440.38\) dollars</td></tr></table></div>
+<div class="box how"><h4>How to <b>find the time in an exponential model</b></h4><ol>
+<li>Substitute every known number.</li>
+<li>Divide to get the power alone.</li>
+<li>Take \(\ln\) of both sides and use the power property.</li>
+<li>Solve for \(t\). Round only at the end.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>$1,000 is invested at 5% compounded continuously. How long until it grows to $2,000?</p><table class="st">
+<tr><td>Substitute into \(A = Pe^{rt}\).</td><td>\(2000 = 1000e^{0.05t}\)</td></tr>
+<tr><td>Divide by 1000.</td><td>\(e^{0.05t} = 2\)</td></tr>
+<tr><td>Take \(\ln\) of both sides.</td><td>\(0.05t = \ln\,2\)</td></tr>
+<tr><td>Divide by 0.05 and round.</td><td>\(t = \dfrac{\ln\,2}{0.05} \approx 13.9\) years</td></tr></table></div>
+<h3>Log scales</h3>
+<div class="box rule"><h4>Formula <b>pH, decibels and magnitude</b></h4><p>Acidity: \(\text{pH} = -\log\left[\text{H}^{+}\right]\)<br>Sound level: \(L = 10\log\,\dfrac{I}{I_{0}}\), with \(I_{0} = 10^{-12}\) W/m²<br>Earthquake magnitude: \(M = \log\,\dfrac{I}{I_{0}}\)</p></div>
+<p>Because these use base 10, each step on the scale is a factor of 10. One pH unit, one magnitude, or 10 decibels each mean 10 times as much. So a magnitude 7 quake is \(10^{7 - 5} = 100\) times as intense as a magnitude 5 quake. A liquid with pH 3 has \(10^{2} = 100\) times the hydrogen-ion concentration of one with pH 5. Going the other way, a quake 100 times as intense as a magnitude 4.2 quake has magnitude \(4.2 + \log\,100 = 6.2\).</p>
+<div class="box warn"><h4>Watch out</h4><p>A lower pH means <em>more</em> acid, because of the minus sign. And in \(A = P\left(1 + \frac{r}{n}\right)^{nt}\), the rate is divided by \(n\) but the time is multiplied by \(n\).</p></div>`,
     variants,
   });
 })(typeof window !== 'undefined' ? window : globalThis);

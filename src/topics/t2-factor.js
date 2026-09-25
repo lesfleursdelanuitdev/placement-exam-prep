@@ -113,11 +113,28 @@
   MX.register({
     id: 'factor-grouping', section: SEC, title: 'Factoring by grouping', kind: 'skill',
     sources: ['Exam 1 #11b', 'Exam 3 #13'],
-    lesson: T`<p>Four terms usually means grouping:</p>
-<ol><li>Pair the terms: (first two) + (last two).</li><li>Factor the GCF out of each pair. If it works, both pairs leave the <em>same</em> binomial.</li>
-<li>Factor that common binomial out: \(b(a + 5) + 2(a + 5) = (a + 5)(b + 2)\).</li></ol>
-<p>If the second pair starts with a minus, factor out a negative so the binomials match. If the binomials don't match, try reordering the middle two terms.</p>
-<p class="warn">Check whether a factor can still be factored (for example \(x^{2} - 4\)).</p>`,
+    lesson: T`<p>When a polynomial has four terms and no single factor is shared by all of them, try <strong>grouping</strong>. You factor the terms two at a time, and then factor out the binomial the two pairs share.</p>
+<h3>A binomial can be a common factor</h3>
+<p>You already know how to take out a <strong>greatest common factor</strong> (GCF): the largest number and variable part that divides every term, as in \(3x + 3y = 3\left(x + y\right)\). A whole binomial can play the same role.</p>
+<div class="box rule"><h4>Rule <b>Factoring out a common binomial</b></h4><p>In \(x\left(y + 2\right) + 5\left(y + 2\right)\), both terms contain \(\left(y + 2\right)\). Factor it out like any GCF: \(x\left(y + 2\right) + 5\left(y + 2\right) = \left(y + 2\right)\left(x + 5\right)\).</p></div>
+<div class="box how"><h4>How to <b>factor by grouping</b></h4><ol>
+<li>Take out the GCF of all four terms, if there is one.</li>
+<li>Group the first two terms and the last two terms.</li>
+<li>Factor the GCF out of each pair. The GCF can include variables, like \(2xy\).</li>
+<li>If both pairs now contain the same binomial, factor it out.</li>
+<li>Check whether any factor can be factored again.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Factor \(xy + 5y - 2x - 10\).</p><table class="st">
+<tr><td>Group the terms in pairs.</td><td>\(\left(xy + 5y\right) + \left(-2x - 10\right)\)</td></tr>
+<tr><td>Take \(y\) from the first pair and \(-2\) from the second.</td><td>\(y\left(x + 5\right) - 2\left(x + 5\right)\)</td></tr>
+<tr><td>Factor out the common binomial.</td><td>\(\left(x + 5\right)\left(y - 2\right)\)</td></tr>
+<tr><td>Check by multiplying.</td><td>\(xy - 2x + 5y - 10\) ✓</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>When the second pair starts with a minus, factor out a <em>negative</em> number, and change every sign inside: \(-2x - 10 = -2\left(x + 5\right)\), not \(-2\left(x - 5\right)\). If the two binomials still do not match, try swapping the middle two terms.</p></div>
+<h3>Keep going until nothing factors</h3>
+<p>Sometimes a factor from grouping can be factored again. A <strong>difference of squares</strong>, \(a^{2} - b^{2} = \left(a - b\right)\left(a + b\right)\), often shows up.</p>
+<div class="ex"><h4>Example</h4><p>Factor completely \(x^{3} + 3x^{2} - 4x - 12\).</p><table class="st">
+<tr><td>Take \(x^{2}\) from the first pair and \(-4\) from the second.</td><td>\(x^{2}\left(x + 3\right) - 4\left(x + 3\right)\)</td></tr>
+<tr><td>Factor out the common binomial.</td><td>\(\left(x + 3\right)\left(x^{2} - 4\right)\)</td></tr>
+<tr><td>\(x^{2} - 4\) is a difference of squares.</td><td>\(\left(x + 3\right)\left(x - 2\right)\left(x + 2\right)\)</td></tr></table></div>`,
     variants: {
       basic: {
         name: 'Two variables',
@@ -230,16 +247,31 @@
       solution: steps,
     };
   }
-  const SPECIAL_LESSON = T`<p>Four patterns to recognize on sight:</p>
-\[a^{2} - b^{2} = \left(a - b\right)\left(a + b\right)\]
-\[a^{3} - b^{3} = \left(a - b\right)\left(a^{2} + ab + b^{2}\right)\]
-\[a^{3} + b^{3} = \left(a + b\right)\left(a^{2} - ab + b^{2}\right)\]
-\[a^{2} \pm 2ab + b^{2} = \left(a \pm b\right)^{2}\]
-<p><strong>Perfect squares</strong>: 1, 4, 9, 16, 25, 36, 49, 64, 81, 100 and even powers like \(x^{2}, x^{4}, y^{6}\).<br>
-<strong>Perfect cubes</strong>: 1, 8, 27, 64, 125, 216 and powers divisible by 3 like \(x^{3}, x^{6}\).</p>
-<p class="key">Cube signs, <strong>SOAP</strong>: the first sign is the <strong>S</strong>ame as the original, the second is the <strong>O</strong>pposite, the last is <strong>A</strong>lways <strong>P</strong>ositive.</p>
-<ol><li>Take out any GCF first: \(2x^{3} - 54 = 2\left(x^{3} - 27\right)\).</li><li>Identify \(a\) and \(b\) (what gets squared or cubed).</li><li>Fill in the pattern and simplify.</li><li>Check whether a factor can still be factored: \(x^{4} - 16 = \left(x^{2} + 4\right)\left(x - 2\right)\left(x + 2\right)\).</li></ol>
-<p class="warn">A sum of squares like \(x^{2} + 9\) is prime, and the quadratic factor \(a^{2} \pm ab + b^{2}\) from a cube pattern never factors further.</p>`;
+  const SPECIAL_LESSON = T`<p>Some polynomials are the answers to special products, such as \(\left(x - 3\right)\left(x + 3\right) = x^{2} - 9\). If you recognize the pattern, you can write the factors straight away, with no guessing.</p>
+<div class="box def"><h4>Definition <b>Perfect squares and perfect cubes</b></h4><p><strong>Perfect squares</strong> are 1, 4, 9, 16, 25, 36, 49, 64, 81, 100 and variables with even exponents, like \(x^{2}\), \(y^{4}\), \(x^{6}\). <strong>Perfect cubes</strong> are 1, 8, 27, 64, 125, 216 and variables with exponents divisible by 3, like \(x^{3}\), \(y^{6}\).</p></div>
+<h3>Difference of squares</h3>
+<div class="box rule"><h4>Formula <b>Difference of squares</b></h4><p>\(a^{2} - b^{2} = \left(a - b\right)\left(a + b\right)\)</p></div>
+<div class="ex"><h4>Example</h4><p>Factor completely \(5n^{2} - 45\).</p><table class="st">
+<tr><td>Take out the GCF.</td><td>\(5\left(n^{2} - 9\right)\)</td></tr>
+<tr><td>Both terms are squares: \(a = n\), \(b = 3\).</td><td>\(n^{2} - 3^{2}\)</td></tr>
+<tr><td>Use the pattern.</td><td>\(5\left(n - 3\right)\left(n + 3\right)\)</td></tr></table></div>
+<p>A factor may be a difference of squares again: \(x^{4} - 16 = \left(x^{2} - 4\right)\left(x^{2} + 4\right) = \left(x - 2\right)\left(x + 2\right)\left(x^{2} + 4\right)\).</p>
+<h3>Perfect-square trinomials</h3>
+<div class="box rule"><h4>Formula <b>Perfect-square trinomial</b></h4><p>\(a^{2} + 2ab + b^{2} = \left(a + b\right)^{2}\) and \(a^{2} - 2ab + b^{2} = \left(a - b\right)^{2}\). The first and last terms must be squares, and the middle term must be \(2ab\).</p></div>
+<p>For example, \(4x^{2} - 12x + 9\): \(4x^{2} = \left(2x\right)^{2}\), \(9 = 3^{2}\), and \(2\left(2x\right)\left(3\right) = 12x\). So it equals \(\left(2x - 3\right)^{2}\).</p>
+<h3>Sum and difference of cubes</h3>
+<div class="box rule"><h4>Formula <b>Sum and difference of cubes</b></h4><p>\(a^{3} + b^{3} = \left(a + b\right)\left(a^{2} - ab + b^{2}\right)\)<br>\(a^{3} - b^{3} = \left(a - b\right)\left(a^{2} + ab + b^{2}\right)\)<br>Signs, <strong>SOAP</strong>: the first sign is the <strong>S</strong>ame as in the problem, the next is the <strong>O</strong>pposite, and the last is <strong>A</strong>lways <strong>P</strong>ositive.</p></div>
+<div class="ex"><h4>Example</h4><p>Factor \(8x^{3} + 27\).</p><table class="st">
+<tr><td>Write each term as a cube.</td><td>\(\left(2x\right)^{3} + 3^{3}\), so \(a = 2x,\ b = 3\)</td></tr>
+<tr><td>Find \(a^{2}\), \(ab\) and \(b^{2}\).</td><td>\(4x^{2},\ 6x,\ 9\)</td></tr>
+<tr><td>Fill in the sum pattern.</td><td>\(\left(2x + 3\right)\left(4x^{2} - 6x + 9\right)\)</td></tr></table></div>
+<p>An exponent of 6 is both a square and a cube. For \(x^{6} - 64\), use the difference of squares first: \(\left(x^{3} - 8\right)\left(x^{3} + 8\right)\). Then factor each piece with a cube pattern.</p>
+<div class="box how"><h4>How to <b>factor a special pattern</b></h4><ol>
+<li>Take out any GCF first: \(2x^{3} - 54 = 2\left(x^{3} - 27\right)\).</li>
+<li>Match the pattern and find \(a\) and \(b\), the things being squared or cubed.</li>
+<li>Fill in the formula and simplify each term.</li>
+<li>Check whether any factor can still be factored.</li></ol></div>
+<div class="box warn"><h4>Watch out</h4><p>A <em>sum</em> of squares, like \(x^{2} + 9\), does not factor. The trinomial \(a^{2} \pm ab + b^{2}\) from a cube pattern does not factor either. Do not try to break it into two binomials.</p></div>`;
   const DOS_POOL = ['dos', 'dosGcf', 'dosTwice'], DOC_POOL = ['doc', 'docGcf', 'docCoef', 'sixth'], SOC_POOL = ['soc', 'socGcf', 'socCoef'];
   MX.register({
     id: 'factor-special', section: SEC, title: 'Special factoring patterns', kind: 'skill',
@@ -391,15 +423,27 @@
     id: 'factor-strategy', section: SEC, title: 'Factoring strategy', kind: 'skill',
     sources: ['added'],
     slots: [{ label: 'Factor completely', source: 'Added', pool: ['gcfOnly', 'prime', 'mixed'] }],
-    lesson: T`<p>A checklist that works for every "factor completely" problem:</p>
-<ol><li><strong>GCF first.</strong> Take out the greatest common factor of all the terms (numbers and variables).</li>
-<li><strong>Count the terms</strong> of what's left:
-<ul><li>2 terms: difference of squares, difference of cubes, or sum of cubes. A sum of squares is prime.</li>
-<li>3 terms: perfect-square trinomial? Otherwise the trinomial method (AC method when the leading coefficient isn't 1).</li>
+    lesson: T`<p>Each earlier lesson taught one factoring method. On a test, a problem just says "factor completely" and does not tell you which method to use. This lesson gives you a plan that picks the method for you.</p>
+<div class="box def"><h4>Definition <b>Factored completely, and prime</b></h4><p>A polynomial is <strong>factored completely</strong> when none of its factors can be factored any further. A polynomial is <strong>prime</strong> when it has no common factor and cannot be written as a product of smaller polynomials with integer coefficients. For example, \(x^{2} + 4x + 6\) is prime.</p></div>
+<h3>The plan</h3>
+<div class="box how"><h4>How to <b>factor any polynomial completely</b></h4><ol>
+<li><strong>GCF first.</strong> Take out the greatest common factor of all the terms, numbers and variables.</li>
+<li><strong>Count the terms</strong> of what is left.
+<ul><li>2 terms: difference of squares, sum of cubes, or difference of cubes. A sum of squares does not factor.</li>
+<li>3 terms: a perfect-square trinomial, or two numbers that multiply to \(c\) and add to \(b\) (the ac method when the leading coefficient is not 1).</li>
 <li>4 terms: factor by grouping.</li></ul></li>
-<li><strong>Check every factor</strong> and keep going until nothing factors further.</li>
-<li>If nothing works and there's no GCF, the polynomial is <strong>prime</strong>. Type <code>prime</code>.</li></ol>
-<p class="warn">Taking out a GCF is not the end: \(3x^{3} - 12x = 3x\left(x^{2} - 4\right) = 3x\left(x - 2\right)\left(x + 2\right)\).</p>`,
+<li><strong>Check every factor.</strong> Keep going until nothing factors further.</li>
+<li>If there is no GCF and no method works, the polynomial is <strong>prime</strong>. Type <code>prime</code>.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Factor completely \(2y^{3} - 18y\).</p><table class="st">
+<tr><td>Take out the GCF.</td><td>\(2y\left(y^{2} - 9\right)\)</td></tr>
+<tr><td>Two terms remain, a difference of squares.</td><td>\(y^{2} - 3^{2}\)</td></tr>
+<tr><td>Factor it.</td><td>\(2y\left(y - 3\right)\left(y + 3\right)\)</td></tr></table></div>
+<div class="ex"><h4>Example</h4><p>Factor completely \(x^{2} + 4x + 6\).</p><table class="st">
+<tr><td>There is no GCF. Three terms: look for two numbers that multiply to 6 and add to 4.</td><td>\(1 \cdot 6,\ 2 \cdot 3\)</td></tr>
+<tr><td>Check the sums, with either sign.</td><td>\(1 + 6 = 7,\ 2 + 3 = 5\)</td></tr>
+<tr><td>Neither sum is 4, so nothing works.</td><td>\(\text{prime}\)</td></tr></table></div>
+<p>Sometimes a GCF comes out and what is left does not factor. Then the answer is the GCF times that piece, for example \(5x^{2} + 20 = 5\left(x^{2} + 4\right)\). That polynomial is not prime, because you did factor something out.</p>
+<div class="box warn"><h4>Watch out</h4><p>Taking out a GCF is usually not the end. \(3x^{3} - 12x = 3x\left(x^{2} - 4\right)\) is not finished, because \(x^{2} - 4\) still factors: \(3x\left(x - 2\right)\left(x + 2\right)\).</p></div>`,
     variants: {
       gcfOnly: {
         name: 'Greatest common factor only',

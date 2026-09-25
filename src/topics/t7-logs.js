@@ -104,11 +104,24 @@
   MX.register({
     id: 'log-form', section: SEC, title: 'Exponential & logarithmic form', kind: 'skill', sources: [],
     slots: [{ label: 'Exponential & logarithmic form', source: ADDED, pool: ['toExp', 'toLog', 'natural', 'common'] }],
-    lesson: T`<p>A logarithm is an exponent. The two statements below say exactly the same thing:</p>
-\[\log_{b} N = k \quad\Longleftrightarrow\quad b^{k} = N\]
-<p>Read \(\log_{2} 32\) as "the power of 2 that gives 32". Since \(2^{5} = 32\), \(\log_{2} 32 = 5\).</p>
-<ul><li>The <strong>base</strong> of the log is the base of the power.</li><li>The <strong>answer</strong> of the log is the exponent.</li><li>The number inside the log is the result of the power.</li></ul>
-<p>Two special bases have their own names: the <strong>common log</strong> \(\log N\) means base 10, and the <strong>natural log</strong> \(\ln N\) means base \(e \approx 2.718\). So \(\ln 7 = x\) means \(e^{x} = 7\).</p>
+    lesson: T`<p>A logarithm answers the question "which exponent?" You already know that \(2^{5} = 32\). The logarithm \(\log_{2}\,32\) asks for that exponent, so \(\log_{2}\,32 = 5\). A log and a power are two ways to write the same fact.</p>
+<div class="box def"><h4>Definition <b>Logarithm</b></h4><p>For a base \(b \gt 0\) with \(b \ne 1\), and a number \(N \gt 0\):</p><p>\(\log_{b}\,N = k\) means \(b^{k} = N\).</p><p>Read \(\log_{b}\,N\) as "log base \(b\) of \(N\)". The value \(k\) of a logarithm is always an exponent.</p></div>
+<h3>Switching between the two forms</h3>
+<p>Both forms use the same three numbers. Only their places change:</p>
+<ul><li>The <strong>base</strong> of the log is the base of the power.</li><li>The <strong>value</strong> of the log is the exponent.</li><li>The number <strong>inside</strong> the log is the result of the power.</li></ul>
+<div class="ex"><h4>Example</h4><p>Write \(\log_{3}\,81 = 4\) in exponential form.</p><table class="st">
+<tr><td>Name the parts: base, value, inside.</td><td>\(b = 3,\ k = 4,\ N = 81\)</td></tr>
+<tr><td>The base gets the value as its exponent, and equals the inside.</td><td>\(3^{4} = 81\)</td></tr>
+<tr><td>Check.</td><td>\(3 \cdot 3 \cdot 3 \cdot 3 = 81\) ✓</td></tr></table></div>
+<div class="ex"><h4>Example</h4><p>Write \(5^{-2} = \frac{1}{25}\) in logarithmic form.</p><table class="st">
+<tr><td>The base of the power becomes the base of the log.</td><td>\(\log_{5}\)</td></tr>
+<tr><td>The result goes inside the log.</td><td>\(\log_{5}\,\frac{1}{25}\)</td></tr>
+<tr><td>The exponent is the value of the log.</td><td>\(\log_{5}\,\frac{1}{25} = -2\)</td></tr></table></div>
+<p>Fractional exponents work the same way: \(49^{1/2} = 7\) becomes \(\log_{49}\,7 = \frac{1}{2}\).</p>
+<h3>Common and natural logs</h3>
+<div class="box def"><h4>Definition <b>Common log and natural log</b></h4><p>The <strong>common log</strong> \(\log\,N\), written with no base, has base 10: \(\log\,N = k\) means \(10^{k} = N\).</p><p>The <strong>natural log</strong> \(\ln\,N\) has base \(e \approx 2.718\): \(\ln\,N = k\) means \(e^{k} = N\).</p></div>
+<p>So \(\log\,1000 = 3\) because \(10^{3} = 1000\), and \(\log\,0.01 = -2\) because \(10^{-2} = 0.01\). Also \(\ln\,7 = x\) means \(e^{x} = 7\).</p>
+<div class="box warn"><h4>Watch out</h4><p>The base of the log stays the base. \(\log_{2}\,8 = 3\) becomes \(2^{3} = 8\). It is not \(3^{2} = 8\) and not \(8^{3} = 2\).</p></div>
 <p>Type logs like <code>log_2(32)</code>, <code>log(1000)</code> and <code>ln(7)</code>, or use the log buttons.</p>`,
     variants: {
       toExp: {
@@ -192,11 +205,26 @@
   MX.register({
     id: 'log-eval', section: SEC, title: 'Evaluating logarithms', kind: 'skill', sources: [],
     slots: [{ label: 'Evaluate', source: ADDED, pool: ['basic', 'fraction', 'special'] }],
-    lesson: T`<p>To evaluate \(\log_{b} N\), ask: <strong>"\(b\) to what power gives \(N\)?"</strong></p>
-<ul><li>\(\log_{3} 81 = 4\) because \(3^{4} = 81\).</li><li>\(\log_{2} \frac{1}{8} = -3\) because \(2^{-3} = \frac{1}{8}\).</li><li>\(\log_{9} 3 = \frac{1}{2}\) because \(9^{1/2} = 3\).</li></ul>
-<p>Rules that come straight from the definition:</p>
-\[\log_{b} 1 = 0 \qquad \log_{b} b = 1 \qquad \log_{b} b^{k} = k \qquad b^{\log_{b} N} = N\]
-<p>They hold for the special logs too: \(\log 10^{k} = k\), \(\ln e^{k} = k\), \(\ln 1 = 0\), \(\ln e = 1\), \(e^{\ln N} = N\).</p>`,
+    lesson: T`<p>To evaluate a logarithm means to find its value, and that value is an exponent. For \(\log_{b}\,N\), ask: <strong>"\(b\) to what power gives \(N\)?"</strong> For example, \(\log_{3}\,81 = 4\) because \(3^{4} = 81\).</p>
+<div class="box how"><h4>How to <b>evaluate \(\log_{b}\,N\) without a calculator</b></h4><ol>
+<li>Set the log equal to \(x\): \(\log_{b}\,N = x\).</li>
+<li>Rewrite it in exponential form: \(b^{x} = N\).</li>
+<li>Write both sides as powers of the same base.</li>
+<li>Set the exponents equal and solve for \(x\).</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Evaluate \(\log_{4}\,8\).</p><table class="st">
+<tr><td>Set the log equal to \(x\).</td><td>\(\log_{4}\,8 = x\)</td></tr>
+<tr><td>Rewrite in exponential form.</td><td>\(4^{x} = 8\)</td></tr>
+<tr><td>Write 4 and 8 as powers of 2.</td><td>\(\left(2^{2}\right)^{x} = 2^{3}\), so \(2^{2x} = 2^{3}\)</td></tr>
+<tr><td>Set the exponents equal.</td><td>\(2x = 3\), so \(x = \frac{3}{2}\)</td></tr></table></div>
+<h3>Negative and fractional answers</h3>
+<p>The answer does not have to be a whole number.</p>
+<ul><li>A fraction inside gives a negative answer, because a negative exponent makes a reciprocal: \(\log_{2}\,\frac{1}{8} = -3\) because \(2^{-3} = \frac{1}{8}\).</li>
+<li>A root gives a fractional answer: \(\log_{9}\,3 = \frac{1}{2}\) because \(9^{1/2} = \sqrt{9} = 3\).</li>
+<li>Decimals work with base 10: \(\log\,0.001 = -3\) because \(0.001 = 10^{-3}\).</li></ul>
+<h3>Special values</h3>
+<div class="box rule"><h4>Property <b>Special logs and inverse properties</b></h4><p>For any allowed base \(b\) and any \(N \gt 0\):</p><p>\(\log_{b}\,1 = 0\) because \(b^{0} = 1\).<br>\(\log_{b}\,b = 1\) because \(b^{1} = b\).<br>\(\log_{b}\,b^{k} = k\): the log undoes the power.<br>\(b^{\log_{b}\,N} = N\): the power undoes the log.</p></div>
+<p>They hold for the common log and the natural log too: \(\log\,10^{k} = k\), \(10^{\log\,N} = N\), \(\ln\,1 = 0\), \(\ln\,e = 1\), \(\ln\,e^{k} = k\) and \(e^{\ln\,N} = N\). For example, \(\ln\,e^{6} = 6\) and \(5^{\log_{5}\,12} = 12\).</p>
+<div class="box warn"><h4>Watch out</h4><p>\(\log_{b}\,1 = 0\), not 1. It is \(\log_{b}\,b\) that equals 1. Also, the number inside a log must be positive: \(\log_{2}\,0\) and \(\log_{2}\left(-4\right)\) have no value, because no power of 2 is zero or negative.</p></div>`,
     variants: {
       basic: {
         name: 'Whole-number answers',
@@ -266,11 +294,27 @@
   MX.register({
     id: 'log-expand', section: SEC, title: 'Expanding logarithms', kind: 'skill', sources: [],
     slots: [{ label: 'Expand', source: ADDED, pool: ['rules', 'numbers', 'roots'] }],
-    lesson: T`<p>The three log rules (for positive \(M\), \(N\)):</p>${RULES}
-<ul><li><strong>Product</strong> → sum. <strong>Quotient</strong> → difference (top minus bottom). <strong>Power</strong> → coefficient in front.</li>
-<li>A root is a fractional power: \(\sqrt{x} = x^{1/2}\), so \(\log\sqrt{x} = \frac{1}{2}\log x\).</li>
-<li>Evaluate any log of a plain number when you can: \(\log_{2}\left(8x\right) = 3 + \log_{2} x\).</li></ul>
-<p class="warn">\(\log\left(M + N\right)\) does <strong>not</strong> split. The rules are for products, quotients and powers only.</p>`,
+    lesson: T`<p>A logarithm is an exponent, so logs follow the exponent rules. When you multiply powers you add exponents (\(b^{m} \cdot b^{n} = b^{m + n}\)). In the same way, the log of a product is a sum of logs. <strong>Expanding</strong> a log means breaking one log of a product, quotient or power into several simpler logs.</p>
+<div class="box rule"><h4>Property <b>Product, quotient and power properties</b></h4><p>For positive \(M\) and \(N\) and any allowed base \(b\):</p><p><strong>Product:</strong> \(\log_{b}\left(MN\right) = \log_{b}\,M + \log_{b}\,N\)<br><strong>Quotient:</strong> \(\log_{b}\,\dfrac{M}{N} = \log_{b}\,M - \log_{b}\,N\)<br><strong>Power:</strong> \(\log_{b}\,M^{p} = p\log_{b}\,M\)</p><p>In words: a product becomes a sum, a quotient becomes top minus bottom, and an exponent moves to the front. They work the same for \(\log\) and \(\ln\).</p></div>
+<h3>Roots and plain numbers</h3>
+<p>A root is a fractional power: \(\sqrt{x} = x^{1/2}\) and \(\sqrt[3]{x} = x^{1/3}\). So \(\ln\,\sqrt{x} = \frac{1}{2}\ln\,x\).</p>
+<p>If a plain number sits inside a log and you can evaluate it, do so: \(\log_{2}\left(8x\right) = \log_{2}\,8 + \log_{2}\,x = 3 + \log_{2}\,x\).</p>
+<div class="box how"><h4>How to <b>expand a logarithm</b></h4><ol>
+<li>Use the quotient property first: log of the top minus log of the bottom.</li>
+<li>Use the product property to split each product into a sum.</li>
+<li>Rewrite any root as a fractional power.</li>
+<li>Use the power property to bring each exponent to the front.</li>
+<li>Evaluate any log of a plain number.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Expand \(\log_{3}\left(\dfrac{9x^{2}}{y^{4}}\right)\).</p><table class="st">
+<tr><td>Quotient property: top minus bottom.</td><td>\(\log_{3}\left(9x^{2}\right) - \log_{3}\,y^{4}\)</td></tr>
+<tr><td>Product property on the top.</td><td>\(\log_{3}\,9 + \log_{3}\,x^{2} - \log_{3}\,y^{4}\)</td></tr>
+<tr><td>Power property: exponents to the front.</td><td>\(\log_{3}\,9 + 2\log_{3}\,x - 4\log_{3}\,y\)</td></tr>
+<tr><td>Evaluate \(\log_{3}\,9\), since \(3^{2} = 9\).</td><td>\(2 + 2\log_{3}\,x - 4\log_{3}\,y\)</td></tr></table></div>
+<div class="ex"><h4>Example</h4><p>Expand \(\ln\left(\dfrac{\sqrt{x}}{y^{3}}\right)\).</p><table class="st">
+<tr><td>Write the root as a power.</td><td>\(\ln\left(\dfrac{x^{1/2}}{y^{3}}\right)\)</td></tr>
+<tr><td>Quotient property.</td><td>\(\ln\,x^{1/2} - \ln\,y^{3}\)</td></tr>
+<tr><td>Power property.</td><td>\(\frac{1}{2}\ln\,x - 3\ln\,y\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>There is no rule for the log of a sum. \(\log\left(x + 2\right)\) does <strong>not</strong> equal \(\log\,x + \log\,2\). Leave it as it is. The properties are for products, quotients and powers only.</p></div>`,
     variants: {
       rules: {
         name: 'Product, quotient and power rules',
@@ -330,11 +374,22 @@
   MX.register({
     id: 'log-condense', section: SEC, title: 'Condensing logarithms', kind: 'skill', sources: [],
     slots: [{ label: 'Condense', source: ADDED, pool: ['rules', 'fraction', 'number'] }],
-    lesson: T`<p>Condensing runs the rules backward to get <strong>one</strong> logarithm:</p>${RULES}
-<ol><li>Power rule first: move each coefficient up as an exponent, \(3\log x = \log x^{3}\).</li>
-<li>Added logs combine into a product; subtracted logs go into the denominator.</li>
-<li>All the logs must have the same base.</li></ol>
-<p>A plain number can be written as a log to combine it: \(2 = \log_{3} 9\), so \(2 + \log_{3} x = \log_{3}\left(9x\right)\).</p>`,
+    lesson: T`<p>Condensing is expanding in reverse. You start with several logs and combine them into <strong>one</strong> logarithm. You use the same three properties, read from right to left.</p>
+<div class="box rule"><h4>Property <b>Combining logs with the same base</b></h4><p>For positive \(M\) and \(N\):</p><p>\(\log_{b}\,M + \log_{b}\,N = \log_{b}\left(MN\right)\)<br>\(\log_{b}\,M - \log_{b}\,N = \log_{b}\,\dfrac{M}{N}\)<br>\(p\log_{b}\,M = \log_{b}\,M^{p}\)</p><p>You can only combine logs that have the same base.</p></div>
+<div class="box how"><h4>How to <b>condense to a single logarithm</b></h4><ol>
+<li>Power property first: move each number in front of a log up as an exponent. A coefficient of \(\frac{1}{2}\) becomes a square root.</li>
+<li>If there is a plain number, write it as a log with the same base: \(k = \log_{b}\,b^{k}\).</li>
+<li>Logs that are added combine into a product on top. Logs that are subtracted go in the denominator.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Write \(2\log\,x + 3\log\,y - \log\,z\) as a single logarithm.</p><table class="st">
+<tr><td>Power property: coefficients become exponents.</td><td>\(\log\,x^{2} + \log\,y^{3} - \log\,z\)</td></tr>
+<tr><td>Product property for the sum.</td><td>\(\log\left(x^{2}y^{3}\right) - \log\,z\)</td></tr>
+<tr><td>Quotient property for the difference.</td><td>\(\log\left(\dfrac{x^{2}y^{3}}{z}\right)\)</td></tr></table></div>
+<div class="ex"><h4>Example</h4><p>Write \(2 + 3\log_{5}\,x\) as a single logarithm.</p><table class="st">
+<tr><td>Write 2 as a base-5 log, since \(5^{2} = 25\).</td><td>\(2 = \log_{5}\,25\)</td></tr>
+<tr><td>Power property on the other term.</td><td>\(\log_{5}\,25 + \log_{5}\,x^{3}\)</td></tr>
+<tr><td>Product property.</td><td>\(\log_{5}\left(25x^{3}\right)\)</td></tr></table></div>
+<p>Fractional coefficients turn into roots: \(\frac{1}{2}\ln\,x = \ln\,x^{1/2} = \ln\,\sqrt{x}\). So \(\frac{1}{2}\ln\,x + 4\ln\,y = \ln\left(y^{4}\sqrt{x}\right)\).</p>
+<div class="box warn"><h4>Watch out</h4><p>Move the coefficients up <em>before</em> you combine. \(2\log\,x + \log\,y\) equals \(\log\left(x^{2}y\right)\). It is not \(\log\left(2xy\right)\) and not \(2\log\left(xy\right)\).</p></div>`,
     variants: {
       rules: {
         name: 'Coefficients to exponents',
@@ -406,10 +461,26 @@
   MX.register({
     id: 'log-cob', section: SEC, title: 'Change of base', kind: 'skill', sources: [],
     slots: [{ label: 'Change of base', source: ADDED, pool: ['value', 'small'] }],
-    lesson: T`<p>Calculators have only \(\log\) (base 10) and \(\ln\) (base \(e\)). To evaluate any other base, use</p>
-\[\log_{b} N = \frac{\ln N}{\ln b} = \frac{\log N}{\log b}\]
-<p>Example: \(\log_{3} 20 = \dfrac{\ln 20}{\ln 3} \approx \dfrac{2.9957}{1.0986} \approx 2.73\). Check: \(3^{2.73} \approx 20\) ✓.</p>
-<p class="warn">It's \(\ln N\) on <em>top</em> (the number inside) and \(\ln b\) on the bottom (the base). Round only at the end.</p>`,
+    lesson: T`<p>Most calculators have only two log keys: <strong>LOG</strong> (base 10) and <strong>LN</strong> (base \(e\)). To find a log with any other base, such as \(\log_{3}\,20\), you change it into common or natural logs.</p>
+<p>You can estimate first. Since \(3^{2} = 9\) and \(3^{3} = 27\), the value of \(\log_{3}\,20\) is between 2 and 3. It is not a whole number, so you need a calculator.</p>
+<div class="box rule"><h4>Formula <b>Change of base</b></h4><p>For positive \(N\) and an allowed base \(b\):</p><p>\(\log_{b}\,N = \dfrac{\ln\,N}{\ln\,b} = \dfrac{\log\,N}{\log\,b}\)</p><p>The number inside goes on top. The base goes on the bottom. Both ways give the same answer.</p></div>
+<div class="box how"><h4>How to <b>evaluate a log with change of base</b></h4><ol>
+<li>Write the quotient: \(\ln\) of the inside over \(\ln\) of the base.</li>
+<li>Compute it on a calculator. If you write down middle steps, keep at least four decimal places.</li>
+<li>Round only at the end.</li>
+<li>Check: the base raised to your answer should be close to the inside.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Evaluate \(\log_{3}\,20\) to the nearest hundredth.</p><table class="st">
+<tr><td>Write the change-of-base quotient.</td><td>\(\log_{3}\,20 = \dfrac{\ln\,20}{\ln\,3}\)</td></tr>
+<tr><td>Find each natural log.</td><td>\(\approx \dfrac{2.9957}{1.0986}\)</td></tr>
+<tr><td>Divide and round.</td><td>\(\approx 2.73\)</td></tr>
+<tr><td>Check.</td><td>\(3^{2.73} \approx 20.07\) ✓</td></tr></table></div>
+<h3>Negative answers</h3>
+<p>When the base is bigger than 1 and the inside is between 0 and 1, the log is negative. For example, \(\log_{2}\,0.5 = -1\) because \(2^{-1} = 0.5\). The formula handles this on its own, because the log of a number less than 1 is negative.</p>
+<div class="ex"><h4>Example</h4><p>Evaluate \(\log_{4}\,0.3\) to the nearest hundredth.</p><table class="st">
+<tr><td>Write the quotient.</td><td>\(\dfrac{\ln\,0.3}{\ln\,4}\)</td></tr>
+<tr><td>Find each natural log.</td><td>\(\approx \dfrac{-1.2040}{1.3863}\)</td></tr>
+<tr><td>Divide and round.</td><td>\(\approx -0.87\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Put \(\ln\,N\) (the inside) on top and \(\ln\,b\) (the base) on the bottom. Also, \(\dfrac{\ln\,20}{\ln\,3}\) is a division of two logs. It is not \(\ln\,\dfrac{20}{3}\).</p></div>`,
     variants: {
       value: { name: 'Evaluate with change of base', gen: (rng) => cob(rng, false) },
       small: { name: 'Answers that are negative', gen: (rng) => cob(rng, true) },
@@ -420,11 +491,32 @@
   MX.register({
     id: 'log-solve', section: SEC, title: 'Solving logarithmic equations', kind: 'skill', sources: [],
     slots: [{ label: 'Solve', source: ADDED, pool: ['basic', 'equal', 'sum', 'natural', 'nosol'] }],
-    lesson: T`<p>Two situations:</p>
-<ul><li><strong>One log equals a number</strong>: rewrite in exponential form. \(\log_{2}\left(x + 3\right) = 5 \Rightarrow x + 3 = 2^{5}\).</li>
-<li><strong>Logs on both sides</strong> with the same base: set the insides equal. \(\log\left(2x + 3\right) = \log\left(x + 7\right) \Rightarrow 2x + 3 = x + 7\).</li></ul>
-<p>With several logs, condense first: \(\log_{2} x + \log_{2}\left(x - 2\right) = 3 \Rightarrow \log_{2}\left(x\left(x - 2\right)\right) = 3\).</p>
-<p class="key">Always check: the inside of every log must be positive. Throw out any answer that makes one zero or negative. If none survive, type <code>no solution</code>.</p>`,
+    lesson: T`<p>A logarithmic equation has the variable inside a log, as in \(\log_{2}\left(x + 3\right) = 5\). You solve it by getting rid of the log. There are two ways, depending on what is on the other side. After you solve, you must always check your answers.</p>
+<h3>A log equal to a number</h3>
+<p>Rewrite the equation in exponential form. Then the log is gone. \(\log_{b}\,M = k\) becomes \(M = b^{k}\).</p>
+<div class="ex"><h4>Example</h4><p>Solve \(\log_{2}\left(x + 3\right) = 5\).</p><table class="st">
+<tr><td>Rewrite in exponential form.</td><td>\(x + 3 = 2^{5}\)</td></tr>
+<tr><td>Evaluate the power and solve.</td><td>\(x + 3 = 32\), so \(x = 29\)</td></tr>
+<tr><td>Check: the inside must be positive.</td><td>\(29 + 3 = 32 \gt 0\) ✓</td></tr></table></div>
+<p>With \(\ln\), the base is \(e\): \(\ln\left(2x + 1\right) = 3\) becomes \(2x + 1 = e^{3}\), so \(x = \dfrac{e^{3} - 1}{2} \approx 9.54\).</p>
+<h3>A log equal to a log</h3>
+<div class="box rule"><h4>Property <b>One-to-one property of logarithms</b></h4><p>If \(\log_{b}\,M = \log_{b}\,N\), then \(M = N\). Equal logs with the same base have equal insides.</p></div>
+<p>For example, \(\log\left(2x + 3\right) = \log\left(x + 7\right)\) gives \(2x + 3 = x + 7\), so \(x = 4\). Both insides equal 11, which is positive ✓.</p>
+<div class="box how"><h4>How to <b>solve a logarithmic equation</b></h4><ol>
+<li>If one side has several logs, condense them into one log.</li>
+<li>If a log equals a number, rewrite in exponential form. If a log equals a log with the same base, set the insides equal.</li>
+<li>Solve the equation that is left.</li>
+<li>Check every answer in the original equation. The inside of every log must be positive. Throw out any answer that fails; it is <strong>extraneous</strong>. If no answer is left, there is <strong>no solution</strong>.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Solve \(\log_{2}\,x + \log_{2}\left(x - 2\right) = 3\).</p><table class="st">
+<tr><td>Condense with the product property.</td><td>\(\log_{2}\left(x\left(x - 2\right)\right) = 3\)</td></tr>
+<tr><td>Rewrite in exponential form.</td><td>\(x^{2} - 2x = 2^{3} = 8\)</td></tr>
+<tr><td>Set the quadratic equal to 0 and factor.</td><td>\(x^{2} - 2x - 8 = 0\), so \(\left(x - 4\right)\left(x + 2\right) = 0\)</td></tr>
+<tr><td>List the candidates.</td><td>\(x = 4\) or \(x = -2\)</td></tr>
+<tr><td>Check \(x = -2\): \(\log_{2}\left(-2\right)\) does not exist.</td><td>reject \(-2\)</td></tr>
+<tr><td>Check \(x = 4\).</td><td>\(\log_{2}\,4 + \log_{2}\,2 = 2 + 1 = 3\) ✓</td></tr></table></div>
+<p>The answer is \(x = 4\).</p>
+<div class="box warn"><h4>Watch out</h4><p>The answer itself may be negative. What must be positive is the inside of every log. For example, \(\log\left(x + 5\right) = 0\) gives \(x + 5 = 1\), so \(x = -4\), and that is fine because \(-4 + 5 = 1 \gt 0\).</p></div>
+<p>If no answer survives the check, type <code>no solution</code>.</p>`,
     variants: {
       basic: {
         name: 'Rewrite in exponential form',
@@ -547,11 +639,30 @@
   MX.register({
     id: 'log-expeq', section: SEC, title: 'Exponential equations using logs', kind: 'skill', sources: [],
     slots: [{ label: 'Solve with logs', source: ADDED, pool: ['common', 'natural', 'isolate', 'shift'] }],
-    lesson: T`<p>When the two sides can't be written with the same base, take a log of both sides and use the power rule to bring the variable down:</p>
-\[5^{x} = 12 \;\Rightarrow\; \ln 5^{x} = \ln 12 \;\Rightarrow\; x\ln 5 = \ln 12 \;\Rightarrow\; x = \frac{\ln 12}{\ln 5} \approx 1.54\]
-<ol><li>Isolate the power first (subtract and divide what's around it).</li><li>Take \(\ln\) (or \(\log\)) of both sides.</li><li>Power rule, then divide.</li></ol>
-<p>With base \(e\), use \(\ln\): \(\ln e^{3x} = 3x\). The inverse rules \(\ln e^{x} = x\) and \(e^{\ln x} = x\) do the work.</p>
-<p class="warn">\(\dfrac{\ln 12}{\ln 5}\) is not \(\ln\dfrac{12}{5}\) and not \(\ln 12 - \ln 5\).</p>`,
+    lesson: T`<p>In an equation like \(5^{x} = 12\), the variable is in the exponent. Since \(5^{1} = 5\) and \(5^{2} = 25\), you know \(x\) is between 1 and 2, but 12 is not a nice power of 5. Logs solve this: the power property moves the exponent down to the front, where you can solve for it.</p>
+<div class="box rule"><h4>Property <b>The power property does the work</b></h4><p>\(\ln\,b^{x} = x\,\ln\,b\). For base \(e\), \(\ln\,e^{x} = x\), because \(\ln\,e = 1\).</p></div>
+<div class="box how"><h4>How to <b>solve an exponential equation with logs</b></h4><ol>
+<li>Isolate the power: get \(b^{\text{something}}\) alone on one side.</li>
+<li>Take \(\ln\) (or \(\log\)) of both sides.</li>
+<li>Use the power property to bring the exponent to the front.</li>
+<li>Solve for \(x\). This gives the exact answer, written with logs.</li>
+<li>Use a calculator to round, if asked.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Solve \(3\cdot 5^{x} + 4 = 40\).</p><table class="st">
+<tr><td>Subtract 4 from both sides.</td><td>\(3\cdot 5^{x} = 36\)</td></tr>
+<tr><td>Divide by 3 to isolate the power.</td><td>\(5^{x} = 12\)</td></tr>
+<tr><td>Take \(\ln\) of both sides.</td><td>\(\ln\,5^{x} = \ln\,12\)</td></tr>
+<tr><td>Power property.</td><td>\(x\,\ln\,5 = \ln\,12\)</td></tr>
+<tr><td>Divide by \(\ln\,5\). This is the exact answer.</td><td>\(x = \dfrac{\ln\,12}{\ln\,5}\)</td></tr>
+<tr><td>Round with a calculator.</td><td>\(x \approx 1.54\)</td></tr></table></div>
+<h3>Base e</h3>
+<p>When the base is \(e\), take \(\ln\) of both sides. The \(\ln\) and the \(e\) cancel. For \(e^{2x} = 15\): \(2x = \ln\,15\), so \(x = \dfrac{\ln\,15}{2} \approx 1.35\).</p>
+<h3>An expression in the exponent</h3>
+<p>Keep the whole exponent together in parentheses when it moves to the front.</p>
+<div class="ex"><h4>Example</h4><p>Solve \(2^{x - 3} = 10\).</p><table class="st">
+<tr><td>Take \(\ln\) of both sides and use the power property.</td><td>\(\left(x - 3\right)\ln\,2 = \ln\,10\)</td></tr>
+<tr><td>Divide by \(\ln\,2\).</td><td>\(x - 3 = \dfrac{\ln\,10}{\ln\,2}\)</td></tr>
+<tr><td>Add 3. Then round.</td><td>\(x = 3 + \dfrac{\ln\,10}{\ln\,2} \approx 6.32\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Isolate the power <em>before</em> you take logs: \(3\cdot 5^{x}\) is not \(15^{x}\). Also, \(\dfrac{\ln\,12}{\ln\,5}\) is not \(\ln\,\dfrac{12}{5}\) and not \(\ln\,12 - \ln\,5\). Divide the two logs.</p></div>`,
     variants: {
       common: { name: 'Any base', gen: (rng) => expeq(rng, 'common') },
       natural: { name: 'Base e', gen: (rng) => expeq(rng, 'natural') },

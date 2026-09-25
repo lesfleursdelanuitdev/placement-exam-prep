@@ -10,11 +10,27 @@
   MX.register({
     id: 'poly-addsub', section: SEC, title: 'Adding & subtracting polynomials', kind: 'skill',
     sources: ['Exam 1 #1', 'Exam 2 #1'],
-    lesson: T`<p>To subtract a polynomial, distribute the minus sign (or the number in front) to <em>every</em> term in the parentheses, then combine like terms: terms with the same variable and the same exponent.</p>
-<ol><li>Remove parentheses. A minus sign in front changes the sign of every term inside.</li>
-<li>Line up like terms: \(x^2\) with \(x^2\), \(x\) with \(x\), constants with constants.</li>
-<li>Add their coefficients. The exponents do not change.</li></ol>
-<p class="warn">Most common mistake: changing the sign of only the first term inside the parentheses.</p>`,
+    lesson: T`<p>Adding and subtracting polynomials is the same skill you use to simplify \(3x + 5x = 8x\): you combine like terms. The only new work is removing the parentheses correctly.</p>
+<div class="box def"><h4>Definition <b>Like terms</b></h4><p><strong>Like terms</strong> have the same variables raised to the same exponents. \(4x^{2}\) and \(-9x^{2}\) are like terms. \(4x^{2}\) and \(4x\) are not. To combine like terms, add their <strong>coefficients</strong> (the numbers in front). The exponents do not change.</p></div>
+<h3>Adding</h3>
+<p>A plus sign in front of parentheses changes nothing. Drop the parentheses and combine like terms.</p>
+<h3>Subtracting</h3>
+<p>A minus sign in front of parentheses is really \(-1\) times the whole group. It has to reach every term inside.</p>
+<div class="box rule"><h4>Rule <b>Subtracting a polynomial</b></h4><p>\(-\left(a - b + c\right) = -a + b - c\). Change the sign of <em>every</em> term inside. If a number stands in front, as in \(-3\left(\ldots\right)\), multiply every term inside by \(-3\).</p></div>
+<div class="box how"><h4>How to <b>add or subtract polynomials</b></h4><ol>
+<li>Remove the parentheses. A plus keeps the signs. A minus flips every sign. A number in front multiplies every term.</li>
+<li>Group like terms: \(x^{2}\) with \(x^{2}\), \(x\) with \(x\), numbers with numbers.</li>
+<li>Add the coefficients of each group. Keep the exponents.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Subtract \(\left(5x^{2} - 3x + 7\right) - \left(2x^{2} + 4x - 1\right)\).</p><table class="st">
+<tr><td>Change the sign of every term in the second group.</td><td>\(5x^{2} - 3x + 7 - 2x^{2} - 4x + 1\)</td></tr>
+<tr><td>Group like terms.</td><td>\(\left(5x^{2} - 2x^{2}\right) + \left(-3x - 4x\right) + \left(7 + 1\right)\)</td></tr>
+<tr><td>Combine each group.</td><td>\(3x^{2} - 7x + 8\)</td></tr></table></div>
+<div class="ex"><h4>Example</h4><p>Simplify \(\left(4y^{2} + y - 6\right) - 3\left(y^{2} - 2y + 5\right)\).</p><table class="st">
+<tr><td>Multiply every term of the second group by \(-3\).</td><td>\(-3y^{2} + 6y - 15\)</td></tr>
+<tr><td>Write the whole expression without parentheses.</td><td>\(4y^{2} + y - 6 - 3y^{2} + 6y - 15\)</td></tr>
+<tr><td>Combine like terms.</td><td>\(y^{2} + 7y - 21\)</td></tr></table></div>
+<p>With three polynomials, treat each group by the sign in front of it. Groups after a plus keep their signs. A group after a minus has every sign flipped.</p>
+<div class="box warn"><h4>Watch out</h4><p>The most common mistake is changing the sign of only the first term inside the parentheses. \(-\left(2x^{2} + 4x - 1\right)\) is \(-2x^{2} - 4x + 1\), not \(-2x^{2} + 4x - 1\).</p></div>`,
     variants: {
       sub: {
         name: 'Subtract two trinomials',
@@ -84,11 +100,28 @@
   MX.register({
     id: 'poly-divmono', section: SEC, title: 'Dividing a polynomial by a monomial', kind: 'skill',
     sources: ['Exam 1 #2', 'Exam 3 #9'],
-    lesson: T`<p>Dividing by a single term is the same as dividing <em>each</em> term on top by it:</p>
-\[\frac{a + b - c}{d} = \frac{a}{d} + \frac{b}{d} - \frac{c}{d}\]
-<ol><li>Split into one fraction per term.</li><li>Divide the coefficients.</li><li>Subtract exponents of matching variables: \(\frac{m^{4}}{m^{3}} = m^{1}\).</li>
-<li>If an exponent comes out negative, move that factor to the denominator: \(m^{-2} = \frac{1}{m^{2}}\).</li></ol>
-<p class="warn">When the divisor is negative, every term changes sign.</p>`,
+    lesson: T`<p>When you add fractions with the same denominator, you write \(\frac{a}{d} + \frac{b}{d} = \frac{a + b}{d}\). Dividing a polynomial by a monomial runs that idea backward: you split one big fraction into one small fraction per term.</p>
+<div class="box def"><h4>Definition <b>Monomial</b></h4><p>A <strong>monomial</strong> is a single term: a number times variables with whole-number exponents, such as \(3a^{2}b\) or \(-5x^{4}\). A <strong>polynomial</strong> is a sum of monomials.</p></div>
+<h3>Divide each term separately</h3>
+<div class="box rule"><h4>Rule <b>Dividing a polynomial by a monomial</b></h4><p>\(\dfrac{a + b - c}{d} = \dfrac{a}{d} + \dfrac{b}{d} - \dfrac{c}{d}\). Every term on top is divided by the monomial.</p></div>
+<p>Each small fraction is a monomial divided by a monomial. Divide the numbers, then use the quotient rule on each variable.</p>
+<div class="box rule"><h4>Property <b>Quotient rule for exponents</b></h4><p>\(\dfrac{a^{m}}{a^{n}} = a^{m - n}\). If the result is \(a^{0}\), that factor is 1. If the exponent is negative, move the factor to the denominator: \(a^{-2} = \dfrac{1}{a^{2}}\).</p></div>
+<div class="box how"><h4>How to <b>divide a polynomial by a monomial</b></h4><ol>
+<li>Write one fraction for each term on top.</li>
+<li>Divide the coefficients, including their signs.</li>
+<li>For each variable, subtract the exponents (top minus bottom).</li>
+<li>Rewrite any negative exponent as a factor in the denominator.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Divide \(\left(6a^{4}b^{3} + 9a^{2}b^{2} - 3ab\right) \div \left(3a^{2}b^{2}\right)\).</p><table class="st">
+<tr><td>Split into one fraction per term.</td><td>\(\dfrac{6a^{4}b^{3}}{3a^{2}b^{2}} + \dfrac{9a^{2}b^{2}}{3a^{2}b^{2}} - \dfrac{3ab}{3a^{2}b^{2}}\)</td></tr>
+<tr><td>First term: \(6 \div 3 = 2\), \(a^{4-2}\), \(b^{3-2}\).</td><td>\(2a^{2}b\)</td></tr>
+<tr><td>Second term: the top equals 3 times the bottom.</td><td>\(3\)</td></tr>
+<tr><td>Third term: \(3 \div 3 = 1\), \(a^{1-2} = a^{-1}\), \(b^{1-2} = b^{-1}\).</td><td>\(\dfrac{1}{ab}\)</td></tr>
+<tr><td>Put the pieces together.</td><td>\(2a^{2}b + 3 - \dfrac{1}{ab}\)</td></tr></table></div>
+<div class="ex"><h4>Example</h4><p>Divide \(\dfrac{-10x^{5} + 15x^{2}}{-5x^{2}}\).</p><table class="st">
+<tr><td>Divide the first term. A negative divided by a negative is positive.</td><td>\(\dfrac{-10x^{5}}{-5x^{2}} = 2x^{3}\)</td></tr>
+<tr><td>Divide the second term. A positive divided by a negative is negative.</td><td>\(\dfrac{15x^{2}}{-5x^{2}} = -3\)</td></tr>
+<tr><td>Put the pieces together.</td><td>\(2x^{3} - 3\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>When the divisor is negative, every term changes sign, not just the first one. And a term that divides out completely leaves its number, not 0: \(\frac{9a^{2}b^{2}}{3a^{2}b^{2}} = 3\).</p></div>`,
     variants: {
       two: {
         name: 'Two variables',
@@ -146,11 +179,26 @@
   MX.register({
     id: 'special-products', section: SEC, title: 'Special products', kind: 'skill',
     sources: ['Exam 1 #3', 'Exam 2 #3', 'Exam 3 #4'],
-    lesson: T`<p>Two patterns save a lot of work:</p>
-\[(a - b)(a + b) = a^{2} - b^{2}\qquad (a + b)^{2} = a^{2} + 2ab + b^{2}\]
-<p>The first is a <em>difference of squares</em>: the middle terms cancel. It works with radicals too, because \(\left(\sqrt{y}\right)^{2} = y\).</p>
-<p>The second is a <em>perfect square</em>. You can also just FOIL: \((a+b)(a+b)\).</p>
-<p class="warn">\((a + b)^{2}\) is <strong>not</strong> \(a^{2} + b^{2}\). The middle term \(2ab\) is easy to forget.</p>`,
+    lesson: T`<p>Some products come up so often that it pays to know their answers by pattern. You can always get them by FOIL (multiplying every term by every term), but the patterns are faster, and you will use them again when you factor.</p>
+<h3>Squaring a binomial</h3>
+<p>A <strong>binomial</strong> is a polynomial with two terms, like \(3x - 5y\). Squaring it means multiplying it by itself.</p>
+<div class="box rule"><h4>Formula <b>Square of a binomial</b></h4><p>\(\left(a + b\right)^{2} = a^{2} + 2ab + b^{2}\) and \(\left(a - b\right)^{2} = a^{2} - 2ab + b^{2}\). In words: square the first term, add twice the product of the two terms, then add the square of the last term.</p></div>
+<div class="ex"><h4>Example</h4><p>Expand \(\left(3x - 5y\right)^{2}\).</p><table class="st">
+<tr><td>Name the two terms.</td><td>\(a = 3x,\ b = 5y\)</td></tr>
+<tr><td>Square the first term.</td><td>\(\left(3x\right)^{2} = 9x^{2}\)</td></tr>
+<tr><td>Twice the product. The sign is minus, as in the binomial.</td><td>\(2\left(3x\right)\left(5y\right) = 30xy\)</td></tr>
+<tr><td>Square the last term.</td><td>\(\left(5y\right)^{2} = 25y^{2}\)</td></tr>
+<tr><td>Put it together.</td><td>\(9x^{2} - 30xy + 25y^{2}\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>\(\left(a + b\right)^{2}\) is <strong>not</strong> \(a^{2} + b^{2}\). Try numbers: \(\left(2 + 3\right)^{2} = 25\), but \(2^{2} + 3^{2} = 13\). The missing 12 is the middle term \(2ab\).</p></div>
+<h3>Multiplying conjugates</h3>
+<div class="box def"><h4>Definition <b>Conjugates</b></h4><p>Two binomials are <strong>conjugates</strong> when they have the same two terms, but one is a sum and the other a difference: \(a - b\) and \(a + b\).</p></div>
+<div class="box rule"><h4>Formula <b>Product of conjugates</b></h4><p>\(\left(a - b\right)\left(a + b\right) = a^{2} - b^{2}\). The two middle terms, \(+ab\) and \(-ab\), cancel. The result is called a <strong>difference of squares</strong>.</p></div>
+<p>This works with square roots too, because squaring a square root undoes it: \(\left(\sqrt{y}\right)^{2} = y\) for \(y \ge 0\). So the roots disappear:</p><p>\(\left(\sqrt{y} - \sqrt{3}\right)\left(\sqrt{y} + \sqrt{3}\right) = y - 3\)</p>
+<div class="ex"><h4>Example</h4><p>Multiply \(\left(2\sqrt{x} - 7\right)\left(2\sqrt{x} + 7\right)\).</p><table class="st">
+<tr><td>These are conjugates. Name the terms.</td><td>\(a = 2\sqrt{x},\ b = 7\)</td></tr>
+<tr><td>Square the first term. Square the 2 as well as the root.</td><td>\(\left(2\sqrt{x}\right)^{2} = 4x\)</td></tr>
+<tr><td>Square the last term.</td><td>\(7^{2} = 49\)</td></tr>
+<tr><td>Subtract.</td><td>\(4x - 49\)</td></tr></table></div>`,
     variants: {
       conjRad: {
         name: 'Conjugates with two radicals',
@@ -213,12 +261,33 @@
   MX.register({
     id: 'exp-rules', section: SEC, title: 'Exponent rules', kind: 'skill',
     sources: ['Exam 1 #5, #6', 'Exam 2 #2', 'Exam 3 #1'],
-    lesson: T`<p>The rules you need, for \(a \ne 0\):</p>
-<ul><li>Product: \(a^{m}a^{n} = a^{m+n}\)</li><li>Quotient: \(\frac{a^{m}}{a^{n}} = a^{m-n}\)</li>
-<li>Power: \(\left(a^{m}\right)^{n} = a^{mn}\) and \(\left(ab\right)^{n} = a^{n}b^{n}\)</li>
-<li>Zero: \(a^{0} = 1\)</li><li>Negative: \(a^{-n} = \frac{1}{a^{n}}\) and \(\frac{1}{a^{-n}} = a^{n}\)</li></ul>
-<p>Simplify each variable separately, reduce the numbers, then move any negative exponents across the fraction bar so every exponent is positive.</p>
-<p class="warn">A negative exponent moves only its own factor: in \(4a^{-5}\) the 4 stays on top.</p>`,
+    lesson: T`<p>An exponent counts how many times a base is multiplied by itself: \(a^{3} = a \cdot a \cdot a\). The rules below are shortcuts for that counting. They let you simplify a long expression without writing out every factor.</p>
+<h3>The rules</h3>
+<div class="box rule"><h4>Property <b>Properties of exponents</b></h4><p>For \(a \ne 0\), \(b \ne 0\) and integers \(m\) and \(n\) (positive, negative or zero):</p><ul>
+<li>Product rule: \(a^{m} \cdot a^{n} = a^{m + n}\)</li>
+<li>Quotient rule: \(\dfrac{a^{m}}{a^{n}} = a^{m - n}\)</li>
+<li>Power rule: \(\left(a^{m}\right)^{n} = a^{mn}\)</li>
+<li>Product to a power: \(\left(ab\right)^{n} = a^{n}b^{n}\)</li></ul></div>
+<p>The product rule adds exponents because you are counting factors: \(a^{2} \cdot a^{3}\) is two \(a\)'s times three \(a\)'s, which is five \(a\)'s.</p>
+<h3>Zero and negative exponents</h3>
+<div class="box def"><h4>Definition <b>Zero and negative exponents</b></h4><p>For \(a \ne 0\): \(a^{0} = 1\), and \(a^{-n} = \dfrac{1}{a^{n}}\). Also \(\dfrac{1}{a^{-n}} = a^{n}\). A negative exponent means "take the reciprocal". It does not make the number negative: \(2^{-3} = \frac{1}{8}\).</p></div>
+<p>So a factor with a negative exponent can move across the fraction bar, and its exponent becomes positive.</p>
+<div class="box how"><h4>How to <b>simplify with positive exponents only</b></h4><ol>
+<li>Use the power rules to remove parentheses.</li>
+<li>Work on one variable at a time. Add exponents for a product, subtract them for a quotient.</li>
+<li>Reduce the numbers like an ordinary fraction.</li>
+<li>Move each factor with a negative exponent across the fraction bar.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Simplify \(\left(x^{2}y^{3}\right)^{-2}\left(x^{5}y^{0}\right)^{2}\).</p><table class="st">
+<tr><td>Power rule on the first group.</td><td>\(x^{-4}y^{-6}\)</td></tr>
+<tr><td>Power rule on the second group. \(y^{0} = 1\).</td><td>\(x^{10}\)</td></tr>
+<tr><td>Product rule on \(x\).</td><td>\(x^{-4 + 10}y^{-6} = x^{6}y^{-6}\)</td></tr>
+<tr><td>Move \(y^{-6}\) to the denominator.</td><td>\(\dfrac{x^{6}}{y^{6}}\)</td></tr></table></div>
+<div class="ex"><h4>Example</h4><p>Simplify \(\dfrac{6a^{-2}b^{5}}{9a^{3}b^{-1}}\).</p><table class="st">
+<tr><td>Reduce the numbers.</td><td>\(\dfrac{6}{9} = \dfrac{2}{3}\)</td></tr>
+<tr><td>Quotient rule on \(a\).</td><td>\(a^{-2 - 3} = a^{-5}\)</td></tr>
+<tr><td>Quotient rule on \(b\). Subtracting a negative adds.</td><td>\(b^{5 - (-1)} = b^{6}\)</td></tr>
+<tr><td>Move \(a^{-5}\) to the denominator.</td><td>\(\dfrac{2b^{6}}{3a^{5}}\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>A negative exponent moves only its own factor. In \(4a^{-5}\) the 4 stays on top: \(4a^{-5} = \dfrac{4}{a^{5}}\), not \(\dfrac{1}{4a^{5}}\).</p></div>`,
     variants: {
       powers: {
         name: 'Powers of products',
@@ -284,11 +353,26 @@
   MX.register({
     id: 'sci-notation', section: SEC, title: 'Scientific notation', kind: 'skill',
     sources: ['Exam 1 #10', 'Exam 2 #7'],
-    lesson: T`<p>A number is in scientific notation when it looks like \(a \times 10^{n}\) with \(1 \le a \lt 10\).</p>
-<ul><li>Big numbers: move the decimal point left; the number of places is a positive \(n\). \(396{,}710 = 3.9671 \times 10^{5}\)</li>
-<li>Small numbers: move it right; \(n\) is negative. \(0.00045 = 4.5 \times 10^{-4}\)</li>
-<li>Multiplying: multiply the front numbers, add the exponents, then fix the front number if it is 10 or more.</li>
-<li>Dividing: divide the front numbers, subtract the exponents, then fix if the front number is below 1.</li></ul>
+    lesson: T`<p>Scientific notation is a short way to write very large or very small numbers. Instead of counting zeros, you write the digits once and let a power of 10 say how big the number is.</p>
+<div class="box def"><h4>Definition <b>Scientific notation</b></h4><p>A number is in <strong>scientific notation</strong> when it is written as \(a \times 10^{n}\), where \(1 \le a \lt 10\) and \(n\) is an integer. The front number \(a\) has exactly one nonzero digit before the decimal point.</p></div>
+<h3>Writing a number in scientific notation</h3>
+<div class="box how"><h4>How to <b>write a number in scientific notation</b></h4><ol>
+<li>Move the decimal point so that exactly one nonzero digit is to its left.</li>
+<li>Count how many places you moved it. That count is the size of \(n\).</li>
+<li>If the original number is 10 or more, \(n\) is positive. If it is less than 1, \(n\) is negative.</li></ol></div>
+<p>For example, 52,600 is \(5.26 \times 10^{4}\) (the point moved 4 places left), and 0.000382 is \(3.82 \times 10^{-4}\) (it moved 4 places right).</p>
+<h3>Multiplying and dividing</h3>
+<p>Treat the front numbers and the powers of 10 separately. The powers of 10 follow the exponent rules.</p>
+<div class="box rule"><h4>Rule <b>Multiplying and dividing in scientific notation</b></h4><p>\(\left(a \times 10^{m}\right)\left(b \times 10^{n}\right) = \left(a \cdot b\right) \times 10^{m + n}\) and \(\dfrac{a \times 10^{m}}{b \times 10^{n}} = \dfrac{a}{b} \times 10^{m - n}\).</p></div>
+<div class="ex"><h4>Example</h4><p>Multiply \(\left(4.5 \times 10^{3}\right)\left(6 \times 10^{-7}\right)\).</p><table class="st">
+<tr><td>Multiply the front numbers.</td><td>\(4.5 \times 6 = 27\)</td></tr>
+<tr><td>Add the exponents.</td><td>\(10^{3 + (-7)} = 10^{-4}\)</td></tr>
+<tr><td>27 is not less than 10. Move the point one place left and add 1 to the exponent.</td><td>\(27 \times 10^{-4} = 2.7 \times 10^{-3}\)</td></tr></table></div>
+<div class="ex"><h4>Example</h4><p>Divide \(\dfrac{1.2 \times 10^{5}}{4 \times 10^{-2}}\).</p><table class="st">
+<tr><td>Divide the front numbers.</td><td>\(1.2 \div 4 = 0.3\)</td></tr>
+<tr><td>Subtract the exponents.</td><td>\(10^{5 - (-2)} = 10^{7}\)</td></tr>
+<tr><td>0.3 is less than 1. Move the point one place right and subtract 1 from the exponent.</td><td>\(0.3 \times 10^{7} = 3 \times 10^{6}\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Always check the front number at the end. If it is 10 or more, or less than 1, the answer is not in scientific notation yet. Making the front number smaller makes the exponent bigger, and the other way around.</p></div>
 <p>Type answers like <code>3.358 x 10^7</code>.</p>`,
     variants: {
       write: {
@@ -365,9 +449,22 @@
   MX.register({
     id: 'signed-powers', section: SEC, title: 'Negative signs and powers', kind: 'skill',
     sources: ['Exam 3 #20'],
-    lesson: T`<p>An exponent applies only to what it touches. Parentheses decide whether the negative sign is included.</p>
-<ul><li>\(-2^{4} = -(2\cdot2\cdot2\cdot2) = -16\)</li><li>\(\left(-2\right)^{4} = (-2)(-2)(-2)(-2) = 16\)</li><li>\(-\left(-2\right)^{3} = -(-8) = 8\)</li></ul>
-<p>Evaluate the power first, then apply the outside negative. An even number of negative factors gives a positive result; an odd number gives a negative result.</p>`,
+    lesson: T`<p>\(-3^{2}\) and \(\left(-3\right)^{2}\) look almost the same, but one is \(-9\) and the other is \(9\). The difference is what the exponent applies to, and the parentheses decide that.</p>
+<div class="box def"><h4>Definition <b>Base</b></h4><p>The <strong>base</strong> is the number the exponent sits on. An exponent applies only to its base. In \(-3^{2}\) the base is 3, and the minus sign stays outside. In \(\left(-3\right)^{2}\) the base is \(-3\), because the parentheses put the minus sign inside.</p></div>
+<h3>Power first, then the outside sign</h3>
+<p>Order of operations puts exponents before multiplication, and a minus sign in front means "multiply by \(-1\)". So you work out the power first and apply any outside minus sign last.</p>
+<div class="box rule"><h4>Rule <b>Powers of a negative number</b></h4><p>When the base is negative, count the negative factors. An <strong>even</strong> exponent gives a positive result: \(\left(-2\right)^{4} = 16\). An <strong>odd</strong> exponent gives a negative result: \(\left(-2\right)^{3} = -8\).</p></div>
+<div class="ex"><h4>Example</h4><p>Evaluate each expression.</p><table class="st">
+<tr><td>Base 2. Find \(2^{4}\), then make it negative.</td><td>\(-2^{4} = -\left(16\right) = -16\)</td></tr>
+<tr><td>Parentheses around 2 alone change nothing.</td><td>\(-\left(2\right)^{4} = -16\)</td></tr>
+<tr><td>Base \(-2\), even exponent.</td><td>\(\left(-2\right)^{4} = 16\)</td></tr>
+<tr><td>Base \(-2\), odd exponent, then the outside minus flips it.</td><td>\(-\left(-2\right)^{3} = -\left(-8\right) = 8\)</td></tr></table></div>
+<p>To compare two expressions, find the value of each one first, then compare the numbers: \(-2^{4} \lt \left(-2\right)^{4}\) because \(-16 \lt 16\).</p>
+<div class="ex"><h4>Example</h4><p>Evaluate \(\left(-2\right)^{3} - \left(-3^{2}\right)\).</p><table class="st">
+<tr><td>Base \(-2\), odd exponent.</td><td>\(\left(-2\right)^{3} = -8\)</td></tr>
+<tr><td>Base 3. Square it, then make it negative.</td><td>\(-3^{2} = -9\)</td></tr>
+<tr><td>Subtracting a negative is adding.</td><td>\(-8 - \left(-9\right) = -8 + 9 = 1\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>\(-3^{2}\) is \(-9\), not 9. Without parentheses, the minus sign is not part of the base. Many calculators agree: typing <code>-3^2</code> gives \(-9\).</p></div>`,
     variants: {
       compare: {
         name: 'Evaluate and compare',
