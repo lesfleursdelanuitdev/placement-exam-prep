@@ -338,6 +338,10 @@ select.units { max-width: 100%; height: 36px; border: 1px solid var(--rule); bor
 .lesson .warn::before { content: 'Watch out: '; font-weight: 700; color: var(--bad); }
 .lesson .key { background: var(--hl); padding: 6px 12px; border-radius: 6px; }
 .sub-h { font-family: var(--f-cond); font-weight: 700; font-size: 19px; letter-spacing: 0.02em; margin: 30px 0 4px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.sub-h .skip { margin-left: auto; height: 32px; font-family: var(--f-ui); font-size: 13.5px; letter-spacing: 0; }
+.worked .eyebrow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.wtype { font-family: var(--f-ui); font-weight: 500; font-size: 13px; letter-spacing: 0; text-transform: none; color: var(--accent-2); }
+#tut-practice { scroll-margin-top: 80px; }
 .tut-stats { font-family: var(--f-ui); font-weight: 500; font-size: 13px; color: var(--muted); }
 .hint { font-size: 14px; color: var(--muted); margin: 0 0 4px; }
 .worked { border-bottom: 0; border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px; margin: 12px 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
@@ -11962,11 +11966,11 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
       </div>
     </article>`;
   }
-  function workedHTML(q, k) {
+  function workedHTML(q, k, typeName) {
     const vis = q.visual ? `<figure class="vis">${q.visual}</figure>` : '';
     const ans = q.parts.map((p) => `<li>${p.ask ? R(p.ask) + ': ' : ''}${p.kind === 'choice' ? (p.graph ? `<span class="mini-graph">${p.options[p.answer]}</span>` : R(p.options[p.answer])) : R('\\(' + showOf(p) + '\\)')}</li>`).join('');
     return `<article class="card worked${q.visual ? ' has-vis' : ''}">
-      <div class="eyebrow">Example ${k + 1}</div>
+      <div class="eyebrow">Example ${k + 1}${typeName ? `<span class="wtype">${esc(typeName)}</span>` : ''}</div>
       <div class="prompt">${R(q.prompt)}</div>${vis}
       <ol class="steps">${q.solution.map((s) => `<li>${R(s)}</li>`).join('')}</ol>
       <div class="wans"><span class="eyebrow">Answer${q.parts.length > 1 ? 's' : ''}</span><ul>${ans}</ul></div>
@@ -12186,15 +12190,43 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
     const all = (Store.state.tut = Store.state.tut || {});
     return (all[id] = all[id] || { batches: [], res: {} });
   }
+  // Six worked examples per tutorial. Problem types are taken round-robin across the exam slots
+  // (first type of every slot, then the second, ...), so the examples cover as many kinds as possible;
+  // a type shown more than once gets different numbers each time, and repeats sit next to each other.
+  const WORKED_N = 6;
+  function workedPlan(t) {
+    const pools = slotsOf(t).map((sl) => sl.pool);
+    const order = [], seen = new Set();
+    const add = (vk) => { if (t.variants[vk] && !seen.has(vk)) { seen.add(vk); order.push(vk); } };
+    const longest = Math.max(...pools.map((p) => p.length));
+    for (let r = 0; r < longest; r++) pools.forEach((p) => add(p[r]));
+    allVariants(t).forEach(add);
+    const plan = [];
+    for (let k = 0; k < WORKED_N; k++) plan.push(order[k % order.length]);
+    return plan.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  }
+  function workedExamples(t) {
+    const seenQ = new Set(), seenCtx = new Set();
+    return workedPlan(t).map((vk, k) => {
+      let q, sig, tries = 0;
+      do {
+        q = t.variants[vk].gen(MX.rngFor('tutorial-worked', t.id + '|' + vk + '|' + k + (tries ? '|' + tries : '')));
+        sig = q.prompt + '|' + q.parts.map((p) => p.answer + (p.answers || []).join(',')).join('|');
+        tries++;
+      } while (tries < 12 && (seenQ.has(sig) || (t.distinctContexts && q.ctx && seenCtx.has(q.ctx) && tries < 6)));
+      seenQ.add(sig);
+      if (q.ctx) seenCtx.add(q.ctx);
+      return { vk, q };
+    });
+  }
   function tutProblems(t) {
     const slots = slotsOf(t), vs = allVariants(t);
-    const worked = [];
-    if (slots.length > 1) slots.slice(0, 3).forEach((s) => worked.push(s.pool[0]));
-    else { worked.push(vs[0]); worked.push(vs[1 % vs.length]); }
-    const wq = worked.map((vk, k) => t.variants[vk].gen(MX.rngFor('tutorial-worked', t.id + '|' + vk + '|' + k)));
+    const wq = workedExamples(t);
     const st = tutState(t.id);
     const ex = [];
-    const start = worked.length % vs.length;
+    // exercise types are laid out exactly as before worked examples went to six, so saved practice still matches its questions
+    const legacyWorked = slots.length > 1 ? Math.min(3, slots.length) : 2;
+    const start = legacyWorked % vs.length;
     for (let k = 0; k < 3; k++) {
       const vk = vs[(start + k) % vs.length];
       ex.push({ key: 'e' + k, vk, q: t.variants[vk].gen(MX.rngFor('tutorial-ex', t.id + '|' + k)) });
@@ -12236,9 +12268,9 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
       <p class="tut-src">${/^Added/.test(sourceText(t)) ? esc(sourceText(t)) : 'On the sample exams: ' + esc(sourceText(t))}</p>
       <div class="vchips" aria-label="Problem types covered">${vnames}</div></header>
       <section class="lesson">${R(t.lesson)}</section>
-      <h2 class="sub-h">Worked examples</h2>
-      <div class="worked-list">${wq.map((q, k) => workedHTML(q, k)).join('')}</div>
-      <h2 class="sub-h">Practice <span id="tut-stats" class="tut-stats"></span></h2>
+      <h2 class="sub-h">Worked examples <span class="tut-stats">${wq.length} examples</span><button type="button" class="btn ghost skip" data-act="to-practice">Skip to practice ↓</button></h2>
+      <div class="worked-list">${wq.map((w, k) => workedHTML(w.q, k, allVariants(t).length > 1 ? t.variants[w.vk].name : '')).join('')}</div>
+      <h2 class="sub-h" id="tut-practice">Practice <span id="tut-stats" class="tut-stats"></span></h2>
       <p class="hint">Check as many times as you like. "Show answer" reveals the answer and the worked solution.</p>
       <div class="ex-list">`;
     [...REG.keys()].forEach((k) => { if (k[0] === 't') REG.delete(k); });
@@ -12701,6 +12733,7 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
     }
     else if (act === 'resume') { setView('exam'); const i = firstOpenItem(); if (i > 0) setTimeout(() => gotoItem(i), 30); }
     else if (act === 'goto') gotoItem(+b.dataset.item);
+    else if (act === 'to-practice') { const h = byId('tut-practice'); if (h) h.scrollIntoView({ block: 'start', behavior: prefersReduced() ? 'auto' : 'smooth' }); }
     else if (act === 'goto-part') {
       if (App.view !== 'exam') setView('exam', { keepScroll: true });
       const h = byId('exam-part-' + b.dataset.part);

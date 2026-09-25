@@ -59,7 +59,7 @@ A study app for an algebra placement exam. It started from three sample final ex
   - "Expand" rejects a log that could still be split.
 
   A form problem is a free nudge; only a wrong value costs points.
-- **Tutorials.** A **Tutorial** button sits on every problem. Tutorials are listed by topic and grouped by section. Each one has a short lesson, worked examples, and practice exercises with unlimited tries, plus a button that adds 3 more exercises. Tutorials are fixed: generating a new exam doesn't change them. Leaving the exam for a tutorial never resets the exam.
+- **Tutorials.** A **Tutorial** button sits on every problem. Tutorials are listed by topic and grouped by section. Each one has a short lesson, six worked examples, and practice exercises with unlimited tries, plus a button that adds 3 more exercises. The six examples are spread across the topic's problem types (every exam slot first, then the rest), each is labeled with its type, and a type that appears more than once gets different numbers each time. A "Skip to practice" link jumps past them. Tutorials are fixed: generating a new exam doesn't change them. Leaving the exam for a tutorial never resets the exam.
 - **Flashcards.** There are 424 cards in 72 decks, one per topic, covering the rules, formulas and quick examples.
   - Tap a card and it turns over in 3D, lifting slightly as it turns. Tapping again mid-turn reverses it smoothly. New cards slide in from the side you're moving toward. With the system's reduce-motion setting on, the two sides simply fade instead.
   - Mark each card **Got it** or **Still learning**.
