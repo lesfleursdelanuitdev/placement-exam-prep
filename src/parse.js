@@ -48,11 +48,14 @@
         const rest = s.slice(i);
         if (/^log/i.test(rest)) { toks.push({ t: 'log' }); i += 3; continue; }
         if (/^ln/i.test(rest)) { toks.push({ t: 'ln' }); i += 2; continue; }
+        if (/^(sin|cos|tan)/i.test(rest)) { toks.push({ t: 'trig', f: rest.slice(0, 3).toLowerCase() }); i += 3; continue; }
+        if (/^pi/i.test(rest)) { toks.push({ t: 'pi' }); i += 2; continue; }
         if (/^inf(inity)?/i.test(rest)) { const m = rest.match(/^inf(inity)?/i); toks.push({ t: 'inf' }); i += m[0].length; continue; }
         if (c === 'e') { toks.push({ t: 'e' }); i++; continue; }
         toks.push({ t: 'id', v: c }); i++; continue;
       }
       if (c === '∞') { toks.push({ t: 'inf' }); i++; continue; }
+      if (c === 'π') { toks.push({ t: 'pi' }); i++; continue; }
       if (c === '_') { toks.push({ t: '_' }); i++; continue; }
       if (c === '<' || c === '>') {
         if (s[i + 1] === '=') { toks.push({ t: 'rel', v: c + '=' }); i += 2; }
@@ -76,7 +79,7 @@
     const peek = () => toks[p];
     const next = () => toks[p++];
     let absDepth = 0; // a "|" right after a term opens a new absolute value only when none is open
-    const isAtomStart = (t) => t && (t.t === 'num' || t.t === 'id' || t.t === '(' || t.t === '√' || t.t === 'log' || t.t === 'ln' || t.t === 'e' || (t.t === '|' && absDepth === 0));
+    const isAtomStart = (t) => t && (t.t === 'num' || t.t === 'id' || t.t === '(' || t.t === '√' || t.t === 'log' || t.t === 'ln' || t.t === 'trig' || t.t === 'e' || t.t === 'pi' || (t.t === '|' && absDepth === 0));
 
     function expr() {
       let a = term();
@@ -138,7 +141,7 @@
       if (t.t === '√') { next(); return { t: 'sqrt', a: radicand() }; }
       if (t.t !== 'num' && t.t !== 'id' && t.t !== 'e') throw new ParseError('Put what’s under the √ right after it, like √(2x).');
       let a = power();
-      while (peek() && (peek().t === 'num' || peek().t === 'id' || peek().t === 'e')) a = { t: 'mul', a, b: power(), imp: true };
+      while (peek() && (peek().t === 'num' || peek().t === 'id' || peek().t === 'e' || peek().t === 'pi')) a = { t: 'mul', a, b: power(), imp: true };
       return a;
     }
     // argument of log / ln: (…) or a run like x^2, 8, 5x
@@ -146,9 +149,9 @@
       const t = peek();
       if (!t) throw new ParseError('Put something after the log.');
       if (t.t === '(') return unwrap(atom());
-      if (t.t !== 'num' && t.t !== 'id' && t.t !== 'e') throw new ParseError('Put the input of the log in parentheses, like log(x+1).');
+      if (t.t !== 'num' && t.t !== 'id' && t.t !== 'e' && t.t !== 'pi') throw new ParseError('Put the input in parentheses, like log(x+1) or sin(2x).');
       let a = power();
-      while (peek() && (peek().t === 'num' || peek().t === 'id' || peek().t === 'e')) a = { t: 'mul', a, b: power(), imp: true };
+      while (peek() && (peek().t === 'num' || peek().t === 'id' || peek().t === 'e' || peek().t === 'pi')) a = { t: 'mul', a, b: power(), imp: true };
       return a;
     }
     function atom() {
@@ -173,6 +176,8 @@
       }
       if (t.t === '√') return { t: 'sqrt', a: radicand() };
       if (t.t === 'e') return { t: 'e' };
+      if (t.t === 'pi') return { t: 'pi' };
+      if (t.t === 'trig') return { t: 'trig', f: t.f, a: logArg() };
       if (t.t === 'inf') throw new ParseError('∞ only belongs in interval answers.');
       if (t.t === 'ln') return { t: 'log', k: 'ln', b: { t: 'e' }, a: logArg() };
       if (t.t === 'log') {
@@ -292,6 +297,8 @@
       case 'sqrt': { const v = ev(n.a, env); return v < -1e-12 ? NaN : Math.sqrt(Math.max(0, v)); }
       case 'abs': return Math.abs(ev(n.a, env));
       case 'e': return Math.E;
+      case 'pi': return Math.PI;
+      case 'trig': { const v = ev(n.a, env); return n.f === 'sin' ? Math.sin(v) : n.f === 'cos' ? Math.cos(v) : Math.tan(v); }
       case 'log': {
         const x = ev(n.a, env), b = n.b ? ev(n.b, env) : 10;
         if (!(x > 0) || !(b > 0) || Math.abs(b - 1) < 1e-12) return NaN;
@@ -361,12 +368,17 @@
       }
       case 'pow': {
         const a = n.a;
-        const base = a.t === 'num' || a.t === 'var' || a.t === 'grp' || a.t === 'sqrt' || a.t === 'e' ? toTex(a) : '\\left(' + toTex(a) + '\\right)';
+        const base = a.t === 'num' || a.t === 'var' || a.t === 'grp' || a.t === 'sqrt' || a.t === 'e' || a.t === 'pi' ? toTex(a) : '\\left(' + toTex(a) + '\\right)';
         return base + '^{' + toTex(unwrap(n.b)) + '}';
       }
       case 'sqrt': return '\\sqrt{' + toTex(n.a) + '}';
       case 'abs': return '|' + toTex(n.a) + '|';
       case 'e': return 'e';
+      case 'pi': return '\\pi ';
+      case 'trig': {
+        const a = unwrap(n.a);
+        return '\\' + n.f + (a.t === 'num' || a.t === 'var' || a.t === 'pi' ? '\\,' + toTex(a) : '\\left(' + toTex(a) + '\\right)');
+      }
       case 'log': {
         const a = unwrap(n.a);
         const arg = a.t === 'num' || a.t === 'var' || a.t === 'e' ? '\\,' + toTex(a) : '\\left(' + toTex(a) + '\\right)';

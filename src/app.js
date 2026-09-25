@@ -875,7 +875,7 @@
   }
 
   // ================= navigation =================
-  const VIEWS = ['home', 'exam', 'tutorials', 'tutorial', 'flashcards', 'deck', 'progress'];
+  const VIEWS = ['home', 'exam', 'tutorials', 'tutorial', 'flashcards', 'deck', 'grapher', 'progress'];
   const TAB_OF = { tutorial: 'tutorials', deck: 'flashcards' };
   function setView(v, opts = {}) {
     if (App.view === 'exam' && v !== 'exam') App.examScroll = G.scrollY;
@@ -888,6 +888,7 @@
     if (v === 'tutorial') renderTutorial();
     if (v === 'flashcards') renderFlashIndex();
     if (v === 'deck') renderDeck();
+    if (v === 'grapher' && MX.Grapher) MX.Grapher.render(byId('gr-page'));
     if (opts.scrollTo != null) G.scrollTo(0, opts.scrollTo);
     else if (!opts.keepScroll) G.scrollTo(0, 0);
   }

@@ -72,6 +72,18 @@
       out.flash[id] = o;
     }
     if (isObj(s.drafts)) for (const [k, v] of Object.entries(s.drafts)) { const c = key(k) && cleanInput(v); if (c) out.drafts[k] = c; }
+    // the grapher: up to 8 functions (text, a preset color name or #rrggbb, shown or hidden) and a window
+    if (isObj(s.grapher)) {
+      const g = s.grapher, o = { fns: [], win: {} };
+      if (Array.isArray(g.fns)) g.fns.slice(0, 8).forEach((f) => {
+        if (!isObj(f)) return;
+        const color = typeof f.color === 'string' && /^([a-z]{3,10}|#[0-9a-fA-F]{6})$/.test(f.color) ? f.color : 'blue';
+        o.fns.push({ src: str(f.src).slice(0, 300), color, show: f.show !== false });
+      });
+      if (isObj(g.win)) for (const k of ['xmin', 'xmax', 'ymin', 'ymax', 'xstep', 'ystep']) { const v = num(g.win[k], NaN); if (isFinite(v) && Math.abs(v) < 1e7) o.win[k] = v; }
+      if (g.mode === 'draw' || g.mode === 'graph') o.mode = g.mode;
+      out.grapher = o;
+    }
     return out;
   }
 

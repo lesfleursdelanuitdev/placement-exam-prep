@@ -25,6 +25,7 @@ const good = {
   tut: { 'log-cob': { batches: ['', 'basic'], res: { e0: { 0: { ok: false, tries: 2, msg: 'x', val: { value: 'log_(3)7' } } } } } },
   flash: { 'log-cob': { 0: 1, 1: 0 } },
   drafts: { 'x3-4-0': { value: '((1)/(2))' }, 'x3-5-1': { choice: '2' } },
+  grapher: { fns: [{ src: 'x^2-4', color: 'blue', show: true }, { src: '1/x', color: '#12ab9f', show: false }], win: { xmin: -5, xmax: 5, ymin: -5, ymax: 5, xstep: 1, ystep: 0.5 }, mode: 'draw' },
 };
 ok(canon(clean(good)) === canon(good), 'a valid save must survive unchanged:\n' + JSON.stringify(clean(good)));
 
@@ -47,6 +48,12 @@ ok(bad.tut['w-logs'].batches[0] === '' && bad.tut['w-logs'].res.e1[0].tries === 
 ok(JSON.stringify(bad.flash['log-cob']) === '{"1":1}', 'flashcard marks are only 0 or 1');
 ok(bad.drafts['x1-0-0'].value === '' && typeof bad.drafts['x1-0-0'].unit === 'string', 'draft values are strings');
 ok(clean({ v: 2 }) === null && clean('x') === null && clean(null) === null, 'unknown formats are rejected');
+
+// the grapher: colors are a preset name or #rrggbb only, text is a string, the window holds finite numbers
+const gr = clean({ v: 1, grapher: { fns: [{ src: X, color: 'red" onload="x', show: 1 }, { src: 5, color: '#12345z' }, 'junk', ...Array(20).fill({ src: 'x', color: 'blue' })], win: { xmin: X, xmax: Infinity, ystep: 3 }, mode: X } }).grapher;
+ok(gr.fns.length <= 8 && gr.fns.length >= 6, 'at most 8 grapher functions (' + gr.fns.length + ')');
+ok(gr.fns.every((f) => /^([a-z]{3,10}|#[0-9a-fA-F]{6})$/.test(f.color) && typeof f.src === 'string' && typeof f.show === 'boolean'), 'grapher colors and text are clean: ' + JSON.stringify(gr.fns.slice(0, 2)));
+ok(!('xmin' in gr.win) && !('xmax' in gr.win) && gr.win.ystep === 3 && !('mode' in gr), 'grapher window keeps only finite numbers: ' + JSON.stringify(gr));
 
 console.log(fails ? fails + ' security checks failed' : 'security checks passed');
 process.exit(fails ? 1 : 0);

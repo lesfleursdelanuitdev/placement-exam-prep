@@ -141,10 +141,35 @@
   MX.register({
     id: 'rel-function', section: SEC, title: 'Relations and functions', kind: 'skill', sources: [],
     slots: [{ label: 'Function or not?', source: ADDED, pool: ['pairs', 'table', 'mapping', 'graph'] }],
-    lesson: T`<p>A <strong>relation</strong> is any set of ordered pairs \((x, y)\). A <strong>function</strong> is a relation where every input \(x\) has <strong>exactly one</strong> output \(y\).</p>
-<ul><li><strong>Pairs, tables, mappings</strong>: look for an \(x\)-value that repeats with a different \(y\). If one does, it's not a function. (A repeated \(y\) is fine.)</li>
-<li><strong>Graphs</strong>: the <strong>vertical line test</strong>. If any vertical line crosses the graph more than once, it's not a function.</li></ul>
-<p>Lines (except vertical ones), parabolas that open up or down, and absolute-value graphs are functions. Circles, sideways parabolas and vertical lines are not.</p>`,
+    lesson: T`<p>A function is a rule that gives each input one output. You use functions all the time: each person has one birthday, and each item on a shelf has one price. This lesson shows how to tell whether a list of pairs, a table, a mapping diagram or a graph is a function.</p>
+<div class="box def"><h4>Definition <b>Relation</b></h4><p>A <strong>relation</strong> is any set of ordered pairs \((x, y)\). The first number \(x\) is the <strong>input</strong>. The second number \(y\) is the <strong>output</strong>.</p></div>
+<div class="box def"><h4>Definition <b>Function</b></h4><p>A <strong>function</strong> is a relation in which every input has <strong>exactly one</strong> output. If one input is paired with two different outputs, the relation is not a function.</p></div>
+<h3>Pairs, tables and mapping diagrams</h3>
+<p>These all show a list of input-output pairs. In a table, each column is one pair. In a mapping diagram, each arrow goes from an input to its output. To test for a function, focus on the inputs.</p>
+<div class="box how"><h4>How to <b>test a list of pairs</b></h4><ol>
+<li>Look at the inputs (the \(x\)-values).</li>
+<li>Find any input that appears more than once.</li>
+<li>If a repeated input has two different outputs, it is <strong>not</strong> a function. If no input does that, it <strong>is</strong> a function.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Is \(\{(2, 5), (-1, 3), (4, 5), (2, 7)\}\) a function?</p><table class="st">
+<tr><td>List the inputs.</td><td>\(2,\ -1,\ 4,\ 2\)</td></tr>
+<tr><td>The input 2 appears twice. Compare its outputs.</td><td>\((2, 5)\) and \((2, 7)\)</td></tr>
+<tr><td>The input 2 has two different outputs.</td><td>\(\text{not a function}\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>A repeated <em>output</em> is fine. \(\{(1, 4), (3, 4)\}\) is a function: two inputs share the output 4, but each input still has only one output.</p></div>
+<h3>Graphs: the vertical line test</h3>
+<p>On a graph, every point is a pair. Two points straight above each other have the same \(x\) but different \(y\)-values, and a vertical line through them finds them both.</p>
+<div class="box rule"><h4>Rule <b>Vertical line test</b></h4><p>A graph is a function if <strong>every</strong> vertical line crosses it at most once. If even one vertical line crosses it twice or more, it is not a function.</p></div>
+${(() => {
+  const fig = (pts, vx, hits, cap) => {
+    const pl = S.plane({ xmin: -5, xmax: 5, ymin: -5, ymax: 5, w: 170, h: 170, step: 1, labelEvery: 5, pad: 14 });
+    const b = pl.body + S.pline(pts.map((p) => [pl.X(p[0]), pl.Y(p[1])]), 'acc thick') + S.line(pl.X(vx), pl.Y(-5), pl.X(vx), pl.Y(5), 'ln dash') + hits.map((y) => S.circle(pl.X(vx), pl.Y(y), 4.2, 'accf acc')).join('');
+    return '<figure class="vis" style="width:170px;margin:0">' + S.svg(pl.W, pl.H, b, cap) + '<figcaption style="font-size:14px;line-height:1.35">' + cap + '</figcaption></figure>';
+  };
+  return '<div style="display:flex;flex-wrap:wrap;gap:12px 32px;margin:12px 0">'
+    + fig(sample((x) => (x * x) / 2 - 3, -4, 4), 2, [-1], 'Parabola: every vertical line crosses once. A function.')
+    + fig(sampleT((t) => [3 * Math.cos(t), 3 * Math.sin(t)], 0, 2 * Math.PI), 1.5, [Math.sqrt(6.75), -Math.sqrt(6.75)], 'Circle: this vertical line crosses twice. Not a function.')
+    + '</div>';
+})()}
+<p>Lines that are not vertical, parabolas that open up or down, V-shaped absolute value graphs and S-shaped curves like \(y = x^{3}\) all pass the test. Circles, parabolas that open sideways and vertical lines fail it.</p>`,
     variants: {
       pairs: {
         name: 'Ordered pairs',
@@ -222,10 +247,22 @@
   MX.register({
     id: 'rel-dr', section: SEC, title: 'Domain & range of a relation', kind: 'skill', sources: [],
     slots: [{ label: 'Domain & range (sets)', source: ADDED, pool: ['pairs', 'table', 'mapping', 'points'] }],
-    lesson: T`<ul><li>The <strong>domain</strong> is the set of all inputs: the \(x\)-values.</li><li>The <strong>range</strong> is the set of all outputs: the \(y\)-values.</li></ul>
-<p>For a list of pairs, a table, a mapping or a scatter of points, just collect the values and write each one <strong>once</strong>, usually smallest to largest:</p>
-\[\{(1, 3), (2, 5), (1, 7)\}:\quad \text{domain } \{1, 2\},\ \text{range } \{3, 5, 7\}\]
-<p>Type sets with braces: <code>{1, 2}</code>.</p>`,
+    lesson: T`<p>Every relation comes with two sets: the inputs it uses and the outputs it produces. They are called the domain and the range, and you will use them for every kind of function in this course.</p>
+<div class="box def"><h4>Definition <b>Domain and range</b></h4><p>The <strong>domain</strong> of a relation is the set of all its inputs (the \(x\)-values). The <strong>range</strong> is the set of all its outputs (the \(y\)-values).</p></div>
+<p>A <strong>set</strong> is a list of values inside braces, like \(\{1, 2, 3\}\). Each value is written only once, and the order does not matter. Listing from smallest to largest makes your work easy to check.</p>
+<div class="box how"><h4>How to <b>find the domain and range of a relation</b></h4><ol>
+<li>Write out the ordered pairs. In a table, each column is a pair. In a mapping diagram, each arrow is a pair. On a graph of points, read each dot as \((x, y)\).</li>
+<li>Collect the first numbers, each one once. That is the domain.</li>
+<li>Collect the second numbers, each one once. That is the range.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Find the domain and range of \(\{(3, -1), (0, 4), (-2, 4), (3, 6)\}\).</p><table class="st">
+<tr><td>List the \(x\)-values.</td><td>\(3,\ 0,\ -2,\ 3\)</td></tr>
+<tr><td>Write each one once, smallest first.</td><td>\(\text{Domain} = \{-2, 0, 3\}\)</td></tr>
+<tr><td>List the \(y\)-values.</td><td>\(-1,\ 4,\ 4,\ 6\)</td></tr>
+<tr><td>Write each one once, smallest first.</td><td>\(\text{Range} = \{-1, 4, 6\}\)</td></tr></table></div>
+<p>Here is the same relation as a mapping diagram. The left oval holds the domain and the right oval holds the range. Each arrow is one pair.</p>
+<figure class="vis">${mapping([[3, -1], [0, 4], [-2, 4], [3, 6]])}</figure>
+<div class="box warn"><h4>Watch out</h4><p>Do not repeat a value, even when it shows up in several pairs. And keep the two sets apart: the domain uses only first numbers, and the range uses only second numbers.</p></div>
+<p>To type a set, use braces and commas: <code>{-2, 0, 3}</code>.</p>`,
     variants: {
       pairs: { name: 'Ordered pairs', gen: (rng) => drSets(rng, 'pairs') },
       table: { name: 'Table', gen: (rng) => drSets(rng, 'table') },
@@ -242,12 +279,27 @@
   MX.register({
     id: 'fn-graph-dr', section: SEC, title: 'Domain & range from a graph', kind: 'skill', sources: [],
     slots: [{ label: 'Domain & range from a graph', source: ADDED, pool: ['segment', 'parabola', 'ray', 'sqrt'] }],
-    lesson: T`<p>Read the <strong>domain</strong> left to right along the \(x\)-axis, and the <strong>range</strong> bottom to top along the \(y\)-axis.</p>
-<ul><li>A <strong>closed dot</strong> ● means the endpoint is included: use a bracket \([\ ]\).</li>
-<li>An <strong>open dot</strong> ○ means it isn't: use a parenthesis \((\ )\).</li>
-<li>An <strong>arrow</strong> means the graph keeps going: use \(\infty\) or \(-\infty\), always with a parenthesis.</li></ul>
-<p>Examples: \([-3, 5)\) means \(-3 \le x \lt 5\); \([2, \infty)\) means \(y \ge 2\); \((-\infty, \infty)\) means all real numbers.</p>
-<p>Type \(\infty\) with the ∞ button or as <code>inf</code>; you may also answer with inequalities like <code>-3 &lt;= x &lt; 5</code>.</p>`,
+    lesson: T`<p>When a graph is a solid line or curve, its domain and range contain infinitely many numbers. You cannot list them all, so you describe them as intervals: "every number from here to there."</p>
+<div class="box def"><h4>Definition <b>Interval notation</b></h4><p>An <strong>interval</strong> is written as its two ends with a comma between them. A <strong>bracket</strong> \([\ ]\) means that end is included. A <strong>parenthesis</strong> \((\ )\) means it is not. For example, \([-3, 5)\) means \(-3 \le x \lt 5\).</p></div>
+<div class="box rule"><h4>Rule <b>Reading the ends of a graph</b></h4><ul>
+<li>A <strong>closed dot</strong> ● is included: use a bracket.</li>
+<li>An <strong>open dot</strong> ○ is not included: use a parenthesis.</li>
+<li>An <strong>arrow</strong> means the graph goes on forever: use \(\infty\) or \(-\infty\), always with a parenthesis.</li></ul></div>
+<div class="box how"><h4>How to <b>find the domain and range from a graph</b></h4><ol>
+<li><strong>Domain:</strong> scan left to right. Find the smallest and largest \(x\)-values the graph reaches.</li>
+<li><strong>Range:</strong> scan bottom to top. Find the lowest and highest \(y\)-values the graph reaches.</li>
+<li>At each end, check for a dot or an arrow, and pick a bracket or a parenthesis.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Find the domain and range of the segment below.</p>
+<figure class="vis">${relGraph([{ pts: [[-4, 5], [3, -2]] }], [[-4, 5, true], [3, -2, false]], { label: 'segment from a closed dot at (-4, 5) to an open dot at (3, -2)' })}</figure>
+<table class="st">
+<tr><td>Left to right, the graph runs from \(x = -4\) (closed dot) to \(x = 3\) (open dot).</td><td>\(\text{Domain} = [-4, 3)\)</td></tr>
+<tr><td>Bottom to top, it runs from \(y = -2\) (open dot) to \(y = 5\) (closed dot).</td><td>\(\text{Range} = (-2, 5]\)</td></tr></table></div>
+<p>Because this segment slopes down, the lowest point is at the <em>right</em> end. Always look for the lowest and highest points; do not just copy the endpoints in order.</p>
+<h3>Graphs that go on forever</h3>
+<p>A parabola with arrows on both sides covers every \(x\), so its domain is \((-\infty, \infty)\). Its range starts at the vertex. If the vertex is \((1, -3)\) and the parabola opens up, the range is \([-3, \infty)\).</p>
+<p>A ray or a square-root curve starts at a dot and goes on forever in one direction. One end of each interval comes from the dot, and the other end is \(\infty\) or \(-\infty\).</p>
+<div class="box warn"><h4>Watch out</h4><p>\(\infty\) is not a number you can reach, so it always gets a parenthesis: write \([2, \infty)\), never \([2, \infty]\).</p></div>
+<p>Type \(\infty\) with the ∞ button or as <code>inf</code>. You may also answer with an inequality such as <code>-4 &lt;= x &lt; 3</code>.</p>`,
     variants: {
       segment: {
         name: 'Line segment',
@@ -359,11 +411,26 @@
   MX.register({
     id: 'fn-domain', section: SEC, title: 'Domain of a function from its formula', kind: 'skill', sources: [],
     slots: [{ label: 'Domain from a formula', source: ADDED, pool: ['rational', 'twoHoles', 'sqrt', 'poly', 'sqrtDen'] }],
-    lesson: T`<p>Start with all real numbers, then remove anything that breaks the formula:</p>
-<ul><li><strong>Polynomials</strong> never break: domain \((-\infty, \infty)\).</li>
-<li><strong>Fractions</strong>: the denominator can't be 0. Solve denominator = 0 and remove those values: \(f(x) = \frac{1}{x - 3}\) has domain \((-\infty, 3) \cup (3, \infty)\).</li>
-<li><strong>Square roots</strong>: the inside can't be negative. Solve inside \(\ge 0\): \(\sqrt{2x - 6}\) needs \(x \ge 3\), so \([3, \infty)\).</li>
-<li><strong>Square root in a denominator</strong>: inside \(\gt 0\) (it can't be 0 either).</li></ul>`,
+    lesson: T`<p>The domain of a function is every input you are allowed to use. With a formula, most numbers work. Your job is to find the few numbers that break the formula and leave them out.</p>
+<div class="box def"><h4>Definition <b>Domain of a function</b></h4><p>The <strong>domain</strong> of \(f\) is the set of all \(x\)-values for which \(f(x)\) is a real number.</p></div>
+<div class="box rule"><h4>Rule <b>What can break a formula</b></h4><ul>
+<li><strong>Polynomials</strong> (no variable in a denominator, no roots) never break. Their domain is all real numbers, \((-\infty, \infty)\).</li>
+<li><strong>Fractions:</strong> the denominator cannot be 0.</li>
+<li><strong>Square roots:</strong> the inside cannot be negative, so the inside must be \(\ge 0\).</li>
+<li><strong>Square root in a denominator:</strong> the inside cannot be negative <em>and</em> cannot be 0, so it must be \(\gt 0\).</li></ul></div>
+<h3>Fractions: remove the zeros of the denominator</h3>
+<div class="ex"><h4>Example</h4><p>Find the domain of \(g(x) = \dfrac{5}{x^{2} - x - 6}\).</p><table class="st">
+<tr><td>Set the denominator equal to 0.</td><td>\(x^{2} - x - 6 = 0\)</td></tr>
+<tr><td>Factor and solve.</td><td>\(\left(x - 3\right)\left(x + 2\right) = 0,\quad x = 3 \text{ or } x = -2\)</td></tr>
+<tr><td>Remove those two numbers. Every other number works.</td><td>\((-\infty, -2) \cup (-2, 3) \cup (3, \infty)\)</td></tr></table></div>
+<p>The symbol \(\cup\) (union) joins the pieces of the number line that are left. With one bad number, such as in \(\dfrac{1}{x - 4}\), you get two pieces: \((-\infty, 4) \cup (4, \infty)\).</p>
+<h3>Square roots: the inside must be at least 0</h3>
+<div class="ex"><h4>Example</h4><p>Find the domain of \(f(x) = \sqrt{6 - 2x}\).</p><table class="st">
+<tr><td>The inside must not be negative.</td><td>\(6 - 2x \ge 0\)</td></tr>
+<tr><td>Subtract 6 from both sides.</td><td>\(-2x \ge -6\)</td></tr>
+<tr><td>Divide by \(-2\) and flip the inequality sign.</td><td>\(x \le 3\)</td></tr>
+<tr><td>Write it as an interval.</td><td>\((-\infty, 3]\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>When you divide both sides of an inequality by a negative number, flip the sign. Also watch the endpoint: \(\sqrt{x - 4}\) allows \(x = 4\) (since \(\sqrt{0} = 0\)), so its domain is \([4, \infty)\). But \(\dfrac{1}{\sqrt{x - 4}}\) would divide by 0 at \(x = 4\), so its domain is \((4, \infty)\).</p></div>`,
     variants: {
       rational: {
         name: 'Fraction',
@@ -435,11 +502,25 @@
   MX.register({
     id: 'fn-range', section: SEC, title: 'Range of a function from its formula', kind: 'skill', sources: [],
     slots: [{ label: 'Range from a formula', source: ADDED, pool: ['quad', 'quadStd', 'sqrt', 'abs', 'linear'] }],
-    lesson: T`<p>The range is every output the function can produce. Picture (or sketch) the graph:</p>
-<ul><li><strong>Non-horizontal line</strong> \(f(x) = mx + b\): every \(y\) is reached, range \((-\infty, \infty)\).</li>
-<li><strong>Parabola</strong> \(a(x - h)^{2} + k\): the vertex height \(k\) is the minimum if \(a \gt 0\), range \([k, \infty)\); the maximum if \(a \lt 0\), range \((-\infty, k]\). From standard form, find the vertex with \(x = -\frac{b}{2a}\).</li>
-<li><strong>Square root</strong> \(a\sqrt{x - h} + k\): starts at \(y = k\) and goes up if \(a \gt 0\) (\([k, \infty)\)) or down if \(a \lt 0\) (\((-\infty, k]\)).</li>
-<li><strong>Absolute value</strong> \(a|x - h| + k\): same idea, a V with its point at \(y = k\).</li></ul>`,
+    lesson: T`<p>The range of a function is every output it can produce. With a formula, the easiest way to find it is to picture the graph and ask two questions: how low does it go, and how high?</p>
+<div class="box def"><h4>Definition <b>Range of a function</b></h4><p>The <strong>range</strong> of \(f\) is the set of all values \(f(x)\) takes as \(x\) runs through the domain.</p></div>
+<p>A slanted line \(f(x) = mx + b\) (with \(m \ne 0\)) rises or falls forever, so it reaches every height. Its range is \((-\infty, \infty)\).</p>
+<p>Parabolas, absolute value graphs and square-root graphs each have one special point at height \(k\): the vertex, the corner of the V, or the starting point. The graph goes on forever in one direction from that height and never passes it in the other.</p>
+<div class="box rule"><h4>Rule <b>Range from the formula</b></h4><p>For \(f(x) = a(x - h)^{2} + k\), \(\ f(x) = a\left|x - h\right| + k\) or \(\ f(x) = a\sqrt{x - h} + k\):</p><ul>
+<li>If \(a \gt 0\), the graph goes up from height \(k\). The range is \([k, \infty)\).</li>
+<li>If \(a \lt 0\), the graph goes down from height \(k\). The range is \((-\infty, k]\).</li></ul></div>
+<div class="ex"><h4>Example</h4><p>Find the range of \(f(x) = -2\left(x + 1\right)^{2} + 5\).</p><table class="st">
+<tr><td>Match \(a(x - h)^{2} + k\).</td><td>\(a = -2,\quad h = -1,\quad k = 5\)</td></tr>
+<tr><td>\(a \lt 0\), so the parabola opens down, and the vertex height 5 is the largest output.</td><td>\(f(x) \le 5\)</td></tr>
+<tr><td>Write the interval.</td><td>\((-\infty, 5]\)</td></tr></table>
+<figure class="vis">${H.fnPlot({ r: 8, pieces: [{ f: (x) => -2 * (x + 1) * (x + 1) + 5 }], dots: [[-1, 5, true]], label: 'parabola opening down with vertex at (-1, 5)' })}</figure></div>
+<h3>Parabolas in standard form</h3>
+<p>If the parabola is written as \(f(x) = ax^{2} + bx + c\), find the vertex first. Its \(x\)-value is \(x = -\dfrac{b}{2a}\). Put that value into \(f\) to get the height \(k\).</p>
+<div class="ex"><h4>Example</h4><p>Find the range of \(f(x) = x^{2} - 6x + 4\).</p><table class="st">
+<tr><td>Find the \(x\)-value of the vertex.</td><td>\(x = -\dfrac{-6}{2 \cdot 1} = 3\)</td></tr>
+<tr><td>Find its height.</td><td>\(f(3) = 9 - 18 + 4 = -5\)</td></tr>
+<tr><td>\(a = 1 \gt 0\), so it opens up and \(-5\) is the smallest output.</td><td>\([-5, \infty)\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>The range uses the <em>height</em> \(k\), not \(h\). For \(f(x) = 3\left|x - 4\right| - 2\), the corner is \((4, -2)\), so the range is \([-2, \infty)\), not \([4, \infty)\).</p></div>`,
     variants: {
       quad: {
         name: 'Parabola in vertex form',

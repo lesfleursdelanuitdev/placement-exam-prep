@@ -71,12 +71,20 @@
   MX.register({
     id: 'abs-value', section: SEC, title: 'Absolute value expressions', kind: 'skill', sources: [ADDED],
     slots: [{ label: 'Absolute value', source: ADDED, pool: ['simplify', 'order', 'compare', 'evaluate', 'distance'] }],
-    lesson: T`<p>The <strong>absolute value</strong> \(|a|\) is the distance from \(a\) to 0 on the number line, so it is never negative: \(|7| = 7\) and \(|-7| = 7\).</p>
-<ul><li>A negative sign <em>outside</em> the bars stays: \(-|-7| = -7\).</li>
-<li>Absolute value bars are grouping symbols. Simplify what's inside first, then take the absolute value: \(|3 - 8| = |-5| = 5\).</li>
-<li>Then follow the order of operations: \(10 - 2|1 - 4| = 10 - 2\cdot3 = 4\) (multiply before subtracting).</li>
-<li>The distance between \(a\) and \(b\) on the number line is \(|a - b|\).</li></ul>
-<p class="warn">\(|a - b|\) is not \(|a| - |b|\): \(|2 - 9| = 7\), but \(|2| - |9| = -7\).</p>`,
+    lesson: T`<p>Absolute value measures how far a number is from 0, without caring about direction. A temperature of \(-7\) degrees and one of \(7\) degrees are both 7 degrees away from zero.</p>
+<div class="box def"><h4>Definition <b>Absolute value</b></h4><p>The <strong>absolute value</strong> of a number \(a\), written \(\left|a\right|\), is its distance from 0 on the number line. A distance is never negative, so \(\left|a\right| \ge 0\). For example, \(\left|6\right| = 6\), \(\left|-6\right| = 6\) and \(\left|0\right| = 0\).</p></div>
+<h3>The bars group like parentheses</h3>
+<p>Work out everything inside the bars first, then take the absolute value. After that, follow the usual order of operations: multiply before you add or subtract.</p>
+<div class="ex"><h4>Example</h4><p>Simplify \(12 - 3\left|2 - 6\right|\).</p><table class="st">
+<tr><td>Simplify inside the bars.</td><td>\(2 - 6 = -4\)</td></tr>
+<tr><td>Take the absolute value.</td><td>\(\left|-4\right| = 4\)</td></tr>
+<tr><td>Multiply before subtracting.</td><td>\(3 \cdot 4 = 12\)</td></tr>
+<tr><td>Subtract.</td><td>\(12 - 12 = 0\)</td></tr></table></div>
+<p>To <strong>evaluate</strong> an expression, replace each variable with its value in parentheses, then simplify the same way. For \(x = -2\) and \(y = 1\): \(\ \left|3x + y\right| = \left|3(-2) + 1\right| = \left|-5\right| = 5\).</p>
+<p>To <strong>compare</strong> two expressions, find the value of each one first. For example, \(-\left|-5\right| = -5\) and \(\left|-5\right| = 5\), so \(-\left|-5\right| \lt \left|-5\right|\).</p>
+<div class="box warn"><h4>Watch out</h4><p>A minus sign <em>outside</em> the bars stays: \(-\left|-9\right| = -9\), while \(-(-9) = 9\). And you cannot split the bars across a subtraction: \(\left|2 - 9\right| = 7\), but \(\left|2\right| - \left|9\right| = -7\).</p></div>
+<h3>Distance between two numbers</h3>
+<div class="box rule"><h4>Rule <b>Distance on the number line</b></h4><p>The distance between \(a\) and \(b\) is \(\left|a - b\right|\). The order does not matter, because \(\left|a - b\right| = \left|b - a\right|\). For example, the distance between \(-8\) and \(3\) is \(\left|-8 - 3\right| = \left|-11\right| = 11\).</p></div>`,
     variants: {
       simplify: {
         name: 'Simplify',
@@ -176,13 +184,31 @@
   MX.register({
     id: 'abs-equation', section: SEC, title: 'Absolute value equations', kind: 'skill', sources: [ADDED],
     slots: [{ label: 'Absolute value equations', source: ADDED, pool: ['basic', 'isolate', 'two', 'zero', 'none'] }],
-    lesson: T`<p>If \(|X| = a\), then \(X\) is \(a\) units from 0, so there are two cases:</p>
-\[|X| = a \;\Rightarrow\; X = a \quad\text{or}\quad X = -a \qquad (a \gt 0)\]
-<ol><li><strong>Isolate the absolute value</strong> first: \(3|x - 2| + 1 = 13 \Rightarrow |x - 2| = 4\).</li>
-<li>Look at the other side. If it is <strong>negative</strong>, stop: there is <strong>no solution</strong>. If it is <strong>0</strong>, there is just one case, \(X = 0\).</li>
-<li>Otherwise write the two equations and solve each one.</li></ol>
-<p>Two absolute values: \(|X| = |Y|\) means \(X = Y\) or \(X = -Y\).</p>
-<p>Answer with every solution separated by commas, like <code>-3, 7</code>.</p>`,
+    lesson: T`<p>An absolute value equation asks which numbers are a certain distance from 0. You can be 4 units from 0 on either side, so \(\left|x\right| = 4\) has two solutions: \(x = 4\) and \(x = -4\).</p>
+<div class="box rule"><h4>Rule <b>Absolute value equations</b></h4><p>For any expression \(X\) and any number \(a\):</p><ul>
+<li>If \(a \gt 0\), then \(\left|X\right| = a\) means \(X = a\) or \(X = -a\). (Two cases.)</li>
+<li>If \(a = 0\), then \(\left|X\right| = 0\) means \(X = 0\). (One case.)</li>
+<li>If \(a \lt 0\), then \(\left|X\right| = a\) has <strong>no solution</strong>, because an absolute value is never negative.</li></ul></div>
+<div class="box how"><h4>How to <b>solve an absolute value equation</b></h4><ol>
+<li>Isolate the absolute value: get \(\left|X\right|\) alone on one side.</li>
+<li>Look at the number on the other side. If it is negative, stop: no solution. If it is 0, solve \(X = 0\).</li>
+<li>If it is positive, write two equations: \(X = a\) and \(X = -a\).</li>
+<li>Solve each one, and check your answers in the original equation.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Solve \(2\left|x - 3\right| + 1 = 9\).</p><table class="st">
+<tr><td>Subtract 1 from both sides.</td><td>\(2\left|x - 3\right| = 8\)</td></tr>
+<tr><td>Divide both sides by 2.</td><td>\(\left|x - 3\right| = 4\)</td></tr>
+<tr><td>4 is positive, so write two equations.</td><td>\(x - 3 = 4 \quad\text{or}\quad x - 3 = -4\)</td></tr>
+<tr><td>Solve each one.</td><td>\(x = 7 \quad\text{or}\quad x = -1\)</td></tr>
+<tr><td>Check both in the original equation.</td><td>\(2\left|4\right| + 1 = 9\) ✓ \(\quad 2\left|-4\right| + 1 = 9\) ✓</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Isolate first, then split. Splitting \(2\left|x - 3\right| + 1 = 9\) into \(2(x - 3) + 1 = 9\) or \(2(x - 3) + 1 = -9\) gives \(x = -2\), which is wrong. And if isolating gives something like \(\left|x + 5\right| = -2\), the answer is "no solution."</p></div>
+<h3>Two absolute values</h3>
+<p>If \(\left|X\right| = \left|Y\right|\), the two insides are the same distance from 0. So they are either equal or opposites: \(X = Y\) or \(X = -Y\).</p>
+<div class="ex"><h4>Example</h4><p>Solve \(\left|x + 1\right| = \left|2x - 4\right|\).</p><table class="st">
+<tr><td>Case 1: the insides are equal.</td><td>\(x + 1 = 2x - 4,\quad x = 5\)</td></tr>
+<tr><td>Case 2: they are opposites. Put the second side in parentheses.</td><td>\(x + 1 = -\left(2x - 4\right) = -2x + 4\)</td></tr>
+<tr><td>Solve case 2.</td><td>\(3x = 3,\quad x = 1\)</td></tr>
+<tr><td>Check: \(\left|6\right| = \left|6\right|\) and \(\left|2\right| = \left|-2\right|\).</td><td>\(x = 5 \quad\text{or}\quad x = 1\)</td></tr></table></div>
+<p>Type your answer as a list separated by commas, like <code>-1, 7</code>. If there is no solution, use the "no solution" button.</p>`,
     variants: {
       basic: {
         name: 'Two solutions',
@@ -320,12 +346,27 @@
   MX.register({
     id: 'fn-piecewise', section: FSEC, title: 'Piecewise functions', kind: 'skill', sources: [ADDED],
     slots: [{ label: 'Piecewise functions', source: ADDED, pool: ['evaluate', 'graph', 'read', 'abs', 'apply'] }],
-    lesson: T`<p>A <strong>piecewise function</strong> uses different formulas on different parts of its domain:</p>
-<p>${H.piecewiseHTML('f(x)', [['2x + 1', 'x \\lt 1'], ['4 - x', 'x \\ge 1']])}</p>
-<ul><li><strong>To evaluate</strong> \(f(a)\): find the one condition that \(a\) satisfies, and use only that formula. Watch the boundary: here \(f(1)\) uses \(4 - x\) because of the \(\ge\), so \(f(1) = 3\).</li>
-<li><strong>To graph</strong>: draw each formula only over its own interval. At a boundary, a closed dot ● means the point is included (\(\le, \ge\)); an open dot ○ means it isn't (\(\lt, \gt\)).</li>
-<li>A graph is still a function as long as no \(x\) gets two outputs, so each boundary point is filled in on at most one piece.</li></ul>
-<p>Absolute value is piecewise: \(|x| = x\) if \(x \ge 0\) and \(|x| = -x\) if \(x \lt 0\).</p>`,
+    lesson: T`<p>Some rules change partway. A shop might charge one flat price for small packages and more for each extra pound after that. A <strong>piecewise function</strong> describes a rule like this: it uses different formulas on different parts of its domain.</p>
+<div class="box def"><h4>Definition <b>Piecewise function</b></h4><p>A <strong>piecewise function</strong> is a list of formulas. Each formula comes with a condition that says which \(x\)-values it is for, and every \(x\) in the domain fits exactly one condition.</p></div>
+<p>${H.piecewiseHTML('f(x)', [['x + 3', 'x \\lt 1'], ['2 - x', 'x \\ge 1']])}</p>
+<h3>Evaluating</h3>
+<div class="box how"><h4>How to <b>evaluate a piecewise function</b></h4><ol>
+<li>Find the one condition that the input satisfies.</li>
+<li>Use only that formula. Ignore the others.</li>
+<li>Substitute and simplify.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>For the function \(f\) above, find \(f(-3)\), \(f(1)\) and \(f(4)\).</p><table class="st">
+<tr><td>\(-3 \lt 1\), so use the first formula.</td><td>\(f(-3) = -3 + 3 = 0\)</td></tr>
+<tr><td>\(1 \ge 1\) is true, so use the second formula.</td><td>\(f(1) = 2 - 1 = 1\)</td></tr>
+<tr><td>\(4 \ge 1\), so use the second formula.</td><td>\(f(4) = 2 - 4 = -2\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Be careful at a boundary. At \(x = 1\), the condition \(x \lt 1\) is false, so \(f(1)\) comes from \(2 - x\), not from \(x + 3\).</p></div>
+<p>Word problems work the same way. First decide which condition the number meets, then use that formula.</p>
+<h3>Graphing</h3>
+<p>Draw each formula only over its own interval. Where a piece ends, a <strong>closed dot</strong> ● means that point is included (from \(\le\) or \(\ge\)). An <strong>open dot</strong> ○ means it is not (from \(\lt\) or \(\gt\)).</p>
+<figure class="vis">${H.fnPlot({ r: 8, pieces: [{ f: (x) => x + 3, from: -Infinity, to: 1, openTo: true }, { f: (x) => 2 - x, from: 1, to: Infinity, openFrom: false }], label: 'graph of the piecewise function f' })}</figure>
+<p>In this graph of \(f\), the left piece ends at the open dot \((1, 4)\) and the right piece starts at the closed dot \((1, 1)\). To read a value from a graph, go to the \(x\)-value and read the height there. At a boundary, use the closed dot.</p>
+<h3>Absolute value is piecewise</h3>
+<p>\(|x| = x\) when \(x \ge 0\), and \(|x| = -x\) when \(x \lt 0\). The split always happens where the inside equals 0. For example:</p>
+<p>${H.piecewiseHTML('\\left|x - 2\\right|', [['x - 2', 'x \\ge 2'], ['-\\left(x - 2\\right)', 'x \\lt 2']])}</p>`,
     variants: {
       evaluate: {
         name: 'Evaluate',
@@ -497,15 +538,35 @@
   MX.register({
     id: 'fn-transform', section: FSEC, title: 'Transformations of functions', kind: 'skill', sources: [ADDED],
     slots: [{ label: 'Transformations', source: ADDED, pool: ['describe', 'equation', 'graph', 'point', 'hscale', 'parent', 'fromGraph'] }],
-    lesson: T`<p>Start from a basic graph, \(y = f(x)\): \(x^{2}\), \(x^{3}\), \(\sqrt{x}\), \(\sqrt[3]{x}\), \(|x|\) or \(\frac{1}{x}\). Then</p>
-\[g(x) = a\,f(x - h) + k\]
-<ul><li>\(h\): <strong>horizontal shift</strong>. \(f(x - 3)\) moves the graph <em>right</em> 3; \(f(x + 3)\) moves it <em>left</em> 3 (the opposite of the sign you see).</li>
-<li>\(k\): <strong>vertical shift</strong>. \(+k\) moves it up, \(-k\) down.</li>
-<li>\(a\): if \(a \lt 0\) the graph is <strong>reflected across the \(x\)-axis</strong>; if \(|a| \gt 1\) it is <strong>stretched</strong> vertically, and if \(0 \lt |a| \lt 1\) it is <strong>compressed</strong>.</li>
-<li>\(f(-x)\) reflects across the \(y\)-axis.</li>
-<li>\(f(bx)\) changes the graph <strong>horizontally</strong>: if \(b \gt 1\) it is compressed by a factor of \(\frac{1}{b}\), and if \(0 \lt b \lt 1\) it is stretched. Every \(x\)-value is divided by \(b\).</li></ul>
-<p>Every point moves the same way: if \((p, q)\) is on \(f\), then \((p + h,\ aq + k)\) is on \(g\). With \(f(bx)\), \((p, q)\) moves to \(\left(\frac{p}{b}, q\right)\).</p>
-<p class="warn">Order matters when you combine them: stretch or reflect first, then shift.</p>`,
+    lesson: T`<p>Many graphs are copies of a few basic graphs that have been moved, flipped or stretched. If you know the basic shape and the moves, you can sketch a graph or write its equation without plotting lots of points.</p>
+<h3>The basic graphs</h3>
+<p>Learn to recognize these six shapes. All of them pass through \((0, 0)\) except \(y = \frac{1}{x}\), which is not defined at \(x = 0\).</p>
+${(() => {
+  const mini = (f, tex, o = {}) => '<figure class="vis" style="width:118px;margin:0;text-align:center">' + H.fnPlot({ r: 3, w: 118, pieces: [Object.assign({ f }, o)], label: 'graph of y = ' + tex }) + '<figcaption>' + MX.texHTML('y = ' + tex) + '</figcaption></figure>';
+  return '<div style="display:flex;flex-wrap:wrap;gap:10px 18px;margin:12px 0;max-width:70ch">'
+    + mini((x) => x * x, 'x^{2}') + mini((x) => x * x * x, 'x^{3}') + mini((x) => Math.sqrt(x), '\\sqrt{x}', { from: 0, dotFrom: false })
+    + mini((x) => Math.cbrt(x), '\\sqrt[3]{x}') + mini((x) => Math.abs(x), '\\left|x\\right|') + mini((x) => (x === 0 ? NaN : 1 / x), '\\frac{1}{x}')
+    + '</div>';
+})()}
+<h3>Shifts, reflections and stretches</h3>
+<div class="box rule"><h4>Rule <b>Transformations of \(y = f(x)\)</b></h4><p>In \(g(x) = a\,f(x - h) + k\):</p><ul>
+<li>\(h\) shifts the graph <strong>right</strong> \(h\) units: \(f(x - 3)\) moves right 3, and \(f(x + 3)\) moves left 3.</li>
+<li>\(k\) shifts the graph <strong>up</strong> \(k\) units: \(+2\) moves up 2, and \(-2\) moves down 2.</li>
+<li>If \(a \lt 0\), the graph is <strong>reflected</strong> across the \(x\)-axis (turned upside down).</li>
+<li>If \(|a| \gt 1\), it is <strong>stretched</strong> vertically (taller). If \(0 \lt |a| \lt 1\), it is <strong>compressed</strong> vertically (flatter).</li></ul></div>
+<div class="box warn"><h4>Watch out</h4><p>The horizontal shift goes the opposite way from the sign you see: \(f(x + 3)\) moves <em>left</em>. Ask which \(x\) makes the inside 0. For \(x + 3\) that is \(x = -3\), to the left.</p></div>
+<p>Every point moves the same way. If \((p, q)\) is on the graph of \(f\), then \((p + h,\ aq + k)\) is on the graph of \(g\). For the \(y\)-value, multiply by \(a\) <em>first</em>, then add \(k\).</p>
+<div class="ex"><h4>Example</h4><p>Describe \(g(x) = -2|x + 3| + 1\) as a change of \(f(x) = |x|\). Then move the point \((2, 2)\) of \(f\).</p><table class="st">
+<tr><td>Match \(a\,f(x - h) + k\).</td><td>\(a = -2,\quad h = -3,\quad k = 1\)</td></tr>
+<tr><td>Read off each move.</td><td>\(\text{left } 3,\ \text{stretch by } 2,\ \text{reflect},\ \text{up } 1\)</td></tr>
+<tr><td>Move the point: add \(h\) to \(x\); multiply \(y\) by \(a\), then add \(k\).</td><td>\(\left(2 - 3,\ -2 \cdot 2 + 1\right) = (-1, -3)\)</td></tr>
+<tr><td>Check with the formula.</td><td>\(g(-1) = -2|2| + 1 = -3\) ✓</td></tr></table>
+<figure class="vis">${H.fnPlot({ r: 6, pieces: [{ f: (x) => Math.abs(x), cls: 'ln dash' }, { f: (x) => -2 * Math.abs(x + 3) + 1 }], dots: [[2, 2, true], [-1, -3, true]], label: 'dashed graph of y = |x| and solid graph of g' })}<figcaption style="font-size:14px">Dashed: \(f(x) = |x|\). Solid: \(g(x)\).</figcaption></figure></div>
+<h3>Changes inside \(f\)</h3>
+<div class="box rule"><h4>Rule <b>Changing the input</b></h4><ul>
+<li>\(f(-x)\) reflects the graph across the \(y\)-axis: \((p, q)\) moves to \((-p, q)\).</li>
+<li>\(f(bx)\) with \(b \gt 1\) <strong>compresses</strong> the graph horizontally by a factor of \(\frac{1}{b}\). With \(0 \lt b \lt 1\) it <strong>stretches</strong> it horizontally by a factor of \(\frac{1}{b}\). Either way, \((p, q)\) moves to \(\left(\frac{p}{b}, q\right)\).</li></ul>
+<p>For example, if \((6, 2)\) is on \(f\), then \((2, 2)\) is on \(y = f(3x)\), because \(3 \cdot 2 = 6\).</p></div>`,
     variants: {
       describe: {
         name: 'Describe the transformation',
