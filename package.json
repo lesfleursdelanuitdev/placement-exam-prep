@@ -2,7 +2,7 @@
   "name": "math098-exam-prep",
   "version": "1.0.0",
   "private": true,
-  "description": "Practice-exam generator with tutorials for a Math 098 intermediate algebra final",
+  "description": "Placement Exam Prep: generated algebra placement practice exams with tutorials and flashcards",
   "type": "module",
   "scripts": {
     "build": "node build.mjs",

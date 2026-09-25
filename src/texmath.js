@@ -11,7 +11,7 @@
     ne: ['≠', 'r'], neq: ['≠', 'r'], approx: ['≈', 'r'], to: ['→', 'r'], Rightarrow: ['⇒', 'r'],
     implies: ['⇒', 'r'], infty: ['∞', 'a'], circ: ['°', 'a'], degree: ['°', 'a'], pi: ['π', 'i'],
     theta: ['θ', 'i'], Delta: ['Δ', 'a'], emptyset: ['∅', 'a'], varnothing: ['∅', 'a'],
-    ldots: ['…', 'a'], cdots: ['⋯', 'a'], checkmark: ['✓', 'a'], '%': ['%', 'a'], $: ['$', 'a'],
+    ldots: ['…', 'a'], cdots: ['⋯', 'a'], checkmark: ['✓', 'a'], square: ['□', 'a'], Box: ['□', 'a'], '%': ['%', 'a'], $: ['$', 'a'],
     '{': ['{', 'o'], '}': ['}', 'a'], '|': ['|', 'a'],
   };
   const SPACE = { quad: ' ', qquad: '  ', ',': ' ', ';': ' ', ' ': ' ', '!': '' };
@@ -123,7 +123,7 @@
           }
           const a = readArg();
           st.prev = 'atom';
-          return '<span class="sq">' + (idx ? '<span class="sqi">' + esc(idx) + '</span>' : '') +
+          return '<span class="sq' + (idx ? ' sqn' : '') + '">' + (idx ? '<span class="sqi">' + esc(idx) + '</span>' : '') +
             '<span class="sqs">√</span><span class="sqa">' + a + '</span></span>';
         }
         if (name === 'left') {
@@ -209,11 +209,17 @@
 
   MX.texHTML = (src) => '<span class="m">' + render(String(src)) + '</span>';
   MX.texBlock = (src) => '<div class="md">' + render(String(src)) + '</div>';
-  // prose with \( inline \) and \[ display \] math
+  // prose with \( inline \) and \[ display \] math; a stray \$ in the prose is a plain dollar sign
   MX.rich = function (s) {
     if (s == null) return '';
-    return String(s).replace(/\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)/g, (m, d, inl) =>
-      d != null ? MX.texBlock(d) : MX.texHTML(inl)
-    );
+    const src = String(s), re = /\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)/g;
+    // "a 80%" → "an 80%" (also 8…, 11 and 18), only in text outside HTML tags
+    const prose = (t) => t.replace(/\\\$/g, '$').split(/(<[^>]*>)/).map((x, i) => (i % 2 ? x : x.replace(/\b([Aa]) (?=(?:8|11(?!\d)|18(?!\d)))/g, '$1n '))).join('');
+    let out = '', last = 0, m;
+    while ((m = re.exec(src))) {
+      out += prose(src.slice(last, m.index)) + (m[1] != null ? MX.texBlock(m[1]) : MX.texHTML(m[2]));
+      last = re.lastIndex;
+    }
+    return out + prose(src.slice(last));
   };
 })(typeof window !== 'undefined' ? window : globalThis);

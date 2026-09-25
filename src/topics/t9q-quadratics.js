@@ -1,0 +1,635 @@
+/* Quadratic equations & functions: completing the square, discriminant, quadratic form,
+   vertex form and transformations, quadratic inequalities, and projectile / max-min applications */
+(function (G) {
+  'use strict';
+  const MX = G.MX;
+  const { Q, T, H, S, poly } = MX;
+  const SEC = 'Quadratic equations & functions';
+  const ADDED = 'Added';
+  const SQF = [2, 3, 5, 6, 7, 10, 11, 13];
+  const INF = Infinity;
+  const sq = (h) => (h ? T`\left(x ${MX.sgnTerm(-h)}\right)^{2}` : 'x^{2}');
+  const sqA = (h) => (h ? `(x${h > 0 ? '-' + h : '+' + -h})^2` : 'x^2');
+  const coef = (a) => (a === 1 ? '' : a === -1 ? '-' : String(a));
+  // "h ± √r" as answers and TeX; r may be a perfect square
+  function pmRoots(h, r) {
+    const s = Math.sqrt(r);
+    if (Number.isInteger(s)) return { answers: [String(h + s), String(h - s)], tex: T`x = ${h + s} \text{ or } x = ${h - s}`, exact: false };
+    const p = MX.sqrtParts(r), rt = (p.out === 1 ? '' : p.out) + '\\sqrt{' + p.in + '}', ra = (p.out === 1 ? '' : p.out) + '√(' + p.in + ')';
+    return { answers: [h + '+' + ra, h + '-' + ra], tex: T`x = ${h === 0 ? '' : h} \pm ${rt}`, exact: true };
+  }
+  const setOfVals = (vals) => {
+    const u = [];
+    vals.forEach((v) => { if (!u.some((w) => Math.abs(w.v - v.v) < 1e-9)) u.push(v); });
+    u.sort((a, b) => a.v - b.v);
+    return u.length
+      ? { kind: 'set', answers: u.map((x) => x.a), answer: '{' + u.map((x) => x.a).join(', ') + '}', show: u.map((x) => 'x = ' + x.t).join('\\ \\text{ or }\\ ') }
+      : { kind: 'set', answers: [], answer: 'no solution', show: '\\text{no solution}' };
+  };
+  const num = (v) => ({ v, a: String(v), t: MX.texNum(v) });
+  const rootOf = (u) => { // real solutions of x^2 = u, as set entries
+    if (u < 0) return [];
+    if (u === 0) return [num(0)];
+    const s = Math.sqrt(u);
+    if (Number.isInteger(s)) return [num(s), num(-s)];
+    const p = MX.sqrtParts(u), t = (p.out === 1 ? '' : p.out) + '\\sqrt{' + p.in + '}', a = (p.out === 1 ? '' : p.out) + '√(' + p.in + ')';
+    return [{ v: s, a, t }, { v: -s, a: '-' + a, t: '-' + t }];
+  };
+
+  // ================= completing the square =================
+  MX.register({
+    id: 'quad-complete', section: SEC, title: 'Completing the square', kind: 'skill', sources: [ADDED],
+    slots: [{ label: 'Completing the square', source: ADDED, pool: ['makeSquare', 'solve1', 'solveA', 'vertexForm'] }],
+    lesson: T`<p>A perfect-square trinomial factors as a square: \(x^{2} + bx + \left(\frac{b}{2}\right)^{2} = \left(x + \frac{b}{2}\right)^{2}\). So to <strong>complete the square</strong> on \(x^{2} + bx\), add \(\left(\frac{b}{2}\right)^{2}\): half of \(b\), squared.</p>
+<p><strong>To solve</strong> \(ax^{2} + bx + c = 0\):</p>
+<ol><li>If \(a \ne 1\), divide every term by \(a\).</li><li>Move the constant to the right side.</li>
+<li>Add \(\left(\frac{b}{2}\right)^{2}\) to <em>both</em> sides.</li><li>Factor the left side as a square.</li>
+<li>Use the square root property (don't forget \(\pm\)) and solve.</li></ol>
+\[x^{2} - 6x + 2 = 0 \;\Rightarrow\; x^{2} - 6x + 9 = -2 + 9 \;\Rightarrow\; (x - 3)^{2} = 7 \;\Rightarrow\; x = 3 \pm \sqrt{7}\]
+<p>The same steps rewrite \(y = ax^{2} + bx + c\) in <strong>vertex form</strong> \(y = a(x - h)^{2} + k\).</p>`,
+    variants: {
+      makeSquare: {
+        name: 'Make a perfect square',
+        gen(rng) {
+          const b = rng.nz(-12, 12), half = new Q(b, 2), c = half.mul(half);
+          const f = MX.poly([[1, { x: 1 }], [half, {}]]);
+          return {
+            prompt: T`Find the number that makes \(${MX.quad(1, b, 0).tex} + \square\) a perfect-square trinomial, then write the trinomial as a binomial squared.`,
+            parts: [
+              { label: 'a', ask: 'The missing number', kind: 'num', frac: true, answer: c.str(), show: c.tex(), points: 1 },
+              { label: 'b', ask: 'The trinomial as a binomial squared', kind: 'factor', answer: '(' + f.asc + ')^2', factors: [f.asc, f.asc], show: T`\left(${f.tex}\right)^{2}`, points: 2 },
+            ],
+            solution: [T`Half of \(${b}\) is \(${half.tex()}\); squared, \(\left(${half.tex()}\right)^{2} = ${c.tex()}\).`, T`\(${MX.quad(1, b, 0).tex} + ${c.tex()} = ${H.box(T`\left(${f.tex}\right)^{2}`)}\)`],
+          };
+        },
+      },
+      solve1: {
+        name: 'Solve (leading coefficient 1)',
+        gen(rng) {
+          const h = rng.nz(-7, 7), r = rng.pick([...SQF, ...SQF, 4, 9, 16, 12, 18, 20]);
+          const b = -2 * h, c = h * h - r, R = pmRoots(h, r), moved = rng.chance(0.4);
+          const eq = moved ? T`x^{2} ${MX.sgnTerm(b)}x = ${-c}` : T`${MX.quad(1, b, c).tex} = 0`;
+          return {
+            prompt: T`Solve by completing the square: \(${eq}\). Leave answers exact (simplified radicals).`,
+            parts: [{ kind: 'nums', count: 2, var: 'x', pre: 'x =', joiner: 'or', exact: R.exact, radical: true, answers: R.answers, show: R.tex, points: 4 }],
+            solution: [
+              moved ? T`The constant is already on the right.` : T`Move the constant: \(x^{2} ${MX.sgnTerm(b)}x = ${-c}\)`,
+              T`Half of ${b} is ${-h}; \(\left(${-h}\right)^{2} = ${h * h}\). Add it to both sides: \(x^{2} ${MX.sgnTerm(b)}x + ${h * h} = ${-c} + ${h * h} = ${r}\)`,
+              T`Factor: \(${sq(h)} = ${r}\), so \(x ${MX.sgnTerm(-h)} = \pm\sqrt{${r}}\).`,
+              T`\(${H.box(R.tex)}\)`,
+            ],
+          };
+        },
+      },
+      solveA: {
+        name: 'Solve (leading coefficient not 1)',
+        gen(rng) {
+          const a = rng.pick([2, 3, 4, 5]), h = rng.nz(-5, 5), r = rng.pick([...SQF, 4, 9, 12]);
+          const b = -2 * a * h, c = a * (h * h - r), R = pmRoots(h, r);
+          return {
+            prompt: T`Solve by completing the square: \(${MX.quad(a, b, c).tex} = 0\). Leave answers exact.`,
+            parts: [{ kind: 'nums', count: 2, var: 'x', pre: 'x =', joiner: 'or', exact: R.exact, radical: true, answers: R.answers, show: R.tex, points: 4 }],
+            solution: [
+              T`Divide every term by ${a}: \(${MX.quad(1, -2 * h, h * h - r).tex} = 0\)`,
+              T`Move the constant and add \(\left(${-h}\right)^{2} = ${h * h}\) to both sides: \(${sq(h)} = ${r}\)`,
+              T`\(x ${MX.sgnTerm(-h)} = \pm\sqrt{${r}}\): \(${H.box(R.tex)}\)`,
+            ],
+          };
+        },
+      },
+      vertexForm: {
+        name: 'Rewrite in vertex form',
+        gen(rng) {
+          const a = rng.pick([1, 1, 2, -1, 3, -2]), h = rng.nz(-6, 6), k = rng.int(-12, 12);
+          const b = -2 * a * h, c = a * h * h + k;
+          const ans = coef(a) + sqA(h) + (k ? (k > 0 ? '+' : '-') + Math.abs(k) : '');
+          const ansT = coef(a) + sq(h) + (k ? ' ' + MX.sgnTerm(k) : '');
+          return {
+            prompt: T`Complete the square to write \(y = ${MX.quad(a, b, c).tex}\) in vertex form \(y = a(x - h)^{2} + k\).`,
+            parts: [{ kind: 'expr', form: 'vertex', pre: 'y =', vars: ['x'], answer: ans, show: 'y = ' + ansT, points: 3 }],
+            solution: [
+              a === 1 ? T`Group the \(x\)-terms: \(y = \left(x^{2} ${MX.sgnTerm(-2 * h)}x\right) ${MX.sgnTerm(c)}\)` : T`Factor ${a} from the \(x\)-terms: \(y = ${a}\left(x^{2} ${MX.sgnTerm(-2 * h)}x\right) ${MX.sgnTerm(c)}\)`,
+              T`Add and subtract \(\left(${-h}\right)^{2} = ${h * h}\) inside: ${a === 1 ? T`\(y = \left(x^{2} ${MX.sgnTerm(-2 * h)}x + ${h * h}\right) ${MX.sgnTerm(c)} - ${h * h}\)` : T`adding ${h * h} inside the parentheses adds \(${a}\cdot${h * h} = ${a * h * h}\), so subtract ${a * h * h} outside.`}`,
+              T`\(${H.box('y = ' + ansT)}\) (vertex \((${h}, ${k})\))`,
+            ],
+          };
+        },
+      },
+    },
+  });
+
+  // ================= the discriminant =================
+  const TYPES = ['Two real solutions', 'One real solution (a repeated root)', 'Two complex (non-real) solutions'];
+  function discCase(rng, kind) {
+    for (;;) {
+      const a = rng.nz(-5, 6), b = rng.int(-10, 10), c = rng.int(-10, 10), D = b * b - 4 * a * c;
+      if (kind === 'pos' && D > 0) return { a, b, c, D };
+      if (kind === 'neg' && D < 0) return { a, b, c, D };
+      if (kind === 'zero') { const p = rng.int(1, 4), q = rng.nz(-6, 6), s = rng.pick([1, -1]); return { a: s * p * p, b: s * 2 * p * q, c: s * q * q, D: 0 }; }
+    }
+  }
+  MX.register({
+    id: 'quad-discriminant', section: SEC, title: 'The discriminant', kind: 'skill', sources: [ADDED],
+    slots: [{ label: 'The discriminant', source: ADDED, pool: ['classify', 'intercepts', 'findK'] }],
+    lesson: T`<p>In the quadratic formula, the part under the radical is the <strong>discriminant</strong>:</p>
+\[D = b^{2} - 4ac\]
+<ul><li>\(D \gt 0\): two real solutions (and the parabola crosses the \(x\)-axis twice). If \(D\) is a perfect square they are rational.</li>
+<li>\(D = 0\): one real solution, a repeated root (the vertex touches the \(x\)-axis).</li>
+<li>\(D \lt 0\): no real solutions; two complex (non-real) solutions (the parabola misses the \(x\)-axis).</li></ul>
+<p class="warn">Write the equation as \(ax^{2} + bx + c = 0\) before reading \(a\), \(b\), \(c\), and keep their signs.</p>`,
+    variants: {
+      classify: {
+        name: 'Number and type of solutions',
+        gen(rng) {
+          const kind = rng.pick(['pos', 'zero', 'neg']), { a, b, c, D } = discCase(rng, kind);
+          const idx = kind === 'pos' ? 0 : kind === 'zero' ? 1 : 2;
+          return {
+            prompt: T`Use the discriminant to determine the number and type of solutions of \(${MX.quad(a, b, c).tex} = 0\).`,
+            parts: [
+              { label: 'a', ask: T`The discriminant \(b^{2} - 4ac\)`, kind: 'num', answer: String(D), points: 2 },
+              { label: 'b', ask: 'Number and type of solutions', kind: 'choice', options: TYPES, answer: idx, points: 1 },
+            ],
+            solution: [T`\(a = ${a}\), \(b = ${b}\), \(c = ${c}\).`, T`\(D = ${MX.par(b)}^{2} - 4\left(${a}\right)\left(${c}\right) = ${b * b} ${MX.sgnTerm(-4 * a * c)} = ${D}\)`, T`\(D ${D > 0 ? '\\gt' : D === 0 ? '=' : '\\lt'} 0\): ${TYPES[idx].toLowerCase()}.`],
+          };
+        },
+      },
+      intercepts: {
+        name: 'How many x-intercepts?',
+        gen(rng) {
+          const kind = rng.pick(['pos', 'zero', 'neg']), { a, b, c, D } = discCase(rng, kind);
+          const n = D > 0 ? 2 : D === 0 ? 1 : 0;
+          return {
+            prompt: T`How many \(x\)-intercepts does the graph of \(f(x) = ${MX.quad(a, b, c).tex}\) have?`,
+            parts: [{ kind: 'num', answer: String(n), points: 2 }],
+            solution: [T`\(x\)-intercepts are the real solutions of \(f(x) = 0\).`, T`\(D = ${MX.par(b)}^{2} - 4\left(${a}\right)\left(${c}\right) = ${D}\)`, T`\(D ${D > 0 ? '\\gt' : D === 0 ? '=' : '\\lt'} 0\), so there ${n === 1 ? 'is' : 'are'} \(${H.box(String(n))}\) \(x\)-intercept${n === 1 ? '' : 's'}.`],
+          };
+        },
+      },
+      findK: {
+        name: 'Choose a coefficient for one solution',
+        gen(rng) {
+          if (rng.chance(0.5)) {
+            const s = rng.int(1, 9), a = rng.pick([1, 1, 4, 9]), c = s * s;
+            const k = 2 * Math.sqrt(a) * s;
+            return {
+              prompt: T`Find every value of \(k\) for which \(${coef(a)}x^{2} + kx + ${c} = 0\) has exactly one real solution.`,
+              parts: [{ kind: 'nums', count: 2, pre: 'k =', joiner: 'or', answers: [String(k), String(-k)], show: T`k = \pm ${k}`, points: 3 }],
+              solution: [T`One solution means \(D = 0\): \(k^{2} - 4\left(${a}\right)\left(${c}\right) = 0\).`, T`\(k^{2} = ${4 * a * c}\), so \(k = \pm${k}\).`, T`\(${H.box(T`k = ${k} \text{ or } k = -${k}`)}\)`],
+            };
+          }
+          const b = rng.nz(-12, 12), c = new Q(b * b, 4);
+          return {
+            prompt: T`Find the value of \(c\) for which \(${MX.quad(1, b, 0).tex} + c = 0\) has exactly one real solution.`,
+            parts: [{ kind: 'num', frac: true, pre: 'c =', answer: c.str(), show: 'c = ' + c.tex(), points: 3 }],
+            solution: [T`One solution means \(D = b^{2} - 4ac = 0\): \(${MX.par(b)}^{2} - 4c = 0\).`, T`\(4c = ${b * b}\), so \(${H.box('c = ' + c.tex())}\)`],
+          };
+        },
+      },
+    },
+  });
+
+  // ================= equations in quadratic form =================
+  const HINT = 'List every real solution, separated by commas.';
+  MX.register({
+    id: 'quad-form', section: SEC, title: 'Equations in quadratic form', kind: 'skill', sources: [ADDED],
+    slots: [{ label: 'Equations in quadratic form', source: ADDED, pool: ['biquad', 'shifted', 'sqrtX', 'fracExp', 'negExp'] }],
+    lesson: T`<p>Some equations become quadratics after a <strong>substitution</strong>. Look for an expression whose square also appears:</p>
+<ul><li>\(x^{4} - 13x^{2} + 36 = 0\): let \(u = x^{2}\), then \(u^{2} - 13u + 36 = 0\).</li>
+<li>\((x - 2)^{2} + 3(x - 2) - 10 = 0\): let \(u = x - 2\).</li>
+<li>\(x - 5\sqrt{x} + 6 = 0\): let \(u = \sqrt{x}\), so \(u^{2} = x\).</li>
+<li>\(x^{\frac{2}{3}} - 5x^{\frac{1}{3}} + 4 = 0\): let \(u = x^{\frac{1}{3}}\). \(x^{-2} - 7x^{-1} + 12 = 0\): let \(u = x^{-1}\).</li></ul>
+<ol><li>Substitute and solve for \(u\).</li><li><strong>Substitute back</strong> and solve for \(x\) (this step is easy to forget).</li>
+<li>Check: with \(u = \sqrt{x}\), a negative \(u\) gives no solution; with \(u = x^{2}\), a negative \(u\) gives no real solution.</li></ol>`,
+    variants: {
+      biquad: {
+        name: 'Fourth degree (u = x²)',
+        gen(rng) {
+          let p, q; do { p = rng.pick([1, 4, 9, 16, 2, 3, 5]); q = rng.pick([1, 4, 9, 25, 3, -1, -4, -9, 6]); } while (p === q);
+          const sols = [...rootOf(p), ...rootOf(q)];
+          return {
+            prompt: T`Solve: \(${poly([[1, { x: 4 }], [-(p + q), { x: 2 }], [p * q, {}]]).tex} = 0\)`,
+            parts: [Object.assign(setOfVals(sols), { ask: HINT, points: 4 })],
+            solution: [
+              T`Let \(u = x^{2}\): \(${MX.quad(1, -(p + q), p * q, 'u').tex} = 0\), so \(\left(u ${MX.sgnTerm(-p)}\right)\left(u ${MX.sgnTerm(-q)}\right) = 0\) and \(u = ${p}\) or \(u = ${q}\).`,
+              T`Back-substitute: ${[p, q].map((u) => (u < 0 ? T`\(x^{2} = ${u}\) has no real solution` : T`\(x^{2} = ${u}\) gives \(x = \pm${Number.isInteger(Math.sqrt(u)) ? Math.sqrt(u) : '\\sqrt{' + u + '}'}\)`)).join('; ')}.`,
+              T`\(${H.box(setOfVals(sols).show)}\)`,
+            ],
+          };
+        },
+      },
+      shifted: {
+        name: 'Substitute for a binomial',
+        gen(rng) {
+          let p, q; do { p = rng.nz(-8, 8); q = rng.nz(-8, 8); } while (p === q || p + q === 0);
+          const d = rng.nz(-6, 6), B = MX.lin(1, d);
+          const sols = [num(p - d), num(q - d)];
+          return {
+            prompt: T`Solve: \(\left(${B.tex}\right)^{2} ${MX.sgnTerm(-(p + q))}\left(${B.tex}\right) ${MX.sgnTerm(p * q)} = 0\)`.replace(/\+ 1\\left|- 1\\left/g, (m) => m.replace(' 1', ' ')),
+            parts: [Object.assign(setOfVals(sols), { ask: HINT, points: 4 })],
+            solution: [
+              T`Let \(u = ${B.tex}\): \(${MX.quad(1, -(p + q), p * q, 'u').tex} = 0\), so \(u = ${p}\) or \(u = ${q}\).`,
+              T`\(${B.tex} = ${p}\) gives \(x = ${p - d}\); \(${B.tex} = ${q}\) gives \(x = ${q - d}\).`,
+              T`\(${H.box(setOfVals(sols).show)}\)`,
+            ],
+          };
+        },
+      },
+      sqrtX: {
+        name: 'Square roots (u = √x)',
+        gen(rng) {
+          let p, q; do { p = rng.int(1, 7); q = rng.pick([rng.int(1, 8), -rng.int(1, 6)]); } while (p === q || p + q === 0);
+          const sols = [p, q].filter((u) => u >= 0).map((u) => num(u * u));
+          return {
+            prompt: T`Solve: \(x ${MX.sgnTerm(-(p + q)).replace(/([+-]) 1$/, '$1 ')}\sqrt{x} ${MX.sgnTerm(p * q)} = 0\)`,
+            parts: [Object.assign(setOfVals(sols), { ask: HINT, points: 4 })],
+            solution: [
+              T`Let \(u = \sqrt{x}\) (so \(u^{2} = x\)): \(${MX.quad(1, -(p + q), p * q, 'u').tex} = 0\), so \(u = ${p}\) or \(u = ${q}\).`,
+              T`${[p, q].map((u) => (u < 0 ? T`\(\sqrt{x} = ${u}\) is impossible (a square root is never negative)` : T`\(\sqrt{x} = ${u}\) gives \(x = ${u * u}\)`)).join('; ')}.`,
+              T`\(${H.box(setOfVals(sols).show)}\)`,
+            ],
+          };
+        },
+      },
+      fracExp: {
+        name: 'Fractional exponents',
+        gen(rng) {
+          let p, q; do { p = rng.nz(-3, 4); q = rng.nz(-3, 4); } while (p === q || p + q === 0);
+          const sols = [num(p * p * p), num(q * q * q)];
+          return {
+            prompt: T`Solve: \(x^{\frac{2}{3}} ${MX.sgnTerm(-(p + q)).replace(/([+-]) 1$/, '$1 ')}x^{\frac{1}{3}} ${MX.sgnTerm(p * q)} = 0\)`,
+            parts: [Object.assign(setOfVals(sols), { ask: HINT, points: 4 })],
+            solution: [
+              T`Let \(u = x^{\frac{1}{3}}\) (so \(u^{2} = x^{\frac{2}{3}}\)): \(${MX.quad(1, -(p + q), p * q, 'u').tex} = 0\), so \(u = ${p}\) or \(u = ${q}\).`,
+              T`Cube both sides of \(x^{\frac{1}{3}} = u\): \(x = ${p}^{3} = ${p * p * p}\) or \(x = ${MX.par(q)}^{3} = ${q * q * q}\).`,
+              T`\(${H.box(setOfVals(sols).show)}\)`,
+            ],
+          };
+        },
+      },
+      negExp: {
+        name: 'Negative exponents',
+        gen(rng) {
+          let p, q; do { p = rng.nz(-5, 6); q = rng.nz(-5, 6); } while (p === q || p + q === 0);
+          const sols = [p, q].map((u) => { const r = new Q(1, u); return { v: r.val(), a: r.str(), t: r.tex() }; });
+          return {
+            prompt: T`Solve: \(x^{-2} ${MX.sgnTerm(-(p + q)).replace(/([+-]) 1$/, '$1 ')}x^{-1} ${MX.sgnTerm(p * q)} = 0\)`,
+            parts: [Object.assign(setOfVals(sols), { ask: HINT, points: 4 })],
+            solution: [
+              T`Let \(u = x^{-1}\) (so \(u^{2} = x^{-2}\)): \(${MX.quad(1, -(p + q), p * q, 'u').tex} = 0\), so \(u = ${p}\) or \(u = ${q}\).`,
+              T`\(x^{-1} = \frac{1}{x} = u\) means \(x = \frac{1}{u}\): \(x = ${new Q(1, p).tex()}\) or \(x = ${new Q(1, q).tex()}\).`,
+              T`\(${H.box(setOfVals(sols).show)}\)`,
+            ],
+          };
+        },
+      },
+    },
+  });
+
+  // ================= vertex form and transformations of parabolas =================
+  const vf = (a, h, k) => ({ tex: coef(a) + sq(h) + (k ? ' ' + MX.sgnTerm(k) : ''), asc: (a === 0.5 ? '(1/2)' : a === -0.5 ? '-(1/2)' : coef(a)) + sqA(h) + (k ? (k > 0 ? '+' : '-') + Math.abs(k) : '') });
+  const aT = (a) => (a === 0.5 ? '\\frac{1}{2}' : a === -0.5 ? '-\\frac{1}{2}' : coef(a));
+  const parabolaPlot = (a, h, k, o = {}) => H.fnPlot({ r: 8, pieces: [{ f: (x) => a * (x - h) * (x - h) + k }], dots: o.dot === false ? [] : [[h, k, true]], label: 'graph of a parabola' });
+  function pDescribe(a, h, k) {
+    const s = [];
+    if (h) s.push(`shift ${h > 0 ? 'right' : 'left'} ${Math.abs(h)}`);
+    if (Math.abs(a) !== 1) s.push(Math.abs(a) > 1 ? `stretch vertically by ${Math.abs(a)}` : 'compress vertically by 1/2');
+    if (a < 0) s.push('reflect across the x-axis');
+    if (k) s.push(`shift ${k > 0 ? 'up' : 'down'} ${Math.abs(k)}`);
+    const t = s.join(', ');
+    return t[0].toUpperCase() + t.slice(1) + '.';
+  }
+  MX.register({
+    id: 'quad-transform', section: SEC, title: 'Vertex form and transformations', kind: 'skill', sources: [ADDED],
+    slots: [{ label: 'Vertex form and transformations', source: ADDED, pool: ['readVertex', 'axisStd', 'graph', 'describe', 'fromGraph'] }],
+    lesson: T`<p>Every parabola is a transformation of \(y = x^{2}\):</p>
+\[f(x) = a(x - h)^{2} + k\]
+<ul><li>The <strong>vertex</strong> is \((h, k)\) and the <strong>axis of symmetry</strong> is the vertical line \(x = h\).</li>
+<li>\(h\) shifts the graph horizontally (\((x - 3)^{2}\) moves it right 3; \((x + 3)^{2}\) left 3); \(k\) shifts it up or down.</li>
+<li>\(a \gt 0\): opens up and \(k\) is the <strong>minimum</strong>. \(a \lt 0\): opens down and \(k\) is the <strong>maximum</strong>.</li>
+<li>\(|a| \gt 1\) makes it narrower (a stretch); \(0 \lt |a| \lt 1\) makes it wider (a compression).</li></ul>
+<p>From standard form \(f(x) = ax^{2} + bx + c\): the axis of symmetry is \(x = -\frac{b}{2a}\); substitute that \(x\) to get the vertex's \(y\).</p>
+<p>To write the equation from a graph: read the vertex \((h, k)\), then use one more point to solve for \(a\).</p>`,
+    variants: {
+      readVertex: {
+        name: 'Vertex, axis and max/min',
+        gen(rng) {
+          const a = rng.pick([1, -1, 2, -2, 3, -3, 0.5, -0.5]), h = rng.nz(-7, 7), k = rng.int(-9, 9), F = vf(a, h, k);
+          const vx = H.pt(h, k);
+          return {
+            prompt: T`For \(f(x) = ${aT(a)}${sq(h)}${k ? ' ' + MX.sgnTerm(k) : ''}\):`,
+            parts: [
+              { label: 'a', ask: 'The vertex', kind: 'point', answer: vx.asc, show: vx.tex, points: 1 },
+              { label: 'b', ask: 'The axis of symmetry (an equation)', kind: 'eq', vars: ['x'], answer: 'x=' + h, show: 'x = ' + h, points: 1 },
+              { label: 'c', ask: T`Is \(${k}\) a maximum or a minimum value of \(f\)?`, kind: 'choice', options: [T`Minimum: the parabola opens up`, T`Maximum: the parabola opens down`], answer: a > 0 ? 0 : 1, points: 1 },
+            ],
+            solution: [T`Compare with \(a(x - h)^{2} + k\): \(h = ${h}\) (watch the sign inside), \(k = ${k}\), \(a = ${MX.num(a)}\).`, T`Vertex \(${vx.tex}\), axis of symmetry \(x = ${h}\).`, T`\(a ${a > 0 ? '\\gt' : '\\lt'} 0\), so it opens ${a > 0 ? 'up and ' + k + ' is the minimum' : 'down and ' + k + ' is the maximum'}.`],
+          };
+        },
+      },
+      axisStd: {
+        name: 'From standard form',
+        gen(rng) {
+          const a = rng.pick([1, -1, 2, -2, 3]), h = rng.nz(-5, 5), k = rng.int(-12, 12);
+          const b = -2 * a * h, c = a * h * h + k, vx = H.pt(h, k);
+          return {
+            prompt: T`Find the axis of symmetry and the vertex of \(f(x) = ${MX.quad(a, b, c).tex}\).`,
+            parts: [
+              { label: 'a', ask: 'Axis of symmetry', kind: 'eq', vars: ['x'], answer: 'x=' + h, show: 'x = ' + h, points: 2 },
+              { label: 'b', ask: 'Vertex', kind: 'point', answer: vx.asc, show: vx.tex, points: 2 },
+            ],
+            solution: [T`\(x = -\frac{b}{2a} = -\frac{${b}}{2\left(${a}\right)} = ${h}\)`, T`\(f(${h}) = ${a}${MX.par(h)}^{2} ${MX.sgnTerm(b)}\cdot${MX.par(h)} ${MX.sgnTerm(c)} = ${k}\)`, T`Axis \(${H.box('x = ' + h)}\), vertex \(${H.box(vx.tex)}\)`],
+          };
+        },
+      },
+      graph: {
+        name: 'Choose the graph',
+        gen(rng) {
+          const a = rng.pick([1, -1, 2, -2]), h = rng.nz(-5, 5), k = rng.nz(-5, 5);
+          const ch = H.choices(rng, parabolaPlot(a, h, k), [parabolaPlot(a, -h, k), parabolaPlot(a, h, -k), parabolaPlot(-a, h, k)]);
+          return {
+            prompt: T`Which graph shows \(f(x) = ${vf(a, h, k).tex}\)?`,
+            parts: [{ kind: 'choice', graph: true, options: ch.options, answer: ch.answer, points: 3 }],
+            solution: [T`Vertex \((${h}, ${k})\); it opens ${a > 0 ? 'up' : 'down'}${Math.abs(a) > 1 ? ' and is narrower than \\(x^{2}\\)' : ''}.`, T`Check a point: \(f(${h + 1}) = ${a + k}\), so the graph passes through \((${h + 1}, ${a + k})\).`],
+          };
+        },
+      },
+      describe: {
+        name: 'Describe the transformation',
+        gen(rng) {
+          const a = rng.pick([1, -1, 2, -2, 3, 0.5]), h = rng.nz(-6, 6), k = rng.nz(-6, 6);
+          const ch = H.choices(rng, pDescribe(a, h, k), [pDescribe(a, -h, k), pDescribe(a, h, -k), pDescribe(-a, -h, -k)]);
+          return {
+            prompt: T`How is the graph of \(g(x) = ${aT(a)}${sq(h)} ${MX.sgnTerm(k)}\) obtained from the graph of \(y = x^{2}\)?`,
+            parts: [{ kind: 'choice', options: ch.options, answer: ch.answer, points: 2 }],
+            solution: [T`\(h = ${h}\): ${h > 0 ? 'right' : 'left'} ${Math.abs(h)}. \(k = ${k}\): ${k > 0 ? 'up' : 'down'} ${Math.abs(k)}. \(a = ${MX.num(a)}\)${a < 0 ? ': reflected' : ''}${Math.abs(a) !== 1 ? (Math.abs(a) > 1 ? ', stretched' : ', compressed') : ''}.`, pDescribe(a, h, k)],
+          };
+        },
+      },
+      fromGraph: {
+        name: 'Equation from a graph',
+        gen(rng) {
+          const a = rng.pick([1, -1, 2, -2]), h = rng.int(-4, 4), k = rng.int(-5, 5), F = vf(a, h, k);
+          if (Math.abs(a + k) > 7) return this.gen(rng);
+          return {
+            prompt: T`Write the equation of the parabola in vertex form. The vertex and one other point are marked.`,
+            visual: H.fnPlot({ r: 8, pieces: [{ f: (x) => a * (x - h) * (x - h) + k }], dots: [[h, k, true], [h + 1, a + k, true]] }),
+            parts: [{ kind: 'expr', form: 'vertex', pre: 'f(x) =', vars: ['x'], answer: F.asc, show: 'f(x) = ' + F.tex, points: 3 }],
+            solution: [T`Vertex \((${h}, ${k})\), so \(f(x) = a${sq(h)} ${MX.sgnTerm(k)}\).`, T`The point \((${h + 1}, ${a + k})\): \(${a + k} = a\left(${h + 1} ${MX.sgnTerm(-h)}\right)^{2} ${MX.sgnTerm(k)} = a ${MX.sgnTerm(k)}\), so \(a = ${a}\).`, T`\(${H.box('f(x) = ' + F.tex)}\)`],
+          };
+        },
+      },
+    },
+  });
+
+  // ================= quadratic inequalities =================
+  function qIneq(rng, forceA) {
+    let r1, r2; do { r1 = rng.int(-7, 6); r2 = rng.int(-6, 8); } while (r1 >= r2);
+    const a = forceA || rng.pick([1, 1, 1, -1, 2]), op = rng.pick(['<', '<=', '>', '>=']);
+    const inside = (a > 0) === (op[0] === '<');
+    const closed = op.length === 2;
+    const reg = inside ? [H.iv(r1, r2, closed, closed)] : [H.iv(-INF, r1, false, closed), H.iv(r2, INF, closed, false)];
+    return { r1, r2, a, op, reg, inside, closed, b: -a * (r1 + r2), c: a * r1 * r2 };
+  }
+  const OPT = { '<': '\\lt', '<=': '\\le', '>': '\\gt', '>=': '\\ge' };
+  MX.register({
+    id: 'quad-ineq', section: SEC, title: 'Quadratic inequalities', kind: 'skill', sources: [ADDED],
+    slots: [{ label: 'Quadratic inequalities', source: ADDED, pool: ['factor', 'rearrange', 'graph', 'special'] }],
+    lesson: T`<p>To solve \(ax^{2} + bx + c \lt 0\) (or \(\le, \gt, \ge\)):</p>
+<ol><li>Get 0 on one side.</li><li>Find the <strong>critical points</strong>: the solutions of \(ax^{2} + bx + c = 0\).</li>
+<li>They split the number line into intervals. Test one number from each interval (or picture the parabola).</li>
+<li>Keep the intervals that make the inequality true. Use brackets for \(\le, \ge\) (the critical points count) and parentheses for \(\lt, \gt\).</li></ol>
+<p>Picture it: \(y = (x + 2)(x - 3)\) opens up, so it is <em>below</em> the \(x\)-axis between the roots. \(\lt 0\) gives \((-2, 3)\); \(\gt 0\) gives \((-\infty, -2) \cup (3, \infty)\).</p>
+<p>If there are no real roots, the parabola is entirely above or below the axis: the answer is all real numbers or no solution.</p>`,
+    variants: {
+      factor: {
+        name: 'Factorable',
+        gen(rng) {
+          const q = qIneq(rng);
+          const nl = H.regionChoices(rng, q.reg);
+          return {
+            prompt: T`Solve \(${MX.quad(q.a, q.b, q.c).tex} ${OPT[q.op]} 0\). Write the solution in interval notation and graph it.`,
+            parts: [
+              { label: 'a', ask: 'Solution (interval notation)', kind: 'interval', answer: H.regionAsc(q.reg), show: H.regionTex(q.reg), points: 3 },
+              { label: 'b', ask: 'Which graph shows the solution?', kind: 'choice', graph: true, options: nl.options, answer: nl.answer, points: 1 },
+            ],
+            solution: [
+              T`Critical points: \(${MX.quad(q.a, q.b, q.c).tex} = ${q.a === 1 ? '' : q.a === -1 ? '-' : q.a}\left(x ${MX.sgnTerm(-q.r1)}\right)\left(x ${MX.sgnTerm(-q.r2)}\right) = 0\) at \(x = ${q.r1}\) and \(x = ${q.r2}\).`,
+              T`The parabola opens ${q.a > 0 ? 'up' : 'down'}, so it is ${q.a > 0 ? 'below' : 'above'} the \(x\)-axis between ${q.r1} and ${q.r2}.`,
+              T`We need ${q.op[0] === '<' ? 'negative' : 'positive'} values${q.closed ? ' or zero' : ''}: ${q.inside ? 'between the roots' : 'outside the roots'}. \(${H.box(H.regionTex(q.reg))}\)`,
+            ],
+          };
+        },
+      },
+      rearrange: {
+        name: 'Rearrange first',
+        gen(rng) {
+          const q = qIneq(rng, 1);
+          if (!q.b || !q.c) return this.gen(rng);
+          return {
+            prompt: T`Solve \(${MX.poly([[1, { x: 2 }], [q.b, { x: 1 }]]).tex} ${OPT[q.op]} ${MX.num(-q.c)}\). Write the solution in interval notation.`,
+            parts: [{ kind: 'interval', answer: H.regionAsc(q.reg), show: H.regionTex(q.reg), points: 3 }],
+            solution: [
+              T`Move everything to the left: \(${MX.quad(1, q.b, q.c).tex} ${OPT[q.op]} 0\)`,
+              T`Factor: \(\left(x ${MX.sgnTerm(-q.r1)}\right)\left(x ${MX.sgnTerm(-q.r2)}\right)\), critical points ${q.r1} and ${q.r2}.`,
+              T`It opens up, so it is negative between the roots and positive outside them: \(${H.box(H.regionTex(q.reg))}\)`,
+            ],
+          };
+        },
+      },
+      graph: {
+        name: 'Solve from a graph',
+        gen(rng) {
+          const q = qIneq(rng, rng.pick([1, -1]));
+          if (Math.abs(q.a * ((q.r2 - q.r1) / 2) ** 2) > 7.5) return this.gen(rng);
+          const f = (x) => q.a * (x - q.r1) * (x - q.r2);
+          return {
+            prompt: T`The graph of \(y = f(x)\) is shown. Use it to solve \(f(x) ${OPT[q.op]} 0\) in interval notation.`,
+            visual: H.fnPlot({ r: 8, pieces: [{ f }], dots: [[q.r1, 0, true], [q.r2, 0, true]] }),
+            parts: [{ kind: 'interval', answer: H.regionAsc(q.reg), show: H.regionTex(q.reg), points: 3 }],
+            solution: [T`The graph crosses the \(x\)-axis at \(x = ${q.r1}\) and \(x = ${q.r2}\).`, T`\(f(x) ${OPT[q.op]} 0\) where the graph is ${q.op[0] === '<' ? 'below' : 'above'} the axis${q.closed ? ' or on it' : ''}: ${q.inside ? 'between them' : 'outside them'}.`, T`\(${H.box(H.regionTex(q.reg))}\)`],
+          };
+        },
+      },
+      special: {
+        name: 'No real roots or a double root',
+        gen(rng) {
+          const kind = rng.pick(['noroot', 'double']);
+          if (kind === 'double') {
+            const h = rng.nz(-6, 6), op = rng.pick(['>', '<', '>=']);
+            const reg = op === '>' ? [H.iv(-INF, h, false, false), H.iv(h, INF, false, false)] : op === '<' ? [] : H.ALLREAL;
+            return {
+              prompt: T`Solve \(${MX.quad(1, -2 * h, h * h).tex} ${OPT[op]} 0\). Write the solution in interval notation (or “no solution”).`,
+              parts: [{ kind: 'interval', answer: H.regionAsc(reg), show: H.regionTex(reg), points: 3 }],
+              solution: [T`\(${MX.quad(1, -2 * h, h * h).tex} = \left(x ${MX.sgnTerm(-h)}\right)^{2}\), which is 0 at \(x = ${h}\) and positive everywhere else.`, op === '>' ? T`Positive for every \(x\) except ${h}.` : op === '<' ? T`A square is never negative.` : T`A square is always \(\ge 0\).`, T`\(${H.box(H.regionTex(reg))}\)`],
+            };
+          }
+          let b, c; do { b = rng.int(-8, 8); c = rng.int(1, 20); } while (b * b - 4 * c >= 0);
+          const a = rng.pick([1, -1]), op = rng.pick(['<', '>', '<=', '>=']);
+          const always = (a > 0) === (op[0] === '>');
+          const reg = always ? H.ALLREAL : [];
+          return {
+            prompt: T`Solve \(${MX.quad(a, a * b, a * c).tex} ${OPT[op]} 0\). Write the solution in interval notation (or “no solution”).`,
+            parts: [{ kind: 'interval', answer: H.regionAsc(reg), show: H.regionTex(reg), points: 3 }],
+            solution: [T`Discriminant: \(${MX.par(a * b)}^{2} - 4\left(${a}\right)\left(${a * c}\right) = ${b * b - 4 * c}\lt 0\): no real roots, so the parabola never touches the \(x\)-axis.`, T`It opens ${a > 0 ? 'up, so it is always above the axis (always positive)' : 'down, so it is always below the axis (always negative)'}.`, T`\(${H.box(H.regionTex(reg))}\)`],
+          };
+        },
+      },
+    },
+  });
+
+  // ================= word problems: projectiles and max/min =================
+  const WSEC = 'Word problems';
+  function arcSvg(h0, peakT, peakH, tEnd, o = {}) {
+    const W = 360, Hh = 186, gy = 158, X = (t) => 76 + (t / tEnd) * 268, Y = (h) => gy - (h / (peakH * 1.1)) * 136;
+    let b = S.line(10, gy, W - 10, gy, 'ln ground');
+    if (h0 > 0) b += S.rect(52, Y(h0), 24, gy - Y(h0), 'ln soft2') + S.label(46, Math.min(gy - 6, (Y(h0) + gy) / 2 + 4), h0 + ' ft', { cls: 'lbl', a: 'end' });
+    const pts = []; for (let k = 0; k <= 60; k++) { const t = (tEnd * k) / 60, hh = -16 * t * t + o.v0 * t + h0; if (hh >= 0) pts.push([X(t), Y(hh)]); }
+    b += S.pline(pts, 'acc dash') + S.circle(X(0), Y(h0), 5, 'sun ln');
+    if (o.markPeak) b += S.line(X(peakT), Y(peakH), X(peakT), gy, 'ln thin dash') + S.q(X(peakT), Y(peakH) - 8, 'max?');
+    if (o.markH) b += S.line(60, Y(o.markH), W - 10, Y(o.markH), 'mut dash') + S.text(W - 12, Y(o.markH) - 4, o.markH + ' ft', { cls: 'tx small', a: 'end' });
+    if (o.markGround) b += S.q(Math.min(W - 20, X(tEnd) - 4), gy - 10, '?');
+    b += S.text(W - 12, gy + 20, 'h = height (ft), t = time (s)', { cls: 'tx small mut', a: 'end' });
+    return S.svg(W, Hh, b, 'Path of a thrown ball');
+  }
+  const proj = {
+    ground: {
+      name: 'When it hits the ground',
+      gen(rng) {
+        const v0 = rng.int(3, 10) * 8, h0 = rng.int(2, 30) * 5;
+        const tg = (v0 + Math.sqrt(v0 * v0 + 64 * h0)) / 32, ans = Math.round(tg * 10) / 10;
+        const peakT = v0 / 32, peakH = h0 + (v0 * v0) / 64;
+        return {
+          prompt: T`A ball is thrown upward from the top of a ${h0}-foot building with an initial speed of ${v0} feet per second. Its height after \(t\) seconds is \(h = -16t^{2} + ${v0}t + ${h0}\). How long until it hits the ground? Round to the nearest tenth of a second.`,
+          visual: arcSvg(h0, peakT, peakH, tg, { v0, markGround: true }),
+          parts: [{ kind: 'num', answer: String(ans), tol: 0.051, show: ans + '\\text{ seconds}', post: 'seconds', points: 4 }],
+          solution: [
+            T`The ground is \(h = 0\): \(-16t^{2} + ${v0}t + ${h0} = 0\).`,
+            T`Quadratic formula with \(a = -16\), \(b = ${v0}\), \(c = ${h0}\): \(t = \dfrac{-${v0} \pm \sqrt{${v0 * v0} + ${64 * h0}}}{-32}\).`,
+            T`The positive solution is \(t \approx ${MX.num(tg, 3)}\) (a negative time makes no sense). \(${H.box(ans + '\\text{ s}')}\)`,
+          ],
+        };
+      },
+    },
+    height: {
+      name: 'When it reaches a height',
+      gen(rng) {
+        const t1 = rng.int(1, 2), t2 = t1 + rng.int(1, 3), v0 = 16 * (t1 + t2), h0 = rng.pick([0, 0, 5, 10, 20]);
+        const Hh = h0 + 16 * t1 * t2, peakT = v0 / 32, peakH = h0 + (v0 * v0) / 64, tEnd = (v0 + Math.sqrt(v0 * v0 + 64 * h0)) / 32;
+        return {
+          prompt: T`A rocket is launched ${h0 ? 'from a ' + h0 + '-foot platform' : 'from the ground'} with an initial velocity of ${v0} feet per second, so its height is \(h = -16t^{2} + ${v0}t${h0 ? ' + ' + h0 : ''}\) after \(t\) seconds. When is it exactly ${Hh} feet high?`,
+          visual: arcSvg(h0, peakT, peakH, tEnd, { v0, markH: Hh }),
+          parts: [{ kind: 'nums', count: 2, pre: 't =', joiner: 'and', answers: [String(t1), String(t2)], show: T`t = ${t1}\text{ s and }t = ${t2}\text{ s}`, post: 'seconds', points: 4 }],
+          solution: [
+            T`Set \(h = ${Hh}\): \(-16t^{2} + ${v0}t${h0 ? ' + ' + h0 : ''} = ${Hh}\), so \(-16t^{2} + ${v0}t - ${Hh - h0} = 0\).`,
+            T`Divide by \(-16\): \(${MX.quad(1, -(t1 + t2), t1 * t2, 't').tex} = 0\), which factors as \(\left(t - ${t1}\right)\left(t - ${t2}\right) = 0\).`,
+            T`Once on the way up and once on the way down: \(${H.box(T`t = ${t1}\text{ and }t = ${t2}`)}\) seconds.`,
+          ],
+        };
+      },
+    },
+    peak: {
+      name: 'Maximum height',
+      gen(rng) {
+        const m = rng.int(1, 4), v0 = 32 * m, h0 = rng.pick([0, 4, 6, 10, 25, 40]);
+        const peakH = h0 + 16 * m * m, tEnd = (v0 + Math.sqrt(v0 * v0 + 64 * h0)) / 32;
+        return {
+          prompt: T`A ball is kicked upward ${h0 ? 'from ' + h0 + ' feet above the ground ' : ''}with an initial velocity of ${v0} feet per second. Its height is \(h = -16t^{2} + ${v0}t${h0 ? ' + ' + h0 : ''}\). When does it reach its maximum height, and what is that height?`,
+          visual: arcSvg(h0, m, peakH, tEnd, { v0, markPeak: true }),
+          parts: [
+            { label: 'a', ask: 'Time to reach the maximum height', kind: 'num', answer: String(m), show: m + '\\text{ s}', post: 'seconds', points: 2 },
+            { label: 'b', ask: 'The maximum height', kind: 'num', answer: String(peakH), show: peakH + '\\text{ ft}', post: 'feet', points: 2 },
+          ],
+          solution: [T`The path is a parabola opening down, so the maximum is at the vertex: \(t = -\frac{b}{2a} = -\frac{${v0}}{2\left(-16\right)} = ${m}\).`, T`\(h(${m}) = -16\left(${m}\right)^{2} + ${v0}\left(${m}\right)${h0 ? ' + ' + h0 : ''} = ${peakH}\)`, T`\(${H.box(T`${m}\text{ s},\ ${peakH}\text{ ft}`)}\)`],
+        };
+      },
+    },
+    fence: {
+      name: 'Largest fenced area',
+      gen(rng) {
+        const barn = rng.chance(0.5), P = barn ? rng.int(10, 60) * 4 : rng.int(10, 60) * 4;
+        const w = P / 4, l = barn ? P / 2 : P / 4, A = w * l;
+        const W = 340, Hh = 170;
+        let v = barn ? S.rect(40, 16, 260, 30, 'wood ln', 2) + S.text(170, 36, 'barn wall (no fence)', { cls: 'tx small', w: 700 }) + S.pline([[80, 46], [80, 140], [260, 140], [260, 46]], 'acc thick') : S.rect(90, 30, 160, 110, 'nofill acc thick');
+        v += S.label(barn ? 72 : 82, barn ? 94 : 86, 'x', { cls: 'lbl', a: 'end' }) + S.label(barn ? 170 : 170, barn ? 158 : 158, barn ? P + ' − 2x' : P / 2 + ' − x', { cls: 'lbl' }) + S.text(170, barn ? 96 : 90, 'area = ?', { cls: 'tx small' });
+        return {
+          prompt: barn
+            ? T`A farmer has ${P} feet of fencing to enclose a rectangular pen along a barn. The barn forms one side, so only three sides need fence. What dimensions give the largest area, and what is that area?`
+            : T`You have ${P} feet of fencing to enclose a rectangular garden. What dimensions give the largest possible area, and what is that area?`,
+          visual: S.svg(W, Hh, v, 'A fenced rectangle with sides in terms of x'),
+          parts: [
+            { label: 'a', ask: barn ? 'Width of each side touching the barn' : 'Width', kind: 'num', answer: String(w), show: w + '\\text{ ft}', post: 'feet', points: 1 },
+            { label: 'b', ask: barn ? 'Length of the side parallel to the barn' : 'Length', kind: 'num', answer: String(l), show: l + '\\text{ ft}', post: 'feet', points: 1 },
+            { label: 'c', ask: 'Largest area', kind: 'num', answer: String(A), show: A + '\\text{ ft}^{2}', post: 'square feet', points: 2 },
+          ],
+          solution: barn
+            ? [T`Let \(x\) be each side touching the barn; the other side is \(${P} - 2x\). Area \(A = x\left(${P} - 2x\right) = -2x^{2} + ${P}x\).`, T`This parabola opens down; its vertex is at \(x = -\frac{${P}}{2\left(-2\right)} = ${w}\).`, T`Other side: \(${P} - 2\cdot${w} = ${l}\). Area \(= ${w}\cdot${l} = ${H.box(A + '\\text{ ft}^{2}')}\)`]
+            : [T`Let \(x\) be the width; the length is \(${P / 2} - x\) (half the perimeter minus the width). \(A = x\left(${P / 2} - x\right) = -x^{2} + ${P / 2}x\).`, T`Vertex: \(x = -\frac{${P / 2}}{2\left(-1\right)} = ${w}\), and the length is also ${l}: a square.`, T`Area \(= ${w}^{2} = ${H.box(A + '\\text{ ft}^{2}')}\)`],
+        };
+      },
+    },
+    revenue: {
+      name: 'Maximum revenue',
+      gen(rng) {
+        const p0 = rng.int(4, 12), n0 = rng.int(8, 30) * 10, drop = rng.pick([5, 10, 20]);
+        // price p0 + x, customers n0 - drop*x; R(x) = (p0 + x)(n0 - drop x)
+        const xv = (n0 / drop - p0) / 2;
+        if (!Number.isInteger(xv * 2) || xv <= 0 || xv > 40) return this.gen(rng);
+        const price = p0 + xv, cust = n0 - drop * xv, R = price * cust;
+        const W = 340, Hh = 150;
+        let v = I_tag(80, 50, '$' + p0) + S.text(80, 90, n0 + ' tickets', { cls: 'tx small', w: 700 }) + S.text(80, 110, 'each +$1 → ' + drop + ' fewer', { cls: 'tx small' });
+        // schematic: R(x) from x = 0 to 2·xv, scaled so the hump fills the panel (the axis does not start at 0)
+        const Rx = (x) => (p0 + x) * (n0 - drop * x), lo = Rx(0) - (R - Rx(0)) * 0.35;
+        const pts = []; for (let k = 0; k <= 40; k++) { const x = (2 * xv * k) / 40; pts.push([190 + (k / 40) * 130, 122 - ((Rx(x) - lo) / (R - lo)) * 84]); }
+        v += S.line(184, 130, 332, 130, 'ln') + S.line(184, 130, 184, 12, 'ln') + S.pline(pts, 'acc thick') + S.text(190, 14, 'revenue', { cls: 'tx small', a: 'start' }) + S.text(330, 145, 'price', { cls: 'tx small', a: 'end' }) + S.circle(255, 38, 4, 'accf acc') + S.q(255, 28, 'max?');
+        return {
+          prompt: T`A theater sells ${n0} tickets a night at $${p0} each. For every $1 increase in price, it sells ${drop} fewer tickets. What ticket price gives the most revenue, and what is that revenue?`,
+          visual: S.svg(W, Hh, v, 'Ticket price and a revenue parabola'),
+          parts: [
+            { label: 'a', ask: 'Best ticket price', kind: 'num', pre: '$', answer: MX.money(price), tol: 0.005, show: '\\$' + MX.money(price), points: 2 },
+            { label: 'b', ask: 'Maximum revenue', kind: 'num', pre: '$', answer: MX.money(R), tol: 0.005, show: '\\$' + MX.commas(R), points: 2 },
+          ],
+          solution: [
+            T`Let \(x\) be the number of $1 increases. Price \(${p0} + x\), tickets \(${n0} - ${drop}x\).`,
+            T`\(R = \left(${p0} + x\right)\left(${n0} - ${drop}x\right) = ${MX.quad(-drop, n0 - drop * p0, p0 * n0).tex}\), a parabola opening down.`,
+            T`Vertex: \(x = -\frac{${n0 - drop * p0}}{2\left(-${drop}\right)} = ${MX.num(xv)}\), so the price is $${MX.money(price)} and \(R = ${MX.money(price)}\cdot${MX.num(cust)} = ${H.box('\\$' + MX.commas(R))}\)`,
+          ],
+        };
+      },
+    },
+    mincost: {
+      name: 'Minimum cost',
+      gen(rng) {
+        const a = rng.pick([0.5, 1, 2, 0.25]), xv = rng.int(5, 40) * (a === 0.25 ? 4 : 2), b = 2 * a * xv, c = rng.int(20, 90) * 50;
+        const minC = c - a * xv * xv;
+        if (minC <= 0) return this.gen(rng);
+        const W = 320, Hh = 150;
+        const pts = []; for (let k = 0; k <= 40; k++) { const x = (2 * xv * k) / 40; pts.push([50 + (k / 40) * 250, 104 - ((a * x * x - b * x + c - minC) / (c - minC)) * 84]); }
+        const v = S.line(40, 130, 310, 130, 'ln') + S.line(40, 130, 40, 12, 'ln') + S.pline(pts, 'acc thick') + S.circle(175, 104, 4, 'accf acc') + S.q(175, 90, 'min?') + S.text(46, 14, 'cost', { cls: 'tx small', a: 'start' }) + S.text(308, 145, 'chairs made', { cls: 'tx small', a: 'end' });
+        return {
+          prompt: T`A workshop's daily cost to make \(x\) chairs is \(C(x) = ${MX.num(a) === '1' ? '' : MX.num(a)}x^{2} - ${MX.num(b)}x + ${MX.commas(c)}\) dollars. How many chairs should it make to keep the cost as low as possible, and what is the minimum cost?`,
+          visual: S.svg(W, Hh, v, 'A cost parabola with a minimum'),
+          parts: [
+            { label: 'a', ask: 'Number of chairs', kind: 'num', answer: String(xv), show: String(xv), points: 2 },
+            { label: 'b', ask: 'Minimum daily cost', kind: 'num', pre: '$', answer: String(minC), tol: 0.005, show: '\\$' + MX.commas(minC), points: 2 },
+          ],
+          solution: [T`\(C\) is a parabola opening up (\(a = ${MX.num(a)} \gt 0\)), so its lowest point is the vertex.`, T`\(x = -\frac{b}{2a} = \frac{${MX.num(b)}}{2\left(${MX.num(a)}\right)} = ${xv}\)`, T`\(C(${xv}) = ${MX.num(a)}\left(${xv}\right)^{2} - ${MX.num(b)}\left(${xv}\right) + ${c} = ${H.box('\\$' + MX.commas(minC))}\)`],
+        };
+      },
+    },
+  };
+  const I_tag = (x, y, label) => S.I.tag(x, y, label, 'paperf');
+  MX.register({
+    id: 'w-quadratic', kind: 'word', section: WSEC, title: 'Quadratic applications', sources: ['added'],
+    slots: [
+      { label: 'Projectile motion', source: 'Added', pool: ['ground', 'height', 'peak'] },
+      { label: 'Maximum and minimum', source: 'Added', pool: ['fence', 'revenue', 'mincost'] },
+    ],
+    lesson: T`<p><strong>Projectiles.</strong> An object launched upward with speed \(v_{0}\) (ft/s) from height \(h_{0}\) (ft) has height</p>
+\[h = -16t^{2} + v_{0}t + h_{0}\]
+<ul><li><em>When does it hit the ground?</em> Solve \(h = 0\) (quadratic formula) and keep the positive time.</li>
+<li><em>When is it at height \(H\)?</em> Solve \(h = H\); there are usually two times, once going up and once coming down.</li>
+<li><em>Maximum height?</em> The vertex: \(t = -\frac{b}{2a}\), then evaluate \(h\) there.</li></ul>
+<p><strong>Maximum and minimum problems.</strong> Write the quantity as a quadratic in one variable (area \(= x\left(\frac{P}{2} - x\right)\), revenue \(=\) price \(\times\) number sold, cost \(= ax^{2} + bx + c\)). If \(a \lt 0\) the vertex is a maximum; if \(a \gt 0\) it is a minimum. The vertex \(x = -\frac{b}{2a}\) answers "how many / what price"; plugging it in answers "how much".</p>`,
+    variants: proj,
+  });
+})(typeof window !== 'undefined' ? window : globalThis);

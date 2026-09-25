@@ -171,7 +171,7 @@
     };
   }
   MX.register({
-    id: 'parabola', section: SEC, title: 'Parabolas: intercepts, vertex, graph', kind: 'skill',
+    id: 'parabola', section: 'Quadratic equations & functions', title: 'Parabolas: intercepts, vertex, graph', kind: 'skill',
     sources: ['Exam 1 #19', 'Exam 2 #22', 'Exam 3 #27'],
     lesson: T`<p>For \(y = ax^{2} + bx + c\):</p>
 <ul><li><strong>x-intercepts</strong>: set \(y = 0\) and solve (factor, or use the quadratic formula).</li>

@@ -1,13 +1,18 @@
-# Math 098 Final Prep
+# Placement Exam Prep
 
-A study app for a Math 098 (intermediate algebra) final. It was built from three sample final exams. It generates an unlimited supply of full-length practice finals on the same topics, grades answers instantly, and has a tutorial and a flashcard deck for every topic. Progress is saved.
+A study app for an algebra placement exam. It started from three sample final exams for an intermediate algebra course and has grown to cover absolute value, piecewise functions, quadratics and transformations, and a full chapter's worth of linear equations and inequalities. It generates an unlimited supply of full-length practice exams, grades answers instantly, and has a tutorial and a flashcard deck for every topic. Progress is saved.
 
 **Open it:** `docs/index.html` is a single self-contained page. Open it in a browser, or turn on GitHub Pages for this repo (Settings → Pages → deploy from branch, folder `/docs`).
 
 ## What it does
 
 - **Home.** Three choices: the practice exam (start or continue), tutorials, and flashcards. A progress snapshot shows the last exam score, tutorials practiced, and flashcards learned. The top bar has Home · Exam · Tutorials · Flashcards · Progress.
-- **Full-length generated exams.** Every exam covers all 55 topics: 49 skill questions plus 20 word problems, about 69 questions and 240–250 points, graded part by part like the paper exam. The length can't be reduced. Instead, your work autosaves as you type, including answers you haven't checked yet. **Save and finish later** returns you to Home, and **Continue** reopens the same exam at the first unanswered question.
+- **Full-length generated exams.** Every exam covers all 72 topics in three parts, 102 questions and about 330–340 points, graded part by part like a paper exam:
+  - **Part I · Skills:** 58 questions across 10 sections.
+  - **Part II · Word problems:** 22 questions from 13 families.
+  - **Part III · Linear equations & inequalities:** 22 questions, one for each skill in a full chapter on the topic (see below).
+
+  The length can't be reduced. Instead, your work autosaves as you type, including answers you haven't checked yet. **Save and finish later** returns you to Home, and **Continue** reopens the same exam at the first unanswered question.
 - **All the factoring.** A special-patterns topic gives two each of a² − b², a³ − b³ and a³ + b³ plus a perfect-square trinomial on every exam. A factoring-strategy topic mixes GCF-only, prime ("doesn't factor") and mixed problems.
 - **Logarithms.** Seven topics:
   - forms
@@ -25,7 +30,18 @@ A study app for a Math 098 (intermediate algebra) final. It was built from three
   - domain and range from a graph in interval notation
   - domain from a formula
   - range from a formula
-- **Word problems vary within their group.** The 20 word-problem slots are grouped into 12 families (distance-rate-time, mixtures, Pythagorean, similar triangles, linear systems, exponential & log models, and more). Each exam draws a different variation from the family. Every word problem comes with an SVG diagram drawn from its own numbers.
+- **Absolute value and piecewise functions.** Absolute value expressions (simplifying, comparing, distance on the number line) and absolute value equations, including the one-solution and no-solution cases. Piecewise functions: evaluating, graphing, reading a graph, writing |x| piecewise, and piecewise pricing.
+- **Quadratic equations & functions.** Factoring, the square root property and the quadratic formula, plus completing the square (solving and vertex form), the discriminant, equations in quadratic form (u-substitution with x², √x, fractional and negative exponents), vertex form and graphs, and quadratic inequalities. A quadratic word-problem group covers projectiles and maximum/minimum problems.
+- **Transformations of functions.** Shifts, reflections, vertical stretches and compressions, and horizontal stretches (f(bx)) of the six basic graphs: describing, writing the equation, choosing the graph, moving a point, and reading the equation off a graph.
+- **Part III: linear equations & inequalities.** Seven topics with 22 skills. All the questions are original and generated fresh for each exam:
+  - general strategy, identities and contradictions, fractions and decimals
+  - number, percent and simple-interest problems
+  - solving formulas, geometry applications
+  - coin, ticket, stamp, mixture and uniform-motion problems
+  - interval notation, linear inequalities and their applications
+  - compound inequalities ("and" / "or")
+  - absolute value inequalities
+- **Word problems vary within their group.** The 22 word-problem slots are grouped into 13 families (distance-rate-time, mixtures, Pythagorean, similar triangles, linear systems, exponential & log models, and more). Each exam draws a different variation from the family. Every word problem comes with an SVG diagram drawn from its own numbers.
 - **A real math answer box.** Answers display as math while you type:
   - Typing `^` raises the cursor into an exponent.
   - Typing `/` stacks a fraction, and the term before it becomes the numerator.
@@ -34,7 +50,7 @@ A study app for a Math 098 (intermediate algebra) final. It was built from three
   - `inf` becomes ∞, and `<=` becomes ≤.
   - The arrow keys move in and out of each piece.
 
-  A button bar under the active box has the fraction, exponent, √, parentheses, ±, ≤ and ≥ buttons, plus context buttons: points, ×10ⁿ, log with base, ln, e, ∞, ∪, set braces, interval brackets, "all reals", "no solution" and "prime". It also has ← → ⌫ for phones. The box works with physical keyboards, phone keyboards, taps and paste, and it is reachable with Tab. Checked answers stay formatted.
+  A button bar under the active box has the fraction, exponent, √, parentheses, ±, ≤ and ≥ buttons, plus context buttons: points, ×10ⁿ, log with base, ln, e, ∞, ∪, set braces, interval brackets, "all real numbers", "no solution" and "prime". It also has ← → ⌫ for phones. The box works with physical keyboards, phone keyboards, taps and paste, and it is reachable with Tab. Checked answers stay formatted.
 - **Grading checks value and form.** The checker tests mathematical equivalence *and* the required form. For example:
   - "Factor completely" rejects a leftover GCF.
   - "Simplify" rejects `√50`.
@@ -43,7 +59,7 @@ A study app for a Math 098 (intermediate algebra) final. It was built from three
 
   A form problem is a free nudge; only a wrong value costs points.
 - **Tutorials.** A **Tutorial** button sits on every problem. Tutorials are listed by topic and grouped by section. Each one has a short lesson, worked examples, and practice exercises with unlimited tries, plus a button that adds 3 more exercises. Tutorials are fixed: generating a new exam doesn't change them. Leaving the exam for a tutorial never resets the exam.
-- **Flashcards.** There are 311 cards in 55 decks, one per topic, covering the rules, formulas and quick examples.
+- **Flashcards.** There are 424 cards in 72 decks, one per topic, covering the rules, formulas and quick examples.
   - Flip a card and mark it **Got it** or **Still learning**.
   - Shuffle the deck, or review only the cards marked still learning.
   - Study a whole section at once.
@@ -55,9 +71,9 @@ A study app for a Math 098 (intermediate algebra) final. It was built from three
 
 ## Catalog
 
-Built from Sample Final Exams 1–3. Topics marked *added* are not on the sample finals; they were added to cover factoring patterns, logarithms, and relations & functions.
+Part I and Part II started from three sample final exams (Exams 1–3). Topics marked *added* are not on those exams; they were added to cover factoring patterns, logarithms, relations & functions, absolute value, piecewise functions, quadratics and transformations. Part III is all added material.
 
-### Skill topics (43; 49 questions per exam)
+### Skill topics (52; 58 questions per exam)
 
 | Section | Topic | On the sample finals | Per exam | Variations | Cards |
 |---|---|---|---|---|---|
@@ -84,9 +100,17 @@ Built from Sample Final Exams 1–3. Topics marked *added* are not on the sample
 | Equations & inequalities | Solving a formula for a variable | Exam 1 #16, Exam 2 #28, Exam 3 #3 | 1 | Formula with a fraction; Formula with a sum; Other formulas | 5 |
 | Equations & inequalities | Linear inequalities | Exam 1 #18, Exam 2 #18 | 1 | Fraction coefficient; Negative outside parentheses; Variables on both sides | 5 |
 | Equations & inequalities | Exponential equations (same base) | Exam 1 #12, Exam 2 #16, Exam 3 #10 | 1 | Rewrite the right side; Different bases, same root; Negative exponent | 6 |
-| Equations & inequalities | Solving quadratics by factoring | Exam 1 #14, Exam 2 #14, Exam 3 #14 | 1 | Trinomial; Common factor; Cubic with a GCF; Leading coefficient not 1 | 5 |
-| Equations & inequalities | Square root property | Exam 1 #15, Exam 2 #8, Exam 3 #5 | 1 | Squared binomial; Whole-number answers; Radical answers | 5 |
-| Equations & inequalities | Quadratic formula | Exam 1 #17, Exam 2 #26, Exam 3 #24 | 1 | Rational answers; Round to hundredths; Rearrange first | 5 |
+| Absolute value | Absolute value expressions | *added* | 1 | Simplify; Order of operations; Compare values; Evaluate for given values; Distance on the number line | 7 |
+| Absolute value | Absolute value equations | *added* | 1 | Two solutions; Isolate the absolute value first; Two absolute values; Equal to zero (one solution); No solution | 7 |
+| Quadratic equations & functions | Solving quadratics by factoring | Exam 1 #14, Exam 2 #14, Exam 3 #14 | 1 | Trinomial; Common factor; Cubic with a GCF; Leading coefficient not 1 | 5 |
+| Quadratic equations & functions | Square root property | Exam 1 #15, Exam 2 #8, Exam 3 #5 | 1 | Squared binomial; Whole-number answers; Radical answers | 5 |
+| Quadratic equations & functions | Quadratic formula | Exam 1 #17, Exam 2 #26, Exam 3 #24 | 1 | Rational answers; Round to hundredths; Rearrange first | 5 |
+| Quadratic equations & functions | Parabolas: intercepts, vertex, graph | Exam 1 #19, Exam 2 #22, Exam 3 #27 | 1 | Opens up; Opens down | 6 |
+| Quadratic equations & functions | Completing the square | *added* | 1 | Make a perfect square; Solve (leading coefficient 1); Solve (leading coefficient not 1); Rewrite in vertex form | 7 |
+| Quadratic equations & functions | The discriminant | *added* | 1 | Number and type of solutions; How many x-intercepts?; Choose a coefficient for one solution | 6 |
+| Quadratic equations & functions | Equations in quadratic form | *added* | 1 | Fourth degree (u = x²); Substitute for a binomial; Square roots (u = √x); Fractional exponents; Negative exponents | 7 |
+| Quadratic equations & functions | Vertex form and transformations | *added* | 1 | Vertex, axis and max/min; From standard form; Choose the graph; Describe the transformation; Equation from a graph | 6 |
+| Quadratic equations & functions | Quadratic inequalities | *added* | 1 | Factorable; Rearrange first; Solve from a graph; No real roots or a double root | 6 |
 | Logarithms | Exponential & logarithmic form | *added* | 1 | Log form to exponential form; Exponential form to log form; Natural log and e; Common log (base 10) | 6 |
 | Logarithms | Evaluating logarithms | *added* | 1 | Whole-number answers; Negative and fractional answers; Special logs and inverse rules | 8 |
 | Logarithms | Expanding logarithms | *added* | 1 | Product, quotient and power rules; With a number to evaluate; Roots and powers | 6 |
@@ -96,7 +120,6 @@ Built from Sample Final Exams 1–3. Topics marked *added* are not on the sample
 | Logarithms | Exponential equations using logs | *added* | 1 | Any base; Base e; Isolate the power first; Expression in the exponent | 5 |
 | Graphs, lines & systems | Intercepts & slope-intercept form | Exam 1 #20, Exam 3 #11 | 1 | Find intercepts and y = mx + b; Graph from standard form | 6 |
 | Graphs, lines & systems | Line through two points | Exam 1 #24, Exam 2 #27 | 1 | Fraction slope; Whole-number slope | 5 |
-| Graphs, lines & systems | Parabolas: intercepts, vertex, graph | Exam 1 #19, Exam 2 #22, Exam 3 #27 | 1 | Opens up; Opens down | 6 |
 | Graphs, lines & systems | Solving systems of equations | Exam 1 #25, Exam 2 #24, Exam 3 #16 | 1 | Multiply both equations; Multiply one equation; Decimal coefficients | 5 |
 | Graphs, lines & systems | Direct & inverse variation | Exam 1 #22, Exam 2 #17 | 1 | Direct variation; Inverse variation; Varies as the square | 5 |
 | Relations & functions | Relations and functions | *added* | 1 | Ordered pairs; Table; Mapping diagram; Graph (vertical line test) | 6 |
@@ -104,25 +127,40 @@ Built from Sample Final Exams 1–3. Topics marked *added* are not on the sample
 | Relations & functions | Domain & range from a graph | *added* | 1 | Line segment; Parabola; Ray (one endpoint); Square-root curve | 6 |
 | Relations & functions | Domain of a function from its formula | *added* | 1 | Fraction; Quadratic denominator; Square root; Polynomial; Square root in a denominator | 6 |
 | Relations & functions | Range of a function from its formula | *added* | 1 | Parabola in vertex form; Parabola in standard form; Square root function; Absolute value function; Linear function | 5 |
+| Relations & functions | Piecewise functions | *added* | 1 | Evaluate; Choose the graph; Read values from the graph; Absolute value as a piecewise function; Piecewise pricing | 6 |
+| Relations & functions | Transformations of functions | *added* | 1 | Describe the transformation; Write the equation; Choose the graph; Move a point; Horizontal stretch or compression; Recognize a basic graph; Equation from a graph | 8 |
 
-### Word-problem groups (12 groups, 20 slots per exam)
+### Word-problem groups (13 groups, 22 slots per exam)
 
 | Group | Slots (source question) | Variations | Cards |
 |---|---|---|---|
+| Proportions & rates | Proportion (Exam 1 #21)<br>Proportion (Exam 2 #19) | Sales tax; Recipe scaling; Unit price; Map scale; Fuel use; Hourly pay; Paint coverage | 5 |
+| Percent | Percent (Exam 2 #25) | Percent correct; Tip; Percent increase or decrease; Sale price; Find the whole | 6 |
+| Scientific notation in context | Scientific notation (Exam 3 #25) | Multiply large numbers; Divide large numbers; Very small quantities | 5 |
+| Inequalities from words | Inequalities from words (Exam 3 #19) | Translate a phrase; Budget; Average needed | 6 |
+| Perimeter & dimensions | Perimeter & dimensions (Exam 2 #20) | Rectangle perimeter; Three-sided fence; Rectangle area (quadratic) | 6 |
+| Pythagorean theorem | Find a side (Exam 1 #27)<br>Rectangles and diagonals (Exam 2 #21)<br>Algebraic side lengths (Exam 3 #21) | Ladder against a wall; Guy wire; Kite string; Walking at right angles; Diagonal of a rectangle; Side from the diagonal; Legs x and x + d; Consecutive integer sides; Legs x and 2x + b | 6 |
+| Similar triangles & triangles | Triangles (Exam 3 #22) | Shadows; Mirror on the ground; Nested triangles (ramp); Angle sum; Triangle perimeter; Triangle area (quadratic) | 6 |
+| Linear models | Interpret the slope (Exam 1 #23)<br>Graph and solve (Exam 2 #23)<br>Build the equation (Exam 3 #28) | Interpret the slope; Graph and solve; Build the equation | 6 |
 | Distance, rate & time | Distance, rate & time (Exam 1 #28) | Moving toward each other; Moving apart; Catching up; Round trip; With and against a current; Average speed | 6 |
 | Mixture problems | Value mixture (Exam 1 #26)<br>Percent mixture (Exam 2 #29) | Blend by price; Two interest rates; Two solutions; Diluting with water; Metal alloy | 6 |
 | Linear systems in context | Linear systems (Exam 3 #23) | Ticket sales; Coins; Two orders; Two numbers; Comparing two plans | 6 |
-| Pythagorean theorem | Find a side (Exam 1 #27)<br>Rectangles and diagonals (Exam 2 #21)<br>Algebraic side lengths (Exam 3 #21) | Ladder against a wall; Guy wire; Kite string; Walking at right angles; Diagonal of a rectangle; Side from the diagonal; Legs x and x + d; Consecutive integer sides; Legs x and 2x + b | 6 |
-| Similar triangles & triangles | Triangles (Exam 3 #22) | Shadows; Mirror on the ground; Nested triangles (ramp); Angle sum; Triangle perimeter; Triangle area (quadratic) | 6 |
-| Perimeter & dimensions | Perimeter & dimensions (Exam 2 #20) | Rectangle perimeter; Three-sided fence; Rectangle area (quadratic) | 6 |
-| Proportions & rates | Proportion (Exam 1 #21)<br>Proportion (Exam 2 #19) | Sales tax; Recipe scaling; Unit price; Map scale; Fuel use; Hourly pay; Paint coverage | 5 |
-| Percent | Percent (Exam 2 #25) | Percent correct; Tip; Percent increase or decrease; Sale price; Find the whole | 6 |
-| Inequalities from words | Inequalities from words (Exam 3 #19) | Translate a phrase; Budget; Average needed | 6 |
-| Scientific notation in context | Scientific notation (Exam 3 #25) | Multiply large numbers; Divide large numbers; Very small quantities | 5 |
-| Linear models | Interpret the slope (Exam 1 #23)<br>Graph and solve (Exam 2 #23)<br>Build the equation (Exam 3 #28) | Interpret the slope; Graph and solve; Build the equation | 6 |
+| Quadratic applications | Projectile motion (added)<br>Maximum and minimum (added) | When it hits the ground; When it reaches a height; Maximum height; Largest fenced area; Maximum revenue; Minimum cost | 7 |
 | Exponential & log models | Money growth (added)<br>Growth and decay (added)<br>Log scales (added) | Compound interest; Continuous compounding; How long to reach a goal; Population growth; Doubling time; Half-life; pH; Decibels; Earthquake magnitude | 8 |
 
-Flashcards: 311 cards in 55 decks.
+### Part III: linear equations & inequalities (7 topics, 22 questions per exam)
+
+| Topic | Skills (one question each) | Variations | Cards |
+|---|---|---|---|
+| Linear equations: strategy and special cases | General strategy<br>Classify equations<br>Fraction or decimal coefficients | Distribute first; Like terms on both sides; Nested grouping symbols; Identity; Contradiction; Conditional; Fraction coefficients; Decimal coefficients | 7 |
+| Problem solving: numbers, percents, interest | Number problems<br>Percent applications<br>Simple interest | Two numbers; Consecutive integers; Translate and solve; Commission; Markup; Find the discount rate; Find the original amount; Find the interest; Find the rate; Find the principal; Find the time | 7 |
+| Formulas and geometry applications | Solve a formula for a variable<br>Geometry applications | Solve for y; Solve a formula; Angles of a triangle; Complementary and supplementary angles; Triangle area; Trapezoid area | 7 |
+| Coins, tickets, mixtures and motion | Coin problems<br>Ticket and stamp problems<br>Mixture problems<br>Uniform motion | Coins; Tickets; Stamps; Price blend; Percent solution; Toward each other: when do they meet?; Two speeds on one trip; Late start: catching up | 6 |
+| Linear inequalities and interval notation | Number line and interval notation<br>Solve linear inequalities<br>Translate and solve<br>Inequality applications | Inequality to interval notation; Graph to interval notation; Solve and graph; With fractions; Translate words; Break-even and profit; Budget limit; Reach a goal | 6 |
+| Compound inequalities | “And” inequalities<br>“Or” inequalities<br>Compound inequality applications | Double inequality; Two inequalities joined by “and”; “Or” inequalities; Temperature range; Stay within a range | 6 |
+| Absolute value inequalities | Absolute value “less than”<br>Absolute value “greater than”<br>Absolute value applications | Less than; Isolate first (less than); Greater than; Isolate first (greater than); Machine-part tolerance; Package weight | 7 |
+
+Flashcards: 424 cards in 72 decks.
 
 ## Development
 
@@ -147,6 +185,7 @@ node test/catalog.mjs     # print the catalog above
 | `src/svg.js` | theme-aware SVG drawing kit (planes, number lines, mappings, illustrations) |
 | `src/topics/t*.js` | skill-topic generators and lessons |
 | `src/topics/w*.js` | word-problem groups, variations, visuals and lessons |
+| `src/topics/x*.js` | Part III topics (`part: 3`), shown after the word problems |
 | `src/flashcards.js` | flashcard decks, one per topic |
 | `src/store.js` | saving progress (localStorage + optional Claude artifact db); every load is sanitized, since saved data is untrusted input |
 | `src/app.js` | home, exam, tutorial, flashcard and progress views |
@@ -155,7 +194,7 @@ node test/catalog.mjs     # print the catalog above
 
 ```js
 MX.register({
-  id: 'my-topic', section: 'Radicals', title: 'My topic', kind: 'skill',   // or kind: 'word' with slots
+  id: 'my-topic', section: 'Radicals', title: 'My topic', kind: 'skill',   // or kind: 'word' with slots; part: 3 puts it in Part III
   sources: ['Exam 1 #9'],
   lesson: MX.T`<p>Explanation with inline math \(x^{2}\).</p>`,
   variants: {

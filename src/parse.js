@@ -9,6 +9,8 @@
 
   const NOSOL = /^\s*(no\s*(real\s*)?solutions?|none|no\s*answer|∅|ø|\{\s*\}|dne|empty\s*set)\s*\.?\s*$/i;
   MX.isNoSolution = (s) => NOSOL.test(String(s || ''));
+  const ALLREAL = /^\s*(all\s*real(s|\s*numbers?)?|ℝ|infinitely\s*many(\s*solutions)?|every\s*real\s*number|identity|\(\s*-\s*(∞|inf(inity)?)\s*,\s*(∞|inf(inity)?)\s*\))\s*\.?\s*$/i;
+  MX.isAllReal = (s) => ALLREAL.test(String(s || ''));
 
   function normalize(s) {
     return String(s)
@@ -73,7 +75,8 @@
     let p = 0;
     const peek = () => toks[p];
     const next = () => toks[p++];
-    const isAtomStart = (t) => t && (t.t === 'num' || t.t === 'id' || t.t === '(' || t.t === '√' || t.t === 'log' || t.t === 'ln' || t.t === 'e');
+    let absDepth = 0; // a "|" right after a term opens a new absolute value only when none is open
+    const isAtomStart = (t) => t && (t.t === 'num' || t.t === 'id' || t.t === '(' || t.t === '√' || t.t === 'log' || t.t === 'ln' || t.t === 'e' || (t.t === '|' && absDepth === 0));
 
     function expr() {
       let a = term();
@@ -161,7 +164,9 @@
         return { t: 'grp', a: e };
       }
       if (t.t === '|') {
+        absDepth++;
         const e = expr();
+        absDepth--;
         if (!peek() || peek().t !== '|') throw new ParseError('A closing “|” is missing.');
         next();
         return { t: 'abs', a: e };
@@ -305,16 +310,22 @@
     return env;
   }
   // true when a and b agree at many sample points
+  // (when the expressions only exist on part of the line, like √(x − 4), shifted sample sets are tried too)
+  const OFFSETS = [0, 5.3, -5.7, 10.1, -10.9, 21.7, -22.3];
   function equivalent(a, b, varList) {
     const vl = varList || [...new Set([...vars(a), ...vars(b)])];
     let compared = 0;
-    for (let k = 0; k < SAMPLES.length; k++) {
-      const env = envAt(vl, k);
-      const x = ev(a, env), y = ev(b, env);
-      if (!isFinite(x) && !isFinite(y)) continue;
-      if (!isFinite(x) || !isFinite(y)) return false;
-      if (Math.abs(x - y) > 1e-7 * Math.max(1, Math.abs(x), Math.abs(y))) return false;
-      compared++;
+    for (const off of OFFSETS) {
+      for (let k = 0; k < SAMPLES.length; k++) {
+        const env = envAt(vl, k);
+        if (off) for (const v in env) env[v] += off;
+        const x = ev(a, env), y = ev(b, env);
+        if (!isFinite(x) && !isFinite(y)) continue;
+        if (!isFinite(x) || !isFinite(y)) return false;
+        if (Math.abs(x - y) > 1e-7 * Math.max(1, Math.abs(x), Math.abs(y))) return false;
+        compared++;
+      }
+      if (compared >= 6) return true;
     }
     return compared >= 3;
   }

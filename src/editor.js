@@ -551,11 +551,11 @@
     let k = BASE.slice();
     if (kind === 'point' || kind === 'points') k.push('point');
     if (kind === 'sci') k.push('sci');
-    if (kind === 'interval') k = ['frac', 'sqrt', 'lb', 'lp', 'rp', 'rb', 'inf', 'cup', 'le', 'ge', 'reals'];
-    if (kind === 'set') k = ['frac', 'sqrt', 'set', 'pm'];
+    if (kind === 'interval') k = ['frac', 'sqrt', 'lb', 'lp', 'rp', 'rb', 'inf', 'cup', 'le', 'ge', 'reals', 'nosol'];
+    if (kind === 'set') k = ['frac', 'sqrt', 'set', 'pm', 'nosol'];
     if (o.logs || kind === 'eqform') k.push('logb', 'log', 'ln', 'e');
     if (kind === 'factor') k.push('prime');
-    if (kind === 'num' || kind === 'nums') k.push('nosol');
+    if (kind === 'num' || kind === 'nums') k.push('nosol', 'reals');
     return k.concat(['left', 'right', 'bksp']);
   }
   function showBar(ed) {

@@ -50,7 +50,7 @@ function M(n) {
 const REL = { '=': '=', '<': '<', '>': '>', '<=': '≤', '>=': '≥' };
 function structured(text, kind) {
   if (kind === 'set' || kind === 'interval' || kind === 'sci') return ED.ser(ED.fromText(text));
-  if (MX.isNoSolution(text) || MX.isPrimeWord(text)) return ED.ser(ED.fromText(text));
+  if (MX.isNoSolution(text) || MX.isPrimeWord(text) || MX.isAllReal(text)) return ED.ser(ED.fromText(text));
   try {
     if (kind === 'point') { const [a, b] = MX.parsePoint(text); return ED.ser(['(', ...M(a), ',', ' ', ...M(b), ')']); }
     if (/[=<>]/.test(MX.normalizeInput(text))) {

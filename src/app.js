@@ -3,22 +3,26 @@
   'use strict';
   const MX = G.MX;
   const Store = MX.Store;
-  const GEN_VERSION = 2;
+  const GEN_VERSION = 3;
   const d = G.document;
 
-  const SECTION_ORDER = ['Polynomials & exponents', 'Factoring', 'Rational expressions', 'Radicals', 'Equations & inequalities', 'Logarithms', 'Graphs, lines & systems', 'Relations & functions', 'Word problems'];
-  const WORD_ORDER = ['w-proportion', 'w-percent', 'w-sci', 'w-ineq', 'w-perimeter', 'w-pyth', 'w-triangles', 'w-linear', 'w-motion', 'w-mixture', 'w-systems', 'w-logs'];
+  const PART3_SEC = 'Linear equations & inequalities';
+  const SECTION_ORDER = ['Polynomials & exponents', 'Factoring', 'Rational expressions', 'Radicals', 'Equations & inequalities', 'Absolute value', 'Quadratic equations & functions', 'Logarithms', 'Graphs, lines & systems', 'Relations & functions', 'Word problems', PART3_SEC];
+  const WORD_ORDER = ['w-proportion', 'w-percent', 'w-sci', 'w-ineq', 'w-perimeter', 'w-pyth', 'w-triangles', 'w-linear', 'w-motion', 'w-mixture', 'w-systems', 'w-quadratic', 'w-logs'];
+  const PART3_ORDER = ['lq-strategy', 'lq-problems', 'lq-formulas', 'lq-applications', 'lq-linear-ineq', 'lq-compound', 'lq-absineq'];
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const R = MX.rich;
   const byId = (id) => d.getElementById(id);
   const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many || one + 's');
 
   function orderedTopics() {
-    const skills = MX.topics.filter((t) => t.kind !== 'word').slice().sort((a, b) => SECTION_ORDER.indexOf(a.section) - SECTION_ORDER.indexOf(b.section));
+    const skills = MX.topics.filter((t) => t.kind !== 'word' && t.part !== 3).slice().sort((a, b) => SECTION_ORDER.indexOf(a.section) - SECTION_ORDER.indexOf(b.section));
     const words = WORD_ORDER.map((id) => MX.byId[id]).filter(Boolean);
-    return [...skills, ...words];
+    const p3 = MX.topics.filter((t) => t.part === 3).slice().sort((a, b) => PART3_ORDER.indexOf(a.id) - PART3_ORDER.indexOf(b.id));
+    return [...skills, ...words, ...p3];
   }
-  const sectionOf = (t) => (t.kind === 'word' ? 'Word problems' : t.section);
+  const examPartOf = (t) => (t.part === 3 ? 3 : t.kind === 'word' ? 2 : 1);
+  const sectionOf = (t) => (t.part === 3 ? PART3_SEC : t.kind === 'word' ? 'Word problems' : t.section);
   function bySection() {
     const groups = {};
     orderedTopics().forEach((t) => { const s = sectionOf(t); (groups[s] = groups[s] || []).push(t); });
@@ -27,11 +31,11 @@
   const slotsOf = (t) => t.slots || [{ pool: Object.keys(t.variants) }];
   const allVariants = (t) => Object.keys(t.variants);
   const isLogTopic = (t) => !!t && (t.section === 'Logarithms' || t.id === 'w-logs');
-  // where a topic came from: the sample finals, or added to round out the course
+  // where a topic came from: the sample exams, or added to round out the course
   function sourceText(t) {
     const real = (t.sources || []).filter((s) => !/^added/i.test(s));
     const added = (t.sources || []).some((s) => /^added/i.test(s));
-    if (!real.length) return 'Added topic (not on the sample finals)';
+    if (!real.length) return 'Added topic (not on the sample exams)';
     return real.join(' · ') + (added ? ' · plus added problem types' : '');
   }
 
@@ -127,7 +131,9 @@
     const post = p.post && !p.units ? `<span class="post">${esc(p.post)}</span>` : '';
     switch (p.kind) {
       case 'choice': {
-        const cls = p.graph ? 'opts graphs' : p.inline ? 'opts inline' : 'opts list';
+        // long, short pictures (number lines) get two wide columns instead of four small ones
+        const strip = p.graph && p.options.every((o) => { const m = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(o); return m && m[1] / m[2] > 2.5; });
+        const cls = p.graph ? 'opts graphs' + (strip ? ' strips' : '') : p.inline ? 'opts inline' : 'opts list';
         return `<div class="${cls}" role="radiogroup">` + p.options.map((o, k) =>
           `<label class="opt${val.choice != null && +val.choice === k ? ' sel' : ''}${dis && k === p.answer ? ' right' : ''}"><input type="radio" name="${base}" id="${base}-o${k}" value="${k}"${val.choice != null && +val.choice === k ? ' checked' : ''}${dis ? ' disabled' : ''}><span class="optl">${p.graph ? '<span class="ok-letter">' + 'ABCD'[k] + '</span>' : ''}${p.graph ? o : R(o)}</span></label>`).join('') + '</div>';
       }
@@ -241,25 +247,32 @@
   function examItemHead(it, i) {
     const t = it.topic;
     const vname = t.variants[it.variant].name;
-    const kind = t.kind === 'word' ? `${esc(t.title)} · ${esc(vname)}` : esc(t.title);
+    const kind = t.kind === 'word' ? `${esc(t.title)} · ${esc(vname)}` : t.part === 3 ? esc(it.slot.label || t.title) : esc(t.title);
     const st = sourceText(t);
     const src = it.slot.source ? (/^added/i.test(it.slot.source) ? 'Added topic' : 'Like ' + it.slot.source) : /^Added/.test(st) ? 'Added topic' : 'Seen on ' + st;
     return `<header class="qhead"><span class="topic">${kind}</span><span class="src">${esc(src)}</span>
       <button type="button" class="btn tut" data-act="tutorial" data-topic="${t.id}" data-item="${i}">Tutorial<span aria-hidden="true"> →</span></button></header>`;
   }
+  const PART_NUM = { 1: 'I', 2: 'II', 3: 'III' };
+  const PART_NAME = { 1: 'Skills', 2: 'Word problems', 3: PART3_SEC };
+  const NAV_NAME = { 1: 'Skills', 2: 'Word problems', 3: 'Linear equations & inequalities' };
+  const PART3_NOTE = 'One question for each skill in a full chapter on linear equations and inequalities: solving strategies, problem solving, formulas, applications, interval notation, compound and absolute value inequalities.';
   function renderExam() {
     const ex = examState();
     const res = ex.res;
     const finished = !!ex.finished;
-    let html = '', lastSec = null, inWords = false;
+    let html = '', lastSec = null, lastPart = 0;
     [...REG.keys()].forEach((k) => { if (k[0] === 'x') REG.delete(k); });
     App.items.forEach((it, i) => {
-      if (it.topic.kind === 'word') {
-        if (!inWords) { inWords = true; html += `<h2 class="part-h"><span>Part II</span> Word problems</h2>`; }
-      } else {
-        if (i === 0) html += `<h2 class="part-h"><span>Part I</span> Skills</h2>`;
-        if (it.topic.section !== lastSec) { lastSec = it.topic.section; html += `<h3 class="sec-h">${esc(lastSec)}</h3>`; }
+      const part = examPartOf(it.topic);
+      if (part !== lastPart) {
+        lastPart = part;
+        lastSec = null;
+        html += `<h2 class="part-h"><span>Part ${PART_NUM[part]}</span> ${esc(PART_NAME[part])}</h2>`;
+        if (part === 3) html += `<p class="part-note">${PART3_NOTE}</p>`;
       }
+      const sub = part === 1 ? it.topic.section : part === 3 ? it.topic.title : null;
+      if (sub && sub !== lastSec) { lastSec = sub; html += `<h3 class="sec-h">${esc(sub)}</h3>`; }
       const cardId = 'x' + ex.no + '-' + i;
       const ctx = { logs: isLogTopic(it.topic) };
       REG.set(cardId, {
@@ -276,13 +289,13 @@
   function renderChip() {
     const ex = examState();
     const sc = scoreOf(App.items, ex.res);
-    byId('score-chip').innerHTML = `<button type="button" class="chip-b" data-act="view" data-view="exam" title="Go to the exam"><span class="chip-l">Final No. ${esc(ex.no)}</span><b>${sc.earned}</b><span>/ ${sc.total}</span></button>`;
+    byId('score-chip').innerHTML = `<button type="button" class="chip-b" data-act="view" data-view="exam" title="Go to the exam"><span class="chip-l">Exam No. ${esc(ex.no)}</span><b>${sc.earned}</b><span>/ ${sc.total}</span></button>`;
   }
   function renderExamHeader() {
     const ex = examState();
     const sc = scoreOf(App.items, ex.res);
     const started = new Date(ex.started);
-    byId('exam-title').textContent = 'Practice Final No. ' + ex.no;
+    byId('exam-title').textContent = 'Practice Exam No. ' + ex.no;
     byId('exam-meta').textContent = `Generated ${started.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} · ${App.items.length} questions · ${sc.total} points`;
     byId('sum-earned').textContent = sc.earned;
     byId('sum-total').textContent = sc.total;
@@ -315,8 +328,8 @@
     const ex = examState();
     let html = '';
     App.items.forEach((it, i) => {
-      if (i === 0) html += '<div class="nav-sec">Skills</div>';
-      if (it.topic.kind === 'word' && (i === 0 || App.items[i - 1].topic.kind !== 'word')) html += '<div class="nav-sec">Word problems</div>';
+      const part = examPartOf(it.topic);
+      if (i === 0 || examPartOf(App.items[i - 1].topic) !== part) html += `<div class="nav-sec">${esc(NAV_NAME[part])}</div>`;
       const st = itemStatus(it, ex.res);
       html += `<button type="button" class="bub ${st}" data-act="goto" data-item="${i}" title="${esc(it.n + '. ' + it.topic.title)}">${it.n}</button>`;
     });
@@ -490,7 +503,7 @@
     let html = `<div class="tut-top">${back}${rv !== 'tutorials' ? `<button type="button" class="btn ghost" data-act="view" data-view="tutorials">All tutorials</button>` : ''}
         ${nCards ? `<button type="button" class="btn tut deck-link" data-act="deck" data-topic="${t.id}" data-from="tutorial">Flashcards for this topic (${nCards}) →</button>` : ''}</div>
       <header class="tut-head"><div class="eyebrow">${esc(sectionOf(t))}</div><h1>${esc(t.title)}</h1>
-      <p class="tut-src">${/^Added/.test(sourceText(t)) ? esc(sourceText(t)) : 'On the sample finals: ' + esc(sourceText(t))}</p>
+      <p class="tut-src">${/^Added/.test(sourceText(t)) ? esc(sourceText(t)) : 'On the sample exams: ' + esc(sourceText(t))}</p>
       <div class="vchips" aria-label="Problem types covered">${vnames}</div></header>
       <section class="lesson">${R(t.lesson)}</section>
       <h2 class="sub-h">Worked examples</h2>
@@ -701,21 +714,21 @@
     const last = hist[hist.length - 1];
     let examBody, examBtns;
     if (ex.finished) {
-      examBody = `Practice Final No. ${ex.no} is finished: <b>${sc.earned} / ${sc.total}</b> (${sc.pct}%). A new exam uses fresh numbers and situations; your tutorials stay the same.`;
-      examBtns = `<button type="button" class="btn primary" data-act="new-exam">Start Practice Final No. ${ex.no + 1}</button><button type="button" class="btn ghost" data-act="view" data-view="exam">Review No. ${ex.no}</button>`;
+      examBody = `Practice Exam No. ${ex.no} is finished: <b>${sc.earned} / ${sc.total}</b> (${sc.pct}%). A new exam uses fresh numbers and situations; your tutorials stay the same.`;
+      examBtns = `<button type="button" class="btn primary" data-act="new-exam">Start Practice Exam No. ${ex.no + 1}</button><button type="button" class="btn ghost" data-act="view" data-view="exam">Review No. ${ex.no}</button>`;
     } else if (!sc.done && !Object.keys(drafts()).some((k) => k[0] === 'x')) {
-      examBody = `Practice Final No. ${ex.no} is ready: ${App.items.length} questions, ${sc.total} points, every topic from the sample finals. Your work saves as you go, so you can stop and come back.`;
+      examBody = `Practice Exam No. ${ex.no} is ready: ${App.items.length} questions worth ${sc.total} points, in three parts: skills, word problems, and linear equations and inequalities. Your work saves as you go, so you can stop and come back.`;
       examBtns = `<button type="button" class="btn primary" data-act="resume">Start the exam</button>`;
     } else {
       const nxt = App.items[firstOpenItem()];
-      examBody = `Practice Final No. ${ex.no} is in progress: ${sc.done} of ${sc.parts} parts answered, <b>${sc.earned}</b> points so far.`;
+      examBody = `Practice Exam No. ${ex.no} is in progress: ${sc.done} of ${sc.parts} parts answered, <b>${sc.earned}</b> points so far.`;
       examBtns = `<button type="button" class="btn primary" data-act="resume">Continue at question ${nxt ? nxt.n : 1}</button>`;
     }
     const fc = flashCounts(allTopicIds());
     const topics = orderedTopics();
     const practiced = topics.filter((t) => tutCounts(t.id).attempted).length;
-    const html = `<header class="home-h"><div class="exam-course">Math 098 · Intermediate Algebra</div><h1>Final exam prep</h1>
-        <p>Take full-length practice finals, study any topic step by step, and drill the rules with flashcards. Everything you do is saved.</p></header>
+    const html = `<header class="home-h"><div class="exam-course">Algebra placement exam</div><h1>Placement Exam Prep</h1>
+        <p>Take full-length practice exams, study any topic step by step, and drill the rules with flashcards. Everything you do is saved.</p></header>
       <div class="choices">
         <article class="choice"><div class="ch-ic">${ICONS.exam}</div><div class="ch-b"><h2>Practice exam</h2><p>${examBody}</p>
           ${ex.finished ? '' : `<div class="ch-meter">${meter(sc.parts ? sc.done / sc.parts : 0)}<span>${Math.round((100 * sc.done) / Math.max(1, sc.parts))}% answered</span></div>`}
@@ -776,7 +789,7 @@
       <h2 class="sub-h">History</h2>`;
     html += hist.length
       ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Exam</th><th>Finished</th><th class="num">Score</th><th class="num">%</th></tr></thead><tbody>${hist.slice().reverse().map((h) => `<tr><td>No. ${esc(h.no)}</td><td>${new Date(h.finished).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td><td class="num">${esc(h.earned)} / ${esc(h.total)}</td><td class="num">${Math.round((100 * h.earned) / h.total)}%</td></tr>`).join('')}</tbody></table></div>`
-      : `<p class="empty">No finished exams yet. Your first score appears here when you finish Practice Final No. ${ex.no}.</p>`;
+      : `<p class="empty">No finished exams yet. Your first score appears here when you finish Practice Exam No. ${ex.no}.</p>`;
     html += `<h2 class="sub-h">By topic <span class="tut-stats">weakest first · all exams</span></h2><div class="tbl-wrap"><table class="tbl topics"><thead><tr><th>Topic</th><th class="num">Exam points</th><th>Accuracy</th><th class="num">Practice solved</th><th class="num">Cards learned</th><th></th></tr></thead><tbody>` +
       rows.map((r) => `<tr><td>${esc(r.t.title)}</td><td class="num">${r.pts ? r.pts[0] + ' / ' + r.pts[1] : '–'}</td><td>${r.pct == null ? '<span class="muted">no data</span>' : `<span class="meter"><span style="width:${r.pct}%" class="${r.pct >= 80 ? 'good' : r.pct >= 50 ? 'mid' : 'low'}"></span></span> ${r.pct}%`}</td><td class="num">${r.c.solved}</td><td class="num">${r.f.total ? r.f.got + ' / ' + r.f.total : '–'}</td><td><button type="button" class="btn tut sm" data-act="tutorial" data-topic="${r.t.id}">Tutorial →</button></td></tr>`).join('') +
       `</tbody></table></div>

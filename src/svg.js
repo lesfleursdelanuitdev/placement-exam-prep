@@ -41,7 +41,7 @@
     const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
     const cls = o.cls || 'dimln';
     return S.arrow(mx, my, x1, y1, cls, 6) + S.arrow(mx, my, x2, y2, cls, 6) +
-      (label != null ? S.label(mx + (o.dx || 0), my + (o.dy || 4), label, { cls: o.lcls || 'lbl' }) : '');
+      (label != null ? (Math.abs(y1 - y2) < 1 ? S.rect(mx + (o.dx || 0) - String(label).length * 3.6 - 4, my + (o.dy || 4) - 12, String(label).length * 7.2 + 8, 16, 'paperf nostroke') : '') + S.label(mx + (o.dx || 0), my + (o.dy || 4), label, { cls: o.lcls || 'lbl' }) : '');
   };
   S.rightAngle = (x, y, s, dx, dy) =>
     S.pline([[x + dx * s, y], [x + dx * s, y + dy * s], [x, y + dy * s]], 'ln thin');
@@ -112,6 +112,35 @@
       b += S.line(x, y, end + (o.dir === 'right' ? -8 : 8), y, 'acc ray') + S.arrow(x, y, end, y, 'acc ray', 9);
       b += S.circle(x, y, 5.5, o.closed ? 'accf acc' : 'paperf acc');
     }
+    return S.svg(W, H, b, o.label || 'number line');
+  };
+
+  // number line showing a region: o = {region:[{lo,hi,lc,hc}], min, max, step, labelEvery, w}
+  // (lo/hi may be ±Infinity; open endpoints are hollow dots, closed are filled)
+  S.regionLine = function (o) {
+    const W = o.w || 300, H = o.h || 54, pad = 18, y = 22;
+    const vv = (v) => (v && typeof v === 'object' && 'n' in v ? v.n / v.d : v);
+    const X = (x) => pad + ((x - o.min) * (W - 2 * pad)) / (o.max - o.min);
+    let b = S.arrow(X(o.min) - 6, y, 4, y, 'ln', 6) + S.arrow(X(o.max) + 6 - 12, y, W - 4, y, 'ln', 6) + S.line(X(o.min) - 6, y, X(o.max) + 6, y, 'ln');
+    const step = o.step || 1, le = o.labelEvery || step;
+    for (let v = o.min; v <= o.max + 1e-9; v += step) {
+      const k = Math.round((v - o.min) / step), major = Math.abs(((v - o.min) / le) - Math.round((v - o.min) / le)) < 1e-9;
+      b += S.line(X(v), y - (major ? 6 : 4), X(v), y + (major ? 6 : 4), 'ln thin');
+      if (major) b += S.text(X(v), y + 22, MX.num(Math.round(v * 1000) / 1000), { cls: 'tx tick' });
+      if (k > 400) break;
+    }
+    const dots = [];
+    for (const r of o.region) {
+      const lo = vv(r.lo), hi = vv(r.hi);
+      const x1 = lo === -Infinity ? 4 : X(lo), x2 = hi === Infinity ? W - 4 : X(hi);
+      if (lo === -Infinity && hi === Infinity) b += S.line(14, y, W - 14, y, 'acc ray') + S.arrow(W / 2, y, 4, y, 'acc ray', 9) + S.arrow(W / 2, y, W - 4, y, 'acc ray', 9);
+      else if (lo === -Infinity) b += S.line(x2, y, x1 + 8, y, 'acc ray') + S.arrow(x2, y, x1, y, 'acc ray', 9);
+      else if (hi === Infinity) b += S.line(x1, y, x2 - 8, y, 'acc ray') + S.arrow(x1, y, x2, y, 'acc ray', 9);
+      else if (hi > lo) b += S.line(x1, y, x2, y, 'acc ray');
+      if (lo !== -Infinity) dots.push([x1, r.lc]);
+      if (hi !== Infinity) dots.push([x2, r.hc]);
+    }
+    dots.forEach(([x, c]) => { b += S.circle(x, y, 5.5, c ? 'accf acc' : 'paperf acc'); });
     return S.svg(W, H, b, o.label || 'number line');
   };
 

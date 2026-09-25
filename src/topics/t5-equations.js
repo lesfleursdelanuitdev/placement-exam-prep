@@ -273,7 +273,7 @@
   // ---------- quadratics by factoring ----------
   const rootsShow = (rs, v = 'x') => rs.map((r) => v + ' = ' + (r instanceof Q ? r.tex() : r)).join(',\\quad ');
   MX.register({
-    id: 'quad-factor', section: SEC, title: 'Solving quadratics by factoring', kind: 'skill',
+    id: 'quad-factor', section: 'Quadratic equations & functions', title: 'Solving quadratics by factoring', kind: 'skill',
     sources: ['Exam 1 #14', 'Exam 2 #14', 'Exam 3 #14'],
     lesson: T`<p>The zero-product property: if \(AB = 0\), then \(A = 0\) or \(B = 0\).</p>
 <ol><li>Get 0 on one side.</li><li>Factor completely (GCF first; don't divide the variable away, factor it out).</li>
@@ -357,7 +357,7 @@
 
   // ---------- square root property ----------
   MX.register({
-    id: 'quad-sqrt', section: SEC, title: 'Square root property', kind: 'skill',
+    id: 'quad-sqrt', section: 'Quadratic equations & functions', title: 'Square root property', kind: 'skill',
     sources: ['Exam 1 #15', 'Exam 2 #8', 'Exam 3 #5'],
     lesson: T`<p>If \(u^{2} = k\) then \(u = \sqrt{k}\) or \(u = -\sqrt{k}\), written \(u = \pm\sqrt{k}\).</p>
 <ol><li>Isolate the squared part.</li><li>Take the square root of both sides and remember the \(\pm\).</li>
@@ -420,7 +420,7 @@
     ];
   }
   MX.register({
-    id: 'quad-formula', section: SEC, title: 'Quadratic formula', kind: 'skill',
+    id: 'quad-formula', section: 'Quadratic equations & functions', title: 'Quadratic formula', kind: 'skill',
     sources: ['Exam 1 #17', 'Exam 2 #26', 'Exam 3 #24'],
     lesson: T`<p>For \(ax^{2} + bx + c = 0\):</p>
 \[x = \frac{-b \pm \sqrt{b^{2} - 4ac}}{2a}\]

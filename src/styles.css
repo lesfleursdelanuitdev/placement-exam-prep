@@ -76,7 +76,8 @@ h1, h2, h3 { text-wrap: balance; }
   padding: 10px 20px; background: var(--paper); border-bottom: 1px solid var(--rule);
 }
 .brand { display: flex; align-items: center; gap: 10px; font-family: var(--f-cond); border: 0; background: none; padding: 0; cursor: pointer; color: var(--ink); }
-.brand-mark { border: 2px solid var(--ink); border-radius: 4px; padding: 0 7px; font-weight: 700; font-size: 18px; letter-spacing: 0.04em; line-height: 1.4; }
+.brand-mark { border: 2px solid var(--ink); border-radius: 4px; padding: 0 6px 0 5px; font: 600 18px/1.4 var(--f-math); }
+.brand-mark sup { font-size: 0.6em; vertical-align: 0.55em; line-height: 0; margin-left: 1px; }
 .brand-t { font-weight: 600; font-size: 17px; letter-spacing: 0.02em; }
 .tabs { display: flex; gap: 4px; }
 .tabs button {
@@ -142,6 +143,7 @@ main { padding-block: 22px 120px; padding-inline: 16px; }
 
 .part-h { font-family: var(--f-cond); font-weight: 700; font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; margin: 34px 0 0; padding-bottom: 6px; border-bottom: 2px solid var(--ink); display: flex; gap: 10px; }
 .part-h span { color: var(--accent); }
+.part-note { color: var(--muted); font-size: 14.5px; margin: 8px 0 0; max-width: 62ch; }
 .sec-h { font-family: var(--f-cond); font-weight: 600; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 26px 0 4px; }
 
 /* ---------- question cards ---------- */
@@ -272,6 +274,9 @@ select.units { height: 36px; border: 1px solid var(--rule); border-radius: 6px; 
 .opts.graphs .optl { position: relative; }
 .ok-letter { position: absolute; top: 2px; left: 4px; font: 700 12px var(--f-cond); color: var(--muted); }
 .opts.graphs svg { width: 100%; height: auto; max-width: 230px; }
+.opts.graphs.strips { grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
+.opts.graphs.strips .opt { padding: 16px 8px 4px; }
+.opts.graphs.strips svg { max-width: 380px; }
 .opts.list .optl { font-size: 15px; }
 
 .btn {
@@ -359,6 +364,13 @@ select.units { height: 36px; border: 1px solid var(--rule); border-radius: 6px; 
 .muted, .empty { color: var(--muted); }
 .danger { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; color: var(--muted); }
 
+/* piecewise functions */
+.pw { display: inline-flex; align-items: center; gap: 0.2em; vertical-align: middle; margin: 0.2em 0; }
+.pw-br { width: 0.55em; flex: none; margin-left: 0.15em; }
+.pw-rows { display: inline-grid; grid-template-columns: auto auto; column-gap: 1.2em; row-gap: 0.15em; align-items: baseline; }
+.pw-c { font-family: var(--f-math); white-space: nowrap; }
+.pw-e .m, .pw-c .m { font-size: 1em; }
+
 /* x / y tables inside prompts */
 .xy { border-collapse: collapse; margin: 8px 0; font-family: var(--f-math); font-size: 17px; }
 .xy th, .xy td { border: 1px solid var(--rule); padding: 4px 12px; text-align: center; min-width: 40px; }
@@ -378,10 +390,11 @@ select.units { height: 36px; border: 1px solid var(--rule); border-radius: 6px; 
 .fr { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; font-size: 0.9em; margin: 0 0.1em; line-height: 1.2; }
 .fn { border-bottom: 1px solid currentColor; padding: 0 0.16em 0.06em; }
 .fd { padding: 0.06em 0.16em 0; }
-.sq { display: inline-flex; align-items: stretch; white-space: nowrap; }
+.sq { display: inline-flex; align-items: stretch; white-space: nowrap; line-height: 1.2; }
 .sqs { font-size: 1.08em; line-height: 1; align-self: flex-end; }
-.sqa { border-top: 1px solid currentColor; padding: 0.04em 0.1em 0; margin-left: -0.02em; }
-.sqi { font-size: 0.58em; align-self: flex-start; margin-right: -0.35em; margin-top: 0.05em; }
+.sqa { border-top: 1px solid currentColor; padding: 0.08em 0.1em 0; margin-left: -0.02em; }
+.sqn { position: relative; padding-left: 0.3em; }
+.sqi { position: absolute; left: 0.02em; top: 0.14em; font-size: 0.58em; line-height: 1; }
 .lr { display: inline; }
 .dl.tall { font-size: 1.55em; line-height: 0; vertical-align: -0.1em; font-weight: 300; }
 .md { text-align: center; margin: 0.4em 0; overflow-x: auto; overflow-y: hidden; padding: 2px 0; }

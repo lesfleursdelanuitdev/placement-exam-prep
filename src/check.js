@@ -248,6 +248,24 @@
         if (raw != null && usedDecimal(raw)) return 'Give the exact answer using logs, not a rounded decimal.';
         if (!A.count(user, 'log')) return 'Leave the exact answer in terms of logs, like ln(12)/ln(5).';
         return null;
+      case 'vertex': {
+        const terms = sumTerms(user);
+        let squares = 0;
+        for (const t of terms) {
+          if (!A.vars(t).size) continue;
+          let u = unwrap(t);
+          if (u.t === 'neg') u = unwrap(u.a);
+          if (u.t === 'mul' || u.t === 'div') {
+            const a = unwrap(u.a), b = unwrap(u.b);
+            if (!A.vars(a).size) u = b; else if (!A.vars(b).size && u.t === 'mul') u = a; else return 'Write it in vertex form, a(x − h)² + k.';
+            u = unwrap(u);
+          }
+          const lin = u.t === 'pow' && MX.evalAST(u.b, {}) === 2 && MX.toPoly(u.a);
+          if (lin && P.degree(lin) === 1) squares++;
+          else return 'Write it in vertex form, a(x − h)² + k.';
+        }
+        return squares === 1 ? null : 'Write it in vertex form, a(x − h)² + k.';
+      }
       case 'rational': {
         if (!isSingleFraction(user)) return 'Combine everything into a single fraction.';
         const ru = MX.toRat(user), re = MX.toRat(expected);
@@ -280,8 +298,11 @@
   CHECK.num = function (part, input) {
     return safe(() => {
       const str = input.value;
-      const expNoSol = part.answer === 'nosol';
-      if (MX.isNoSolution(str)) return expNoSol ? { ok: true } : { ok: false, msg: 'There is a solution here.' };
+      const expNoSol = part.answer === 'nosol', expAll = part.answer === 'allreal';
+      if (MX.isNoSolution(str)) return expNoSol ? { ok: true } : { ok: false, msg: expAll ? '' : 'There is a solution here.' };
+      if (MX.isAllReal(str)) return expAll ? { ok: true } : { ok: false, msg: expNoSol ? '' : 'Only one number works here.' };
+      if (expAll && !String(str).trim()) throw new MX.ParseError('Type an answer first.');
+      if (expAll) { readNumber(str, part.var); return { ok: false, msg: 'Check it: does more than one value work?' }; }
       if (expNoSol && !String(str).trim()) throw new MX.ParseError('Type an answer first.');
       const r = readNumber(str, part.var);
       if (r.vals.length !== 1) return { error: 'Just one value here.' };
@@ -656,19 +677,25 @@
     return out.map((x) => x.trim());
   }
   function readSet(str) {
-    const s = String(str || '').trim().replace(/^\{\s*/, '').replace(/\s*\}$/, '');
+    const s = String(str || '').trim().replace(/^\{\s*/, '').replace(/\s*\}$/, '').replace(/\s+(or|and)\s+/gi, ', ');
     if (!s) throw new MX.ParseError('Type the values, like {-2, 0, 3}.');
-    return splitTop(s, ',').map((p) => {
+    const out = [];
+    splitTop(s, ',').forEach((p) => {
       if (!p) throw new MX.ParseError('There’s an empty spot between commas.');
-      const a = MX.parse(p);
+      const a = MX.parse(p.replace(/^\s*[a-zA-Z]\s*=\s*/, ''));
       if (A.vars(a).size) throw new MX.ParseError('List numbers only, like {-2, 0, 3}.');
-      const v = MX.evalAST(a, {});
-      if (!isFinite(v)) throw new MX.ParseError('One of the values isn’t a number.');
-      return v;
+      A.expandPM(a).forEach((b) => {
+        const v = MX.evalAST(b, {});
+        if (!isFinite(v)) throw new MX.ParseError('One of the values isn’t a real number.');
+        out.push(v);
+      });
     });
+    return out;
   }
   CHECK.set = function (part, input) {
     return safe(() => {
+      if (MX.isNoSolution(input.value)) return part.answers.length ? { ok: false, msg: 'There is at least one solution.' } : { ok: true };
+      if (!part.answers.length) { readSet(input.value); return { ok: false }; }
       const got = readSet(input.value);
       const exp = part.answers.map((a) => MX.evalAST(MX.parse(a), {}));
       const uniq = [];
@@ -710,6 +737,7 @@
     return out;
   }
   function readRegion(str) {
+    if (MX.isNoSolution(str)) return [];
     let s = String(str || '').trim()
       .replace(/[−–—]/g, '-').replace(/≤|=</g, '<=').replace(/≥|=>/g, '>=').replace(/≠|!=|<>/g, '!=')
       .replace(/infinity|inf/gi, '∞');
@@ -776,8 +804,9 @@
       case 'points': return { values: part.answers.slice() };
       case 'choice': return { choice: part.answer };
       case 'sci': return { value: part.answer };
-      case 'set': case 'interval': case 'eqform': return { value: part.answer };
-      case 'num': return { value: part.answer === 'nosol' ? 'no solution' : part.answer, unit: part.units ? part.units.answer : undefined };
+      case 'set': return { value: part.answers.length ? part.answer : 'no solution' };
+      case 'interval': case 'eqform': return { value: part.answer };
+      case 'num': return { value: part.answer === 'nosol' ? 'no solution' : part.answer === 'allreal' ? 'all real numbers' : part.answer, unit: part.units ? part.units.answer : undefined };
       default: return { value: part.answer };
     }
   };
@@ -806,6 +835,7 @@
     if (!s) return null;
     try {
       if (MX.isNoSolution(s)) return '\\text{no solution}';
+      if (MX.isAllReal(s) && kind !== 'interval') return '\\text{all real numbers}';
       if (MX.isPrimeWord(s)) return '\\text{prime}';
       if (kind === 'set' || kind === 'interval') return regionTex(s);
       if (kind === 'point') {
