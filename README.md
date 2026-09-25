@@ -6,8 +6,8 @@ A study app for an algebra placement exam. It started from three sample final ex
 
 ## What it does
 
-- **Home.** Three choices: the practice exam (start or continue), tutorials, and flashcards. A progress snapshot shows the last exam score, tutorials practiced, and flashcards learned. The top bar has Home · Exam · Tutorials · Flashcards · Progress.
-- **Phones and tablets.** Up to 900px wide, the tabs become a hamburger button that slides out a menu from the left. The menu has the five sections, the current exam's score with a Start/Continue button, and jumps to Parts I–III. It closes with ×, a tap on the dimmed page, Escape, or a swipe to the left. While it's open, keyboard focus stays inside it and the page behind it doesn't scroll. On phones the pages run edge to edge, long math wraps after = or + signs, and wide tables scroll inside their own box. Every exam question, tutorial and flashcard is checked at 320px for sideways overflow.
+- **Home.** Three choices: the practice exam (start or continue), tutorials, and flashcards. A progress snapshot shows the last exam score, tutorials practiced, and flashcards learned. The top bar has Home · Exam · Tutorials · Flashcards · Grapher · Progress.
+- **Phones and tablets.** Up to 900px wide, the tabs become a hamburger button that slides out a menu from the left. The menu has the six sections, the current exam's score with a Start/Continue button, and jumps to Parts I–III. It closes with ×, a tap on the dimmed page, Escape, or a swipe to the left. While it's open, keyboard focus stays inside it and the page behind it doesn't scroll. On phones the pages run edge to edge, long math wraps after = or + signs, and wide tables scroll inside their own box. Every exam question, tutorial and flashcard is checked at 320px for sideways overflow.
 - **Full-length generated exams.** Every exam covers all 72 topics in three parts, 102 questions and about 330–340 points, graded part by part like a paper exam:
   - **Part I · Skills:** 58 questions across 10 sections.
   - **Part II · Word problems:** 22 questions from 13 families.
@@ -59,7 +59,14 @@ A study app for an algebra placement exam. It started from three sample final ex
   - "Expand" rejects a log that could still be split.
 
   A form problem is a free nudge; only a wrong value costs points.
-- **Tutorials.** A **Tutorial** button sits on every problem. Tutorials are listed by topic and grouped by section. Each one has a short lesson, six worked examples, and practice exercises with unlimited tries, plus a button that adds 3 more exercises. The six examples are spread across the topic's problem types (every exam slot first, then the rest), each is labeled with its type, and a type that appears more than once gets different numbers each time. A "Skip to practice" link jumps past them. Tutorials are fixed: generating a new exam doesn't change them. Leaving the exam for a tutorial never resets the exam.
+- **Tutorials.** A **Tutorial** button sits on every problem. Tutorials are listed by topic and grouped by section. Each one has a lesson, six worked examples, and practice exercises with unlimited tries, plus a button that adds 3 more exercises. The six examples are spread across the topic's problem types (every exam slot first, then the rest), each is labeled with its type, and a type that appears more than once gets different numbers each time. A "Skip to practice" link jumps past them. Tutorials are fixed: generating a new exam doesn't change them. Leaving the exam for a tutorial never resets the exam.
+- **Clear lessons.** Every lesson is written in plain language: a short opening on what the topic is and why it matters, one idea per section, and one or two small worked examples laid out as "what you do | the math". Major ideas sit in colored boxes: **Definition** (blue), **Rule** or property (green), **How to** steps (violet) and **Watch out** for the common mistake (amber). The style follows OpenStax *Intermediate Algebra 2e*; no text or examples are copied from it (it is CC BY-NC-SA).
+- **Grapher.** A tab for graphing and drawing:
+  - **Graph functions:** up to 8 at once, each in a color you choose (8 preset swatches or a custom color), with show/hide. It graphs everything the answer box understands plus sin, cos, tan and π, piecewise functions (`x+1 if x<0; x^2 if x>=0`, with open and closed dots) and equations in x and y such as circles (`x^2 + y^2 = 9`) and vertical lines. Curves break at asymptotes and jumps and start exactly where a domain begins. Hovering shows each function's value.
+  - **Window and grid:** the x and y range and the tick spacing (1, 2, 5, 10, 0.5…), with presets and zoom.
+  - **Draw a graph:** draw on the grid with a pen, points that snap to the grid, or two-point tools: a line through two points, a parabola from its vertex and one more point, a circle from its center and a point on it. Type what your drawing is the graph of and press **Check**. Pen strokes may wander about half a grid square; lines, parabolas and circles built from points must match closely; the drawing must cover the graph and pass through its intercepts and turning points. You can then show the correct graph on top of yours.
+  - Your functions, colors, window and mode are saved.
+- **Graphing by hand (practice).** A tutorial topic with "Graph it" problems (lines, parabolas, absolute value and square root graphs) answered by drawing on a grid with the same tools and checked the same way. It is practice only; exams stay the same length.
 - **Flashcards.** There are 424 cards in 72 decks, one per topic, covering the rules, formulas and quick examples.
   - Tap a card and it turns over in 3D, lifting slightly as it turns. Tapping again mid-turn reverses it smoothly. New cards slide in from the side you're moving toward. With the system's reduce-motion setting on, the two sides simply fade instead.
   - Mark each card **Got it** or **Still learning**.
@@ -174,6 +181,7 @@ node test/selftest.mjs    # generate every variant with many seeds and check the
 node test/fuzz.mjs 400    # every variant with 400 fresh random seeds; prints a repro command for each failure
 node test/editor.mjs      # rebuild every answer key in the math box (stacked fractions, exponents, radicals) and re-grade it; replay keystrokes
 node test/security.mjs    # tampered saved progress must be cleaned before the page uses it
+node test/grapher.mjs     # grapher: reading inputs, sampling (asymptotes, domain edges), contours, the drawing checker
 node test/dump.mjs w-pyth # print sample problems + solutions for a topic (prefix match)
 node test/catalog.mjs     # print the catalog above
 ```
@@ -184,6 +192,8 @@ node test/catalog.mjs     # print the catalog above
 | `src/texmath.js` | tiny TeX-subset → HTML renderer (fractions, radicals, exponents, logs) with no fonts or libraries |
 | `src/parse.js` | parser for typed answers (including logs, e, ∞), evaluation, polynomial/rational forms |
 | `src/verify.js` | independent answer checks: each generated part's `verify` re-derives the answer from the problem as shown (root finding, substitution, equivalence, region sampling) |
+| `src/plot.js` | the grapher's math: reading functions and equations, adaptive sampling, contours, SVG planes, checking drawings |
+| `src/grapher.js` | the Grapher tab, and the drawing grid used by "graph it" practice |
 | `src/check.js` | graders for each answer type (`num`, `nums`, `expr`, `factor`, `eq`, `system`, `ineq`, `point(s)`, `sci`, `radpm`, `eqform`, `set`, `interval`, `choice`) |
 | `src/editor.js` | the WYSIWYG math answer box and its button bar; its value is the plain text the graders read |
 | `src/svg.js` | theme-aware SVG drawing kit (planes, number lines, mappings, illustrations) |

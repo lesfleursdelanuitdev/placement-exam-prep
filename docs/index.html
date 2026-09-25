@@ -9152,13 +9152,35 @@ ${(() => {
   MX.register({
     id: 'quad-complete', section: SEC, title: 'Completing the square', kind: 'skill', sources: [ADDED],
     slots: [{ label: 'Completing the square', source: ADDED, pool: ['makeSquare', 'solve1', 'solveA', 'vertexForm'] }],
-    lesson: T`<p>A perfect-square trinomial factors as a square: \(x^{2} + bx + \left(\frac{b}{2}\right)^{2} = \left(x + \frac{b}{2}\right)^{2}\). So to <strong>complete the square</strong> on \(x^{2} + bx\), add \(\left(\frac{b}{2}\right)^{2}\): half of \(b\), squared.</p>
-<p><strong>To solve</strong> \(ax^{2} + bx + c = 0\):</p>
-<ol><li>If \(a \ne 1\), divide every term by \(a\).</li><li>Move the constant to the right side.</li>
-<li>Add \(\left(\frac{b}{2}\right)^{2}\) to <em>both</em> sides.</li><li>Factor the left side as a square.</li>
-<li>Use the square root property (don't forget \(\pm\)) and solve.</li></ol>
-\[x^{2} - 6x + 2 = 0 \;\Rightarrow\; x^{2} - 6x + 9 = -2 + 9 \;\Rightarrow\; (x - 3)^{2} = 7 \;\Rightarrow\; x = 3 \pm \sqrt{7}\]
-<p>The same steps rewrite \(y = ax^{2} + bx + c\) in <strong>vertex form</strong> \(y = a(x - h)^{2} + k\).</p>`,
+    lesson: T`<p>Some trinomials are perfect squares: \(x^{2} + 6x + 9 = \left(x + 3\right)^{2}\). <strong>Completing the square</strong> means adding the one number that turns \(x^{2} + bx\) into a perfect square like that. Once one side is a square, you can solve with square roots. It works for every quadratic equation, even ones that don't factor.</p>
+<div class="box def"><h4>Definition <b>Perfect-square trinomial</b></h4><p>A <strong>perfect-square trinomial</strong> is a trinomial that equals a binomial squared, such as \(x^{2} - 10x + 25 = \left(x - 5\right)^{2}\).</p></div>
+<h3>Find the number that completes the square</h3>
+<p>Look at \(\left(x + 3\right)^{2} = x^{2} + 6x + 9\). The 3 is half of 6, and the 9 is \(3^{2}\). That pattern always holds.</p>
+<div class="box rule"><h4>Rule <b>Completing the square</b></h4><p>To complete the square on \(x^{2} + bx\), take half of \(b\) and square it. Adding that number makes a binomial squared:</p>
+\[x^{2} + bx + \left(\frac{b}{2}\right)^{2} = \left(x + \frac{b}{2}\right)^{2}\]</div>
+<p>For \(x^{2} - 10x\): half of \(-10\) is \(-5\), and \(\left(-5\right)^{2} = 25\). So \(x^{2} - 10x + 25 = \left(x - 5\right)^{2}\). The number inside the binomial is half of \(b\), sign included.</p>
+<h3>Solve an equation by completing the square</h3>
+<div class="box how"><h4>How to <b>solve \(ax^{2} + bx + c = 0\) by completing the square</b></h4><ol>
+<li>If \(a \ne 1\), divide every term by \(a\).</li>
+<li>Move the constant to the right side.</li>
+<li>Take half of the \(x\)-coefficient, square it, and add it to <em>both</em> sides.</li>
+<li>Write the left side as a binomial squared.</li>
+<li>Take the square root of both sides. Write \(\pm\) on the right.</li>
+<li>Solve for \(x\) and simplify any radical.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Solve \(2x^{2} + 8x - 6 = 0\).</p><table class="st">
+<tr><td>Divide every term by 2.</td><td>\(x^{2} + 4x - 3 = 0\)</td></tr>
+<tr><td>Move the constant to the right.</td><td>\(x^{2} + 4x = 3\)</td></tr>
+<tr><td>Half of 4 is 2, and \(2^{2} = 4\). Add 4 to both sides.</td><td>\(x^{2} + 4x + 4 = 3 + 4\)</td></tr>
+<tr><td>Write the left side as a square.</td><td>\(\left(x + 2\right)^{2} = 7\)</td></tr>
+<tr><td>Take square roots, with \(\pm\).</td><td>\(x + 2 = \pm\sqrt{7}\)</td></tr>
+<tr><td>Subtract 2.</td><td>\(x = -2 \pm \sqrt{7}\)</td></tr></table></div>
+<h3>Rewrite a function in vertex form</h3>
+<p>The same idea turns \(y = ax^{2} + bx + c\) into <strong>vertex form</strong> \(y = a\left(x - h\right)^{2} + k\), which shows the vertex \(\left(h, k\right)\) of the parabola. There is no other side to add to here, so you add the number inside and take away the same amount outside.</p>
+<div class="ex"><h4>Example</h4><p>Write \(y = 2x^{2} + 8x + 1\) in vertex form.</p><table class="st">
+<tr><td>Factor 2 out of the \(x\)-terms.</td><td>\(y = 2\left(x^{2} + 4x\right) + 1\)</td></tr>
+<tr><td>Add 4 inside. That really adds \(2 \cdot 4 = 8\), so subtract 8 outside.</td><td>\(y = 2\left(x^{2} + 4x + 4\right) + 1 - 8\)</td></tr>
+<tr><td>Write the square and combine.</td><td>\(y = 2\left(x + 2\right)^{2} - 7\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Whatever you add, add it to both sides of an equation. In vertex form, a number you add inside the parentheses gets multiplied by \(a\), so subtract \(a\) times that number outside.</p></div>`,
     variants: {
       makeSquare: {
         name: 'Make a perfect square',
@@ -9246,12 +9268,29 @@ ${(() => {
   MX.register({
     id: 'quad-discriminant', section: SEC, title: 'The discriminant', kind: 'skill', sources: [ADDED],
     slots: [{ label: 'The discriminant', source: ADDED, pool: ['classify', 'intercepts', 'findK'] }],
-    lesson: T`<p>In the quadratic formula, the part under the radical is the <strong>discriminant</strong>:</p>
-\[D = b^{2} - 4ac\]
-<ul><li>\(D \gt 0\): two real solutions (and the parabola crosses the \(x\)-axis twice). If \(D\) is a perfect square they are rational.</li>
-<li>\(D = 0\): one real solution, a repeated root (the vertex touches the \(x\)-axis).</li>
-<li>\(D \lt 0\): no real solutions; two complex (non-real) solutions (the parabola misses the \(x\)-axis).</li></ul>
-<p class="warn">Write the equation as \(ax^{2} + bx + c = 0\) before reading \(a\), \(b\), \(c\), and keep their signs.</p>`,
+    lesson: T`<p>The quadratic formula solves \(ax^{2} + bx + c = 0\): \(x = \dfrac{-b \pm \sqrt{b^{2} - 4ac}}{2a}\). The number under the square root tells you how many solutions there are, and what kind, before you do any other work.</p>
+<div class="box def"><h4>Definition <b>Discriminant</b></h4><p>For \(ax^{2} + bx + c = 0\), the <strong>discriminant</strong> is \(D = b^{2} - 4ac\), the expression under the square root in the quadratic formula.</p></div>
+<h3>What the discriminant tells you</h3>
+<p>The formula adds and subtracts \(\sqrt{D}\). If \(D\) is positive, that gives two different answers. If \(D = 0\), adding and subtracting 0 gives the same answer twice. If \(D\) is negative, there is no real square root.</p>
+<div class="box rule"><h4>Rule <b>Using the discriminant</b></h4><ul>
+<li>\(D \gt 0\): two real solutions. If \(D\) is a perfect square (1, 4, 9, …), they are rational.</li>
+<li>\(D = 0\): one real solution, called a repeated root.</li>
+<li>\(D \lt 0\): no real solutions. There are two complex (non-real) solutions.</li></ul></div>
+<div class="ex"><h4>Example</h4><p>How many solutions does \(2x^{2} + 3 = 5x\) have, and what kind?</p><table class="st">
+<tr><td>Get 0 on one side first.</td><td>\(2x^{2} - 5x + 3 = 0\)</td></tr>
+<tr><td>Read \(a\), \(b\), \(c\) with their signs.</td><td>\(a = 2,\ b = -5,\ c = 3\)</td></tr>
+<tr><td>Compute the discriminant.</td><td>\(D = \left(-5\right)^{2} - 4\left(2\right)\left(3\right) = 25 - 24 = 1\)</td></tr>
+<tr><td>\(D \gt 0\) and 1 is a perfect square.</td><td>two real, rational solutions</td></tr></table></div>
+<h3>Counting x-intercepts</h3>
+<p>The \(x\)-intercepts of \(f(x) = ax^{2} + bx + c\) are the real solutions of \(f(x) = 0\). So the discriminant also counts them: \(D \gt 0\) means the parabola crosses the \(x\)-axis twice, \(D = 0\) means its vertex just touches the axis, and \(D \lt 0\) means it never reaches the axis (0 intercepts).</p>
+<h3>Choosing a coefficient for exactly one solution</h3>
+<p>"Exactly one real solution" means \(D = 0\). Set the discriminant equal to 0 and solve for the unknown coefficient.</p>
+<div class="ex"><h4>Example</h4><p>Find every \(k\) for which \(x^{2} + kx + 16 = 0\) has exactly one real solution.</p><table class="st">
+<tr><td>Write \(D\) with \(a = 1\), \(b = k\), \(c = 16\).</td><td>\(D = k^{2} - 4\left(1\right)\left(16\right) = k^{2} - 64\)</td></tr>
+<tr><td>Set \(D = 0\).</td><td>\(k^{2} - 64 = 0\)</td></tr>
+<tr><td>Solve. Both signs work.</td><td>\(k = 8 \text{ or } k = -8\)</td></tr>
+<tr><td>Check \(k = 8\).</td><td>\(x^{2} + 8x + 16 = \left(x + 4\right)^{2}\) ✓</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Write the equation as \(ax^{2} + bx + c = 0\) before you read off \(a\), \(b\) and \(c\), and keep their signs. Squaring a negative \(b\) gives a positive number: \(\left(-5\right)^{2} = 25\), not \(-25\).</p></div>`,
     variants: {
       classify: {
         name: 'Number and type of solutions',
@@ -9317,13 +9356,35 @@ ${(() => {
   MX.register({
     id: 'quad-form', section: SEC, title: 'Equations in quadratic form', kind: 'skill', sources: [ADDED],
     slots: [{ label: 'Equations in quadratic form', source: ADDED, pool: ['biquad', 'shifted', 'sqrtX', 'fracExp', 'negExp'] }],
-    lesson: T`<p>Some equations become quadratics after a <strong>substitution</strong>. Look for an expression whose square also appears:</p>
-<ul><li>\(x^{4} - 13x^{2} + 36 = 0\): let \(u = x^{2}\), then \(u^{2} - 13u + 36 = 0\).</li>
-<li>\((x - 2)^{2} + 3(x - 2) - 10 = 0\): let \(u = x - 2\).</li>
-<li>\(x - 5\sqrt{x} + 6 = 0\): let \(u = \sqrt{x}\), so \(u^{2} = x\).</li>
-<li>\(x^{\frac{2}{3}} - 5x^{\frac{1}{3}} + 4 = 0\): let \(u = x^{\frac{1}{3}}\). \(x^{-2} - 7x^{-1} + 12 = 0\): let \(u = x^{-1}\).</li></ul>
-<ol><li>Substitute and solve for \(u\).</li><li><strong>Substitute back</strong> and solve for \(x\) (this step is easy to forget).</li>
-<li>Check: with \(u = \sqrt{x}\), a negative \(u\) gives no solution; with \(u = x^{2}\), a negative \(u\) gives no real solution.</li></ol>`,
+    lesson: T`<p>Some equations are not quadratic, but they have the same shape as one: <em>something squared</em>, plus a number times <em>that same something</em>, plus a constant. If you give that "something" a new name, \(u\), the equation becomes an ordinary quadratic that you already know how to solve.</p>
+<div class="box def"><h4>Definition <b>Quadratic form</b></h4><p>An equation is in <strong>quadratic form</strong> if a substitution \(u = \) (an expression in \(x\)) turns it into \(au^{2} + bu + c = 0\). The expression in the middle term is \(u\), and the leading term must be \(u^{2}\).</p></div>
+<h3>Choosing u</h3>
+<p>Look at the middle term. Its variable part is \(u\). Then check that the first term is the square of it.</p>
+<ul>
+<li>\(x^{4} - 13x^{2} + 36 = 0\): let \(u = x^{2}\), since \(\left(x^{2}\right)^{2} = x^{4}\).</li>
+<li>\(\left(x - 2\right)^{2} + 3\left(x - 2\right) - 10 = 0\): let \(u = x - 2\).</li>
+<li>\(x - 5\sqrt{x} + 6 = 0\): let \(u = \sqrt{x}\), since \(\left(\sqrt{x}\right)^{2} = x\).</li>
+<li>\(x^{2/3} - x^{1/3} - 6 = 0\): let \(u = x^{1/3}\), since \(\left(x^{1/3}\right)^{2} = x^{2/3}\).</li>
+<li>\(x^{-2} - 7x^{-1} + 12 = 0\): let \(u = x^{-1}\), since \(\left(x^{-1}\right)^{2} = x^{-2}\).</li></ul>
+<div class="box how"><h4>How to <b>solve an equation in quadratic form</b></h4><ol>
+<li>Choose \(u\) and rewrite the equation as \(au^{2} + bu + c = 0\).</li>
+<li>Solve for \(u\) by factoring or the quadratic formula.</li>
+<li>Substitute back: replace \(u\) with its expression in \(x\), and solve each equation for \(x\).</li>
+<li>Check each answer in the original equation.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Solve \(x^{4} - 5x^{2} + 4 = 0\).</p><table class="st">
+<tr><td>Let \(u = x^{2}\), so \(u^{2} = x^{4}\).</td><td>\(u^{2} - 5u + 4 = 0\)</td></tr>
+<tr><td>Factor and solve for \(u\).</td><td>\(\left(u - 1\right)\left(u - 4\right) = 0,\ u = 1 \text{ or } u = 4\)</td></tr>
+<tr><td>Substitute back and solve.</td><td>\(x^{2} = 1\) or \(x^{2} = 4\)</td></tr>
+<tr><td>Each gives two solutions.</td><td>\(x = -2, -1, 1, 2\)</td></tr></table></div>
+<h3>Getting back to x</h3>
+<p>Undo whatever \(u\) did to \(x\). If \(u = x^{2}\), take square roots (\(\pm\)). If \(u = \sqrt{x}\), square. If \(u = x^{1/3}\), cube. If \(u = x^{-1} = \frac{1}{x}\), flip: \(x = \frac{1}{u}\).</p>
+<div class="ex"><h4>Example</h4><p>Solve \(x - 3\sqrt{x} - 4 = 0\).</p><table class="st">
+<tr><td>Let \(u = \sqrt{x}\), so \(u^{2} = x\).</td><td>\(u^{2} - 3u - 4 = 0\)</td></tr>
+<tr><td>Factor and solve for \(u\).</td><td>\(\left(u - 4\right)\left(u + 1\right) = 0,\ u = 4 \text{ or } u = -1\)</td></tr>
+<tr><td>\(\sqrt{x} = 4\): square both sides.</td><td>\(x = 16\)</td></tr>
+<tr><td>\(\sqrt{x} = -1\) is impossible, because a square root is never negative.</td><td>no solution from this one</td></tr>
+<tr><td>Check: \(16 - 3\sqrt{16} - 4 = 16 - 12 - 4\).</td><td>\(= 0\) ✓, so \(x = 16\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Solving for \(u\) is only halfway. Always substitute back and solve for \(x\). Throw out impossible cases: \(\sqrt{x}\) can't be negative, and \(x^{2}\) can't be negative for a real \(x\).</p></div>`,
     variants: {
       biquad: {
         name: 'Fourth degree (u = x²)',
@@ -9455,14 +9516,27 @@ ${(() => {
   MX.register({
     id: 'quad-transform', section: SEC, title: 'Vertex form and transformations', kind: 'skill', sources: [ADDED],
     slots: [{ label: 'Vertex form and transformations', source: ADDED, pool: ['readVertex', 'axisStd', 'graph', 'describe', 'fromGraph'] }],
-    lesson: T`<p>Every parabola is a transformation of \(y = x^{2}\):</p>
-\[f(x) = a(x - h)^{2} + k\]
-<ul><li>The <strong>vertex</strong> is \((h, k)\) and the <strong>axis of symmetry</strong> is the vertical line \(x = h\).</li>
-<li>\(h\) shifts the graph horizontally (\((x - 3)^{2}\) moves it right 3; \((x + 3)^{2}\) left 3); \(k\) shifts it up or down.</li>
-<li>\(a \gt 0\): opens up and \(k\) is the <strong>minimum</strong>. \(a \lt 0\): opens down and \(k\) is the <strong>maximum</strong>.</li>
-<li>\(|a| \gt 1\) makes it narrower (a stretch); \(0 \lt |a| \lt 1\) makes it wider (a compression).</li></ul>
-<p>From standard form \(f(x) = ax^{2} + bx + c\): the axis of symmetry is \(x = -\frac{b}{2a}\); substitute that \(x\) to get the vertex's \(y\).</p>
-<p>To write the equation from a graph: read the vertex \((h, k)\), then use one more point to solve for \(a\).</p>`,
+    lesson: T`<p>The graph of a quadratic function is a U-shaped curve called a <strong>parabola</strong>. Every parabola is \(y = x^{2}\) moved, stretched or flipped, and <strong>vertex form</strong> shows those changes at a glance.</p>
+<div class="box def"><h4>Definition <b>Vertex and axis of symmetry</b></h4><p>The <strong>vertex</strong> is the turning point of the parabola: its lowest point if it opens up, its highest point if it opens down. The <strong>axis of symmetry</strong> is the vertical line through the vertex. The two halves of the parabola are mirror images across it.</p></div>
+<div class="box rule"><h4>Rule <b>Vertex form</b></h4><p>In \(f(x) = a\left(x - h\right)^{2} + k\), the vertex is \(\left(h, k\right)\) and the axis of symmetry is \(x = h\). If \(a \gt 0\), the parabola opens up and \(k\) is the <strong>minimum</strong> value of \(f\). If \(a \lt 0\), it opens down and \(k\) is the <strong>maximum</strong> value.</p></div>
+<p>For example, \(f(x) = \left(x - 2\right)^{2} - 3\) has \(h = 2\), \(k = -3\) and \(a = 1\). Its vertex is \(\left(2, -3\right)\), its axis is \(x = 2\), and \(-3\) is its minimum.</p>
+<div class="vis" style="margin: 10px 0">${(() => { const X = (x) => 18 + (x + 3) * 19.4, Y = (y) => 212 - (y + 4) * 19.4; return H.fnPlot({ win: { xmin: -3, xmax: 7, ymin: -4, ymax: 6 }, pieces: [{ f: (x) => (x - 2) * (x - 2) - 3 }], dots: [[2, -3, true]], label: 'The parabola f(x) = (x − 2)² − 3 with vertex (2, −3) and axis of symmetry x = 2' }).replace('</svg>', S.line(X(2), Y(6), X(2), Y(-4), 'ln thin dash') + S.label(X(2) + 6, Y(5.4), 'x = 2', { cls: 'lbl', a: 'start' }) + S.label(X(2) + 8, Y(-3) + 16, 'vertex (2, −3)', { cls: 'lbl', a: 'start' }) + '</svg>'); })()}</div>
+<h3>Reading the transformations</h3>
+<div class="box rule"><h4>Property <b>How a, h and k move \(y = x^{2}\)</b></h4><ul>
+<li>\(h\) shifts it sideways: \(\left(x - 3\right)^{2}\) moves it <strong>right</strong> 3, and \(\left(x + 3\right)^{2}\) moves it <strong>left</strong> 3.</li>
+<li>\(k\) shifts it up or down: \(x^{2} + 4\) is \(x^{2}\) moved <strong>up</strong> 4, and \(x^{2} - 4\) is \(x^{2}\) moved <strong>down</strong> 4.</li>
+<li>\(\left|a\right| \gt 1\) stretches it vertically (narrower). \(0 \lt \left|a\right| \lt 1\) compresses it (wider).</li>
+<li>A negative \(a\) reflects it across the \(x\)-axis, so it opens down.</li></ul></div>
+<div class="ex"><h4>Example</h4><p>Describe \(g(x) = -2\left(x + 1\right)^{2} + 4\).</p><table class="st">
+<tr><td>Match \(a\left(x - h\right)^{2} + k\). Note \(x + 1 = x - \left(-1\right)\).</td><td>\(a = -2,\ h = -1,\ k = 4\)</td></tr>
+<tr><td>Vertex and axis.</td><td>\(\left(-1, 4\right)\), axis \(x = -1\)</td></tr>
+<tr><td>\(a \lt 0\): opens down.</td><td>maximum value 4</td></tr>
+<tr><td>From \(y = x^{2}\):</td><td>left 1, stretch by 2, reflect across the \(x\)-axis, up 4</td></tr></table></div>
+<h3>From standard form</h3>
+<p>If the function is \(f(x) = ax^{2} + bx + c\), the axis of symmetry is \(x = -\frac{b}{2a}\). Put that \(x\) into \(f\) to get the \(y\)-coordinate of the vertex. For \(f(x) = 2x^{2} + 8x + 5\): \(x = -\frac{8}{2\left(2\right)} = -2\), and \(f(-2) = 8 - 16 + 5 = -3\), so the vertex is \(\left(-2, -3\right)\).</p>
+<h3>From a graph</h3>
+<p>Read the vertex \(\left(h, k\right)\) and write \(f(x) = a\left(x - h\right)^{2} + k\). Then put in one more point from the graph and solve for \(a\). If the vertex is \(\left(1, 2\right)\) and the graph passes through \(\left(2, 5\right)\), then \(5 = a\left(2 - 1\right)^{2} + 2\), so \(a = 3\) and \(f(x) = 3\left(x - 1\right)^{2} + 2\).</p>
+<div class="box warn"><h4>Watch out</h4><p>The sign inside the parentheses is the opposite of the shift you might expect. \(\left(x + 3\right)^{2}\) means \(h = -3\): the vertex is at \(x = -3\), and the graph moves <em>left</em> 3.</p></div>`,
     variants: {
       readVertex: {
         name: 'Vertex, axis and max/min',
@@ -9562,12 +9636,24 @@ ${(() => {
   MX.register({
     id: 'quad-ineq', section: SEC, title: 'Quadratic inequalities', kind: 'skill', sources: [ADDED],
     slots: [{ label: 'Quadratic inequalities', source: ADDED, pool: ['factor', 'rearrange', 'graph', 'special'] }],
-    lesson: T`<p>To solve \(ax^{2} + bx + c \lt 0\) (or \(\le, \gt, \ge\)):</p>
-<ol><li>Get 0 on one side.</li><li>Find the <strong>critical points</strong>: the solutions of \(ax^{2} + bx + c = 0\).</li>
-<li>They split the number line into intervals. Test one number from each interval (or picture the parabola).</li>
-<li>Keep the intervals that make the inequality true. Use brackets for \(\le, \ge\) (the critical points count) and parentheses for \(\lt, \gt\).</li></ol>
-<p>Picture it: \(y = (x + 2)(x - 3)\) opens up, so it is <em>below</em> the \(x\)-axis between the roots. \(\lt 0\) gives \((-2, 3)\); \(\gt 0\) gives \((-\infty, -2) \cup (3, \infty)\).</p>
-<p>If there are no real roots, the parabola is entirely above or below the axis: the answer is all real numbers or no solution.</p>`,
+    lesson: T`<p>A quadratic inequality such as \(x^{2} - x - 6 \lt 0\) asks: for which \(x\) is the quadratic negative? Picture the parabola \(y = x^{2} - x - 6\). The answer is every \(x\) where the graph is <em>below</em> the \(x\)-axis. The graph can only switch between below and above where it crosses the axis, so those crossing points are the key.</p>
+<div class="box def"><h4>Definition <b>Critical points</b></h4><p>The <strong>critical points</strong> of \(ax^{2} + bx + c \lt 0\) (or \(\le\), \(\gt\), \(\ge\)) are the solutions of \(ax^{2} + bx + c = 0\). They are the \(x\)-intercepts of the parabola, and they split the number line into intervals where the sign stays the same.</p></div>
+<div class="vis" style="margin: 10px 0">${(() => { const X = (x) => 18 + (x + 5) * (194 / 11), Y = (y) => 212 - (y + 7) * (194 / 14); return H.fnPlot({ win: { xmin: -5, xmax: 6, ymin: -7, ymax: 7 }, pieces: [{ f: (x) => (x + 2) * (x - 3) }], dots: [[-2, 0, false], [3, 0, false]], label: 'The parabola y = (x + 2)(x − 3): below the x-axis between −2 and 3, above it outside' }).replace('</svg>', S.label(X(1.5), Y(-3), 'y < 0', { cls: 'lbl' }) + S.label(X(-4), Y(2), 'y > 0', { cls: 'lbl' }) + S.label(X(5), Y(2), 'y > 0', { cls: 'lbl' }) + '</svg>'); })()}</div>
+<p>Here \(x^{2} - x - 6 = \left(x + 2\right)\left(x - 3\right)\), so the critical points are \(-2\) and 3. The parabola opens up, so it is below the axis between them: \(x^{2} - x - 6 \lt 0\) on \(\left(-2, 3\right)\), and \(x^{2} - x - 6 \gt 0\) on \(\left(-\infty, -2\right) \cup \left(3, \infty\right)\).</p>
+<div class="box how"><h4>How to <b>solve a quadratic inequality</b></h4><ol>
+<li>Move every term to one side so the other side is 0.</li>
+<li>Find the critical points by solving \(ax^{2} + bx + c = 0\).</li>
+<li>Decide the sign on each interval. Either test one number from each interval, or use the shape: if \(a \gt 0\), the quadratic is negative between the critical points and positive outside them; if \(a \lt 0\), the opposite.</li>
+<li>Write the intervals that make the inequality true. Use brackets \([\ ]\) at the critical points for \(\le\) or \(\ge\), and parentheses for \(\lt\) or \(\gt\).</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Solve \(x^{2} + 2x \ge 8\).</p><table class="st">
+<tr><td>Get 0 on one side.</td><td>\(x^{2} + 2x - 8 \ge 0\)</td></tr>
+<tr><td>Factor to find the critical points.</td><td>\(\left(x + 4\right)\left(x - 2\right) = 0,\ x = -4 \text{ or } x = 2\)</td></tr>
+<tr><td>Test \(x = 0\) in the middle interval.</td><td>\(0 + 0 - 8 = -8\), not \(\ge 0\)</td></tr>
+<tr><td>So the outside intervals work. The critical points count, because of \(\ge\).</td><td>\(\left(-\infty, -4\right] \cup \left[2, \infty\right)\)</td></tr></table></div>
+<h3>No crossing points, or just one</h3>
+<p>If the parabola never crosses the \(x\)-axis (the discriminant \(b^{2} - 4ac\) is negative), it is entirely above the axis or entirely below it. The answer is then all real numbers, \(\left(-\infty, \infty\right)\), or no solution. For example, \(x^{2} + 2x + 5\) opens up and has discriminant \(4 - 20 = -16\), so \(x^{2} + 2x + 5 \gt 0\) for every \(x\).</p>
+<p>A perfect square like \(\left(x - 3\right)^{2}\) touches the axis at one point. It is 0 at \(x = 3\) and positive everywhere else. So \(\left(x - 3\right)^{2} \gt 0\) on \(\left(-\infty, 3\right) \cup \left(3, \infty\right)\), \(\left(x - 3\right)^{2} \ge 0\) for all real numbers, and \(\left(x - 3\right)^{2} \lt 0\) has no solution.</p>
+<div class="box warn"><h4>Watch out</h4><p>Get 0 on one side before you factor. \(x\left(x - 3\right) \lt 4\) does <em>not</em> mean \(x \lt 4\); first rewrite it as \(x^{2} - 3x - 4 \lt 0\).</p></div>`,
     variants: {
       factor: {
         name: 'Factorable',
@@ -9808,12 +9894,29 @@ ${(() => {
       { label: 'Projectile motion', source: 'Added', pool: ['ground', 'height', 'peak'] },
       { label: 'Maximum and minimum', source: 'Added', pool: ['fence', 'revenue', 'mincost'] },
     ],
-    lesson: T`<p><strong>Projectiles.</strong> An object launched upward with speed \(v_{0}\) (ft/s) from height \(h_{0}\) (ft) has height</p>
-\[h = -16t^{2} + v_{0}t + h_{0}\]
-<ul><li><em>When does it hit the ground?</em> Solve \(h = 0\) (quadratic formula) and keep the positive time.</li>
-<li><em>When is it at height \(H\)?</em> Solve \(h = H\); there are usually two times, once going up and once coming down.</li>
-<li><em>Maximum height?</em> The vertex: \(t = -\frac{b}{2a}\), then evaluate \(h\) there.</li></ul>
-<p><strong>Maximum and minimum problems.</strong> Write the quantity as a quadratic in one variable (area \(= x\left(\frac{P}{2} - x\right)\), revenue \(=\) price \(\times\) number sold, cost \(= ax^{2} + bx + c\)). If \(a \lt 0\) the vertex is a maximum; if \(a \gt 0\) it is a minimum. The vertex \(x = -\frac{b}{2a}\) answers "how many / what price"; plugging it in answers "how much".</p>`,
+    lesson: T`<p>Many real quantities follow a parabola: the height of a thrown ball, or an area or a profit that rises and then falls. These problems ask one of two things. <em>When</em> does the quantity equal some value? Solve a quadratic equation. <em>What is the largest or smallest</em> value? Find the vertex.</p>
+<h3>Objects thrown upward</h3>
+<div class="box rule"><h4>Formula <b>Height of a projectile</b></h4><p>An object launched straight up from a height of \(h_{0}\) feet with a starting speed of \(v_{0}\) feet per second is at height \(h = -16t^{2} + v_{0}t + h_{0}\) feet after \(t\) seconds. The \(-16\) comes from gravity.</p></div>
+<ul><li><strong>When does it hit the ground?</strong> The ground is height 0. Solve \(h = 0\) and keep the positive time.</li>
+<li><strong>When is it at height \(H\)?</strong> Solve \(h = H\). There are usually two times: once going up and once coming down.</li>
+<li><strong>How high does it go?</strong> The top of the path is the vertex. Find its time, then its height.</li></ul>
+<div class="box rule"><h4>Rule <b>The vertex is the maximum or minimum</b></h4><p>For \(y = ax^{2} + bx + c\), the vertex is at \(x = -\frac{b}{2a}\). If \(a \lt 0\) the parabola opens down, and the vertex gives the <strong>maximum</strong>. If \(a \gt 0\) it opens up, and the vertex gives the <strong>minimum</strong>. Put \(x = -\frac{b}{2a}\) back into the formula to get that maximum or minimum value.</p></div>
+<div class="ex"><h4>Example</h4><p>A ball is thrown up from a 64-foot roof at 48 ft/s, so \(h = -16t^{2} + 48t + 64\). When does it land, and how high does it go?</p><table class="st">
+<tr><td>Landing: set \(h = 0\) and factor out \(-16\).</td><td>\(-16\left(t^{2} - 3t - 4\right) = 0\)</td></tr>
+<tr><td>Factor and keep the positive time.</td><td>\(-16\left(t - 4\right)\left(t + 1\right) = 0,\ t = 4\text{ s}\)</td></tr>
+<tr><td>Top of the path: \(a = -16\), \(b = 48\).</td><td>\(t = -\frac{48}{2\left(-16\right)} = 1.5\text{ s}\)</td></tr>
+<tr><td>Height at that time.</td><td>\(-16\left(1.5\right)^{2} + 48\left(1.5\right) + 64 = 100\text{ ft}\)</td></tr></table></div>
+<p>If the equation doesn't factor, use the quadratic formula and round the positive answer as asked.</p>
+<h3>Largest area, most revenue, lowest cost</h3>
+<p>First write the quantity as a quadratic in one variable. Then find the vertex.</p>
+<ul><li><strong>Fencing:</strong> with \(P\) feet of fence around a rectangle, a width of \(x\) leaves a length of \(\frac{P}{2} - x\), so the area is \(x\left(\frac{P}{2} - x\right)\). If a wall forms one side, the fence covers only three sides.</li>
+<li><strong>Revenue:</strong> revenue \(=\) price \(\times\) number sold. If each $1 price increase loses some customers, let \(x\) be the number of increases.</li>
+<li><strong>Cost:</strong> the cost formula is usually given. Its vertex is the minimum.</li></ul>
+<div class="ex"><h4>Example</h4><p>You have 80 feet of fence for a rectangular garden. What is the largest area?</p><table class="st">
+<tr><td>Width \(x\); length is half of 80, minus \(x\).</td><td>\(A = x\left(40 - x\right) = -x^{2} + 40x\)</td></tr>
+<tr><td>\(a = -1 \lt 0\), so the vertex is the maximum.</td><td>\(x = -\frac{40}{2\left(-1\right)} = 20\)</td></tr>
+<tr><td>Length and area.</td><td>\(40 - 20 = 20\), \(A = 20 \cdot 20 = 400\text{ ft}^{2}\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Answer the question that was asked. The vertex's \(x\) tells you <em>when</em> or <em>how many</em>. Put it back into the formula to get <em>how high</em>, <em>how much</em> or <em>what area</em>. Throw out negative times.</p></div>`,
     variants: proj,
   });
 })(typeof window !== 'undefined' ? window : globalThis);
