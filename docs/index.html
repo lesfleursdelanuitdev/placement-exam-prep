@@ -921,6 +921,29 @@ h1[tabindex='-1']:focus { outline: none; }
 }
 @media (max-width: 420px) { .tut-tabs .tt-c { display: none; } .tut-tabs button { padding-left: 6px; padding-right: 6px; } }
 @media (max-width: 380px) { .tut-tabs .tt-n { display: none; } .tut-tabs button { flex: 1 1 0; justify-content: center; } }
+/* grapher: gestures and help */
+.gr-plot svg { touch-action: none; cursor: grab; }
+.gr-plot svg.drawing { cursor: crosshair; }
+.gr-plot svg.moving { cursor: grabbing; }
+.gr-plot svg:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.gr-plot-hint { font-size: 12.5px; color: var(--muted); margin: 6px 2px 0; }
+.grapher .gr-modes { vertical-align: middle; }
+.gr-helpbtn { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; vertical-align: middle; }
+.gr-helpbtn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.gr-helppanel { font-family: var(--f-ui); font-size: 15px; line-height: 1.55; margin: 0 0 18px; padding: 14px 18px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); }
+.gr-help-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.gr-helppanel h3 { font-family: var(--f-cond); font-size: 18px; margin: 0.2em 0 0.4em; }
+.gr-helppanel ol { padding-left: 1.3em; }
+.gr-helppanel .box { max-width: none; }
+.gr-helppanel table { border-collapse: collapse; font-size: 13.5px; width: 100%; }
+.gr-helppanel td, .gr-helppanel th { padding: 4px 8px 4px 0; vertical-align: top; text-align: left; }
+.gr-keys th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.gr-keys td { border-top: 1px solid var(--rule); }
+.gr-keys td:first-child { font-weight: 600; }
+.gr-helppanel code { font-family: var(--f-mono); font-size: 12.5px; background: var(--accent-soft); padding: 0 4px; border-radius: 3px; white-space: nowrap; }
+.gr-helppanel kbd { font-family: var(--f-mono); font-size: 12px; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; }
+@media (max-width: 1000px) { .gr-help-cols { grid-template-columns: minmax(0, 1fr); gap: 8px; } }
+@media (max-width: 560px) { .gr-helpbtn { margin: 0 0 12px; } .gr-helppanel { padding: 12px; } .gr-helppanel code { white-space: normal; } }
 
 </style>
 </head>
@@ -14995,10 +15018,12 @@ ${(() => {
         <button type="button" role="tab" data-gr="mode" data-mode="graph" id="gr-tab-graph">Graph functions</button>
         <button type="button" role="tab" data-gr="mode" data-mode="draw" id="gr-tab-draw">Draw a graph</button>
       </div>
+      <button type="button" class="btn ghost gr-helpbtn" data-gr="help" aria-expanded="false" aria-controls="gr-helppanel">${HELP_ICON}<span>How to use the Grapher</span></button>
+      <section class="gr-helppanel lesson" id="gr-helppanel" hidden aria-label="How to use the Grapher">${HELP}</section>
       <div class="gr-body">
         <div class="gr-plotwrap">
-          <div class="gr-plot" id="gr-plot"><svg id="gr-svg" role="img" aria-label="Coordinate plane"></svg><div class="gr-tip" id="gr-tip" hidden></div></div>
-          <div class="gr-zoom"><button type="button" class="btn ghost sm" data-gr="zoom" data-z="0.5" aria-label="Zoom in">＋ Zoom in</button><button type="button" class="btn ghost sm" data-gr="zoom" data-z="2" aria-label="Zoom out">− Zoom out</button><button type="button" class="btn ghost sm" data-gr="preset" data-p="std">Reset</button></div>
+          <div class="gr-plot" id="gr-plot"><svg id="gr-svg" role="img" tabindex="0" aria-label="Coordinate plane" aria-describedby="gr-plot-hint"></svg><div class="gr-tip" id="gr-tip" hidden></div></div>
+          <p class="gr-plot-hint" id="gr-plot-hint"></p><div class="gr-zoom"><button type="button" class="btn ghost sm" data-gr="zoom" data-z="0.5" aria-label="Zoom in">＋ Zoom in</button><button type="button" class="btn ghost sm" data-gr="zoom" data-z="2" aria-label="Zoom out">− Zoom out</button><button type="button" class="btn ghost sm" data-gr="preset" data-p="std">Reset</button></div>
         </div>
         <div class="gr-side">
           <div id="gr-graph-panel"></div>
@@ -15071,6 +15096,9 @@ ${(() => {
     const svg = d.getElementById('gr-svg');
     svg.classList.toggle('drawing', S.mode === 'draw');
     svg.setAttribute('aria-label', S.mode === 'draw' ? 'Drawing area: a coordinate plane' : 'Graphs on a coordinate plane');
+    d.getElementById('gr-plot-hint').textContent = S.mode === 'draw'
+      ? 'Zoom: scroll the mouse wheel or pinch · Move the view: two fingers, or drag with the middle mouse button'
+      : 'Zoom: scroll the mouse wheel or pinch · Move the view: drag · Tap or hover to read values';
   }
 
   // ---------- the plot ----------
@@ -15138,6 +15166,7 @@ ${(() => {
       const b = ev.target.closest('[data-gr]');
       if (!b) { if (!ev.target.closest('#gr-pop')) closePop(); return; }
       const a = b.dataset.gr, i = +b.dataset.i;
+      if (a === 'help') { const open = b.getAttribute('aria-expanded') !== 'true'; b.setAttribute('aria-expanded', String(open)); d.getElementById('gr-helppanel').hidden = !open; if (open) d.getElementById('gr-helppanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
       if (a === 'mode') { S.mode = b.dataset.mode; S.hover = null; d.getElementById('gr-tip').hidden = true; save(); refresh(); if (MX.onGrapherMode) MX.onGrapherMode(); }
       else if (a === 'add') { S.fns.push({ src: '', color: nextColor(), show: true }); parseAll(); refresh(); const inp = d.getElementById('gr-in-' + (S.fns.length - 1)); if (inp) inp.focus(); save(); }
       else if (a === 'del') { S.fns.splice(i, 1); parseAll(); refresh(); save(); }
@@ -15184,22 +15213,102 @@ ${(() => {
       const tab = ev.target.closest && ev.target.closest('[role="tab"]');
       if (tab && (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft')) { S.mode = S.mode === 'graph' ? 'draw' : 'graph'; refresh(); d.getElementById('gr-tab-' + S.mode).focus(); save(); if (MX.onGrapherMode) MX.onGrapherMode(); }
     });
-    const svg = d.getElementById('gr-svg');
-    svg.addEventListener('pointermove', (ev) => {
+    wireGestures(d.getElementById('gr-svg'));
+  }
+
+  // ---------- zoom and pan: wheel, drag, pinch, keys ----------
+  // Mouse: the wheel zooms around the pointer; in graph mode, dragging moves the graph.
+  // Touch: one finger moves the graph (graph mode) or draws (draw mode); two fingers pinch to zoom and move.
+  const nice = (v) => { const p = Math.pow(10, Math.floor(Math.log10(v))), m = v / p; return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * p; };
+  // keep the tick spacing readable as the window changes: respace only when it gets too dense or too sparse
+  function fitSteps(w) {
+    const sx = w.xmax - w.xmin, sy = w.ymax - w.ymin;
+    if (sx / w.xstep > 40 || sx / w.xstep < 6) w.xstep = nice(sx / 20);
+    if (sy / w.ystep > 40 || sy / w.ystep < 6) w.ystep = nice(sy / 20);
+    return w;
+  }
+  let settleTimer = 0;
+  function setWin(w) {
+    const sx = w.xmax - w.xmin, sy = w.ymax - w.ymin;
+    if (!(sx > 1e-3 && sy > 1e-3 && sx < 1e6 && sy < 1e6) || ![w.xmin, w.xmax, w.ymin, w.ymax].every(isFinite)) return;
+    S.win = P.cleanWin(fitSteps(Object.assign({}, w)));
+    drawPlot();
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(settle, 250);
+  }
+  // after the view stops moving: update the window fields, save, and redraw a checked answer for the new window
+  function settle() {
+    renderWin(); save();
+    if (S.result && S.result.target) { try { S.result.target = P.curves(P.read(S.target), S.win, 900); } catch (e) { /* keep the old overlay */ } drawPlot(); }
+  }
+  function zoomAt(f, mx, my) {
+    const w = S.win;
+    setWin({ xmin: mx + (w.xmin - mx) * f, xmax: mx + (w.xmax - mx) * f, ymin: my + (w.ymin - my) * f, ymax: my + (w.ymax - my) * f, xstep: w.xstep, ystep: w.ystep });
+  }
+  function wireGestures(svg) {
+    const ptrs = new Map();
+    let gest = null, multi = false;
+    const px = (ev) => { const r = svg.getBoundingClientRect(); return [((ev.clientX - r.left) / r.width) * dims.W, ((ev.clientY - r.top) / r.height) * dims.H]; };
+    const hideTip = () => { S.hover = null; d.getElementById('gr-tip').hidden = true; };
+    function pinchStart() {
+      const [a, b] = [...ptrs.values()];
+      const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      return { type: 'pinch', win0: Object.assign({}, S.win), mid0: mid, dist0: Math.max(10, Math.hypot(a[0] - b[0], a[1] - b[1])), m0: plane().inv(mid[0], mid[1]) };
+    }
+    function pinchMove() {
+      const [a, b] = [...ptrs.values()], g = gest;
+      const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], dist = Math.max(10, Math.hypot(a[0] - b[0], a[1] - b[1]));
+      const f = g.dist0 / dist, w0 = g.win0, sx = (w0.xmax - w0.xmin) * f, sy = (w0.ymax - w0.ymin) * f;
+      // the point that was under the fingers' midpoint stays under it
+      const xmin = g.m0[0] - (mid[0] / dims.W) * sx, ymax = g.m0[1] + (mid[1] / dims.H) * sy;
+      setWin({ xmin, xmax: xmin + sx, ymin: ymax - sy, ymax, xstep: w0.xstep, ystep: w0.ystep });
+    }
+    svg.addEventListener('pointerdown', (ev) => {
+      if (ev.pointerType === 'mouse' && ev.button !== 0 && ev.button !== 1) return;
+      ev.preventDefault();
+      try { svg.setPointerCapture(ev.pointerId); } catch (e) { /* capture is optional */ }
+      ptrs.set(ev.pointerId, px(ev));
+      if (ptrs.size >= 2) { // a second finger: pinch, and drop any stroke in progress
+        if (S.drawing) { S.drawing = null; drawPlot(); }
+        multi = true; hideTip(); gest = pinchStart(); svg.classList.add('moving');
+        return;
+      }
+      multi = false;
       const q = svgPoint(ev);
-      if (S.mode === 'graph') { S.hover = { x: q.m[0], py: q.py }; drawPlot(); return; }
+      if (S.mode === 'graph' || ev.button === 1) { gest = { type: 'pan', win0: Object.assign({}, S.win), p0: px(ev), moved: false, touch: ev.pointerType !== 'mouse' }; return; }
+      if (S.tool === 'pen') { S.drawing = [q.m]; S.result = null; }
+    });
+    svg.addEventListener('pointermove', (ev) => {
+      if (ptrs.has(ev.pointerId)) ptrs.set(ev.pointerId, px(ev));
+      if (gest && gest.type === 'pinch') { if (ptrs.size >= 2) pinchMove(); return; }
+      if (gest && gest.type === 'pan' && ptrs.has(ev.pointerId)) {
+        const p = px(ev), dx = p[0] - gest.p0[0], dy = p[1] - gest.p0[1];
+        if (!gest.moved && Math.hypot(dx, dy) < 4) return;
+        if (!gest.moved) { gest.moved = true; hideTip(); svg.classList.add('moving'); }
+        const w0 = gest.win0, sx = w0.xmax - w0.xmin, sy = w0.ymax - w0.ymin;
+        const ox = (dx / dims.W) * sx, oy = (dy / dims.H) * sy;
+        setWin({ xmin: w0.xmin - ox, xmax: w0.xmax - ox, ymin: w0.ymin + oy, ymax: w0.ymax + oy, xstep: w0.xstep, ystep: w0.ystep });
+        return;
+      }
+      if (multi) return;
+      const q = svgPoint(ev);
+      if (S.mode === 'graph') { if (ev.pointerType === 'mouse') { S.hover = { x: q.m[0], py: q.py }; drawPlot(); } return; }
       if (S.drawing) { const last = S.drawing[S.drawing.length - 1]; const pl = plane(); if (!last || Math.hypot(pl.X(last[0]) - q.px, pl.Y(last[1]) - q.py) > 2) S.drawing.push(q.m); drawPlot(); }
       else if (S.pending) { S.pending.b = P.snap(q.m, S.win); drawPlot(); }
     });
-    svg.addEventListener('pointerleave', () => { if (S.mode === 'graph') { S.hover = null; d.getElementById('gr-tip').hidden = true; drawPlot(); } });
-    svg.addEventListener('pointerdown', (ev) => {
-      if (S.mode !== 'draw') return;
-      ev.preventDefault();
-      const q = svgPoint(ev);
-      if (S.tool === 'pen') { S.drawing = [q.m]; svg.setPointerCapture(ev.pointerId); S.result = null; }
-    });
-    svg.addEventListener('pointerup', (ev) => {
-      if (S.mode !== 'draw') return;
+    svg.addEventListener('pointerleave', (ev) => { if (S.mode === 'graph' && ev.pointerType === 'mouse' && !gest) { hideTip(); drawPlot(); } });
+    const end = (ev) => {
+      const had = ptrs.delete(ev.pointerId);
+      if (gest && gest.type === 'pinch') { if (ptrs.size < 2) { gest = null; svg.classList.remove('moving'); } return; }
+      if (gest && gest.type === 'pan') {
+        const g = gest; gest = null; svg.classList.remove('moving');
+        // a tap (no drag) on a touch screen reads the values at that x
+        if (!g.moved && g.touch && ev.type === 'pointerup' && S.mode === 'graph') { const q = svgPoint(ev); S.hover = { x: q.m[0], py: q.py }; drawPlot(); }
+        return;
+      }
+      if (multi) { if (!ptrs.size) multi = false; return; }
+      if (!had || S.mode !== 'draw') return;
+      if (ev.type === 'pointercancel') { S.drawing = null; drawPlot(); return; }
       const q = svgPoint(ev), sp = P.snap(q.m, S.win);
       if (S.tool === 'pen') {
         if (S.drawing && S.drawing.length > 1) S.items.push({ t: 'stroke', pts: S.drawing });
@@ -15211,17 +15320,34 @@ ${(() => {
       }
       S.result = null;
       renderDrawPanel(); drawPlot();
+    };
+    svg.addEventListener('pointerup', end);
+    svg.addEventListener('pointercancel', end);
+    // the wheel (and a trackpad pinch, which arrives as ctrl + wheel) zooms around the pointer
+    svg.addEventListener('wheel', (ev) => {
+      ev.preventDefault();
+      const unit = ev.deltaMode === 1 ? 16 : ev.deltaMode === 2 ? 400 : 1;
+      const f = Math.min(2, Math.max(0.5, Math.exp(ev.deltaY * unit * (ev.ctrlKey ? 0.01 : 0.0015))));
+      const q = svgPoint(ev);
+      hideTip();
+      zoomAt(f, q.m[0], q.m[1]);
+    }, { passive: false });
+    // keyboard, with the plot focused: + and − zoom, arrows move, 0 resets
+    svg.addEventListener('keydown', (ev) => {
+      const w = S.win, cx = (w.xmin + w.xmax) / 2, cy = (w.ymin + w.ymax) / 2, sx = (w.xmax - w.xmin) / 10, sy = (w.ymax - w.ymin) / 10;
+      const mv = { ArrowLeft: [-sx, 0], ArrowRight: [sx, 0], ArrowUp: [0, sy], ArrowDown: [0, -sy] }[ev.key];
+      if (ev.key === '+' || ev.key === '=') zoomAt(0.8, cx, cy);
+      else if (ev.key === '-' || ev.key === '_') zoomAt(1.25, cx, cy);
+      else if (ev.key === '0') { S.win = P.cleanWin(Object.assign({}, PRESETS[0].win)); drawPlot(); settle(); }
+      else if (mv) setWin({ xmin: w.xmin + mv[0], xmax: w.xmax + mv[0], ymin: w.ymin + mv[1], ymax: w.ymax + mv[1], xstep: w.xstep, ystep: w.ystep });
+      else return;
+      ev.preventDefault();
     });
   }
   function safeNum(s) {
     try { const n = MX.parse(MX.normalizeInput(String(s))); if (MX.ast.vars(n).size) return NaN; return MX.evalAST(n, {}); } catch (e) { return NaN; }
   }
-  function zoom(k) {
-    const w = S.win, cx = (w.xmin + w.xmax) / 2, cy = (w.ymin + w.ymax) / 2, hx = ((w.xmax - w.xmin) / 2) * k, hy = ((w.ymax - w.ymin) / 2) * k;
-    const nice = (v) => { const p = Math.pow(10, Math.floor(Math.log10(v))), m = v / p; return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * p; };
-    S.win = P.cleanWin({ xmin: cx - hx, xmax: cx + hx, ymin: cy - hy, ymax: cy + hy, xstep: nice((2 * hx) / 20), ystep: nice((2 * hy) / 20) });
-    S.result = null; renderWin(); drawPlot(); save();
-  }
+  function zoom(k) { const w = S.win; zoomAt(k, (w.xmin + w.xmax) / 2, (w.ymin + w.ymax) / 2); }
   function check() {
     if (!S.target.trim()) { S.result = { ok: false, msgs: ['Type what your drawing is the graph of, like y = 2x - 3.'] }; renderDrawPanel(); return; }
     let g;
@@ -15244,6 +15370,41 @@ ${(() => {
   }
   function closePop() { const pop = d.getElementById('gr-pop'); if (pop && !pop.hidden) { pop.hidden = true; S.colorFor = -1; } }
   function refresh() { renderModes(); renderGraphPanel(); renderDrawPanel(); drawPlot(); }
+
+  // ---------- help ----------
+  const HELP_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>';
+  const HELP = `<div class="gr-help-cols">
+    <div><h3>Graph functions</h3>
+      <ol><li>Type a function in a box, like <code>2x - 3</code> or <code>y = x^2 - 4</code>. It is graphed as you type.</li>
+      <li>Press <b>+ Add a graph</b> to graph more (up to 8 at once).</li>
+      <li>Tap the colored circle to pick a color, the eye to hide or show a graph, and × to remove it.</li></ol>
+      <p>Hover over the graph (or tap it on a phone) to see each function's value at that <i>x</i>.</p>
+      <div class="box how"><h4>What you can type</h4><table>
+        <tr><td><code>3x^2 - 2x + 1</code></td><td>powers with <code>^</code></td></tr>
+        <tr><td><code>(x+1)/(x-2)</code></td><td>fractions with <code>/</code></td></tr>
+        <tr><td><code>sqrt(x+4)</code>, <code>|x - 1|</code></td><td>square root, absolute value</td></tr>
+        <tr><td><code>2^x</code>, <code>ln(x)</code>, <code>log_2(x)</code></td><td>exponentials and logs</td></tr>
+        <tr><td><code>sin(x)</code>, <code>cos(2x)</code>, <code>pi</code></td><td>trig, with <i>x</i> in radians</td></tr>
+        <tr><td><code>x+1 if x&lt;0; x^2 if x&gt;=0</code></td><td>a piecewise function: pieces separated by <code>;</code></td></tr>
+        <tr><td><code>x^2 + y^2 = 9</code>, <code>x = 3</code></td><td>equations in <i>x</i> and <i>y</i>: circles, vertical lines</td></tr></table></div>
+    </div>
+    <div><h3>Zoom and move</h3>
+      <table class="gr-keys">
+        <tr><th></th><th>Computer</th><th>Phone or tablet</th></tr>
+        <tr><td>Zoom in or out</td><td>Scroll the mouse wheel (or pinch on a trackpad)</td><td>Pinch with two fingers</td></tr>
+        <tr><td>Move the view</td><td>Drag the graph</td><td>Drag with one finger (two fingers in <b>Draw a graph</b>)</td></tr>
+        <tr><td>Read values</td><td>Hover over the graph</td><td>Tap the graph</td></tr></table>
+      <p>You can also use <b>Zoom in</b>, <b>Zoom out</b> and <b>Reset</b> under the graph, or click the graph and use <kbd>+</kbd> <kbd>−</kbd>, the arrow keys, and <kbd>0</kbd> to reset.</p>
+      <p><b>Window and grid</b> (below the functions) sets exactly what shows: the smallest and largest <i>x</i> and <i>y</i>, and how far apart the ticks are (1, 2, 5, 10, 0.5…). The presets are quick starting points; <b>Trig</b> uses ticks every π/2.</p>
+    </div>
+    <div><h3>Draw a graph</h3>
+      <p>Draw a graph yourself, then check whether it matches an equation.</p>
+      <ol><li>Pick a tool: <b>Pen</b> to draw freely, <b>Point</b> to plot points, or <b>Line</b>, <b>Parabola</b> or <b>Circle</b>.</li>
+      <li>With <b>Line</b>, tap two points on the line. With <b>Parabola</b>, tap the vertex, then one more point. With <b>Circle</b>, tap the center, then a point on the circle. Points snap to the grid.</li>
+      <li>Type what your drawing is the graph of, like <code>y = 2x - 3</code>, and press <b>Check my graph</b>.</li></ol>
+      <div class="box rule"><h4>How drawings are checked</h4><p>A pen drawing can be off by about half a grid square. A line, parabola or circle made from points has to match closely. Your drawing also has to cover the graph across the window and pass through its intercepts and its vertex or turning points.</p></div>
+      <p>If it isn't right, the parts that are off are marked in red, and <b>Show the correct graph</b> draws the answer on top. Use <b>Undo</b> and <b>Clear</b> to fix mistakes.</p>
+    </div></div>`;
 
   // ---------- icons ----------
   const EYE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
