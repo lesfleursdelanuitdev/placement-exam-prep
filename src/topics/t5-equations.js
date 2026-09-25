@@ -25,7 +25,7 @@
           } while (d + a * c === 0 || b <= 0 || b > 24 || x0 === 0);
           return {
             prompt: T`Solve the equation for \(x\): \(${a}\left(${b} - ${MX.coef(c)}x\right) = ${MX.coef(d)}x\)`,
-            parts: [{ kind: 'num', frac: true, var: 'x', answer: String(x0), show: T`x = ${x0}`, points: 2 }],
+            parts: [{ kind: 'num', frac: true, var: 'x', answer: String(x0), show: T`x = ${x0}`, points: 2, verify: MX.V.solves(`${a}(${b}-${c}x)=${d}x`) }],
             solution: [
               T`Distribute: \(${a * b} - ${a * c}x = ${MX.coef(d)}x\)`,
               T`Add \(${a * c}x\) to both sides: \(${a * b} = ${d + a * c}x\)`,
@@ -45,7 +45,7 @@
           } while (m === 0 || Math.abs(m) > 20);
           return {
             prompt: T`Solve the equation for \(x\): \(\dfrac{x}{${p}} ${MX.sgnTerm(-m)} = \dfrac{x}{${q}} - ${n}\)`,
-            parts: [{ kind: 'num', frac: true, var: 'x', answer: String(x0), show: T`x = ${x0}`, points: 3 }],
+            parts: [{ kind: 'num', frac: true, var: 'x', answer: String(x0), show: T`x = ${x0}`, points: 3, verify: MX.V.solves(`x/${p}-(${m})=x/${q}-${n}`) }],
             solution: [
               T`Multiply every term by the LCD ${Lc}: \(${MX.coef(Lc / p)}x ${MX.sgnTerm(-m * Lc)} = ${MX.coef(Lc / q)}x - ${n * Lc}\)`,
               T`Collect: \(${MX.coef(Lc / p - Lc / q)}x = ${m * Lc - n * Lc}\)`,
@@ -70,7 +70,7 @@
           const la = Lc / a, ld = Lc / d;
           return {
             prompt: T`Solve the equation: \(\dfrac{1}{${a}}\left(${B1.tex}\right) = \dfrac{1}{${d}}\left(${B2.tex}\right)\)`,
-            parts: [{ kind: 'num', frac: true, var: 'x', answer: String(x0), show: T`x = ${x0}`, points: 3 }],
+            parts: [{ kind: 'num', frac: true, var: 'x', answer: String(x0), show: T`x = ${x0}`, points: 3, verify: MX.V.solves(`(1/${a})(${B1.asc})=(1/${d})(${B2.asc})`) }],
             solution: [
               T`Multiply both sides by the LCD ${Lc}: \(${MX.coef(la)}\left(${B1.tex}\right) = ${MX.coef(ld)}\left(${B2.tex}\right)\)`,
               T`Distribute: \(${poly([[la * b, { x: 1 }], [la * c, {}]]).tex} = ${poly([[ld * e, { x: 1 }], [ld * f, {}]]).tex}\)`,

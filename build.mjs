@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path';
 const root = dirname(fileURLToPath(import.meta.url));
 const src = (p) => readFileSync(join(root, 'src', p), 'utf8');
 const topics = readdirSync(join(root, 'src/topics')).filter((f) => f.endsWith('.js')).sort();
-const order = ['core.js', 'texmath.js', 'parse.js', 'check.js', 'svg.js', 'helpers.js', ...topics.map((t) => 'topics/' + t), 'flashcards.js', 'editor.js', 'store.js', 'app.js'];
+const order = ['core.js', 'texmath.js', 'parse.js', 'check.js', 'svg.js', 'helpers.js', 'verify.js', ...topics.map((t) => 'topics/' + t), 'flashcards.js', 'editor.js', 'store.js', 'app.js'];
 
 const js = order.map((f) => `/* ---- ${f} ---- */\n` + src(f)).join('\n').replace(/<\/script/gi, '<\\/script');
 const css = src('styles.css');

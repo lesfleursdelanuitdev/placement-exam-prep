@@ -2,22 +2,27 @@
 //  - the stored correct answer passes its own checker,
 //  - nothing renders as undefined / NaN,
 //  - word problems always carry an SVG visual,
-//  - obvious wrong answers are rejected.
-// Run: node test/selftest.mjs [seedsPerVariant]
+//  - obvious wrong answers are rejected,
+//  - every part has an independent verifier (src/verify.js) that accepts the answer key
+//    and rejects a deliberately broken key.
+// Run: node test/selftest.mjs [seedsPerVariant] [topicId | topic file name, e.g. t5-equations.js]
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-export const ENGINE_FILES = ['core.js', 'texmath.js', 'parse.js', 'check.js', 'svg.js', 'helpers.js'];
+export const ENGINE_FILES = ['core.js', 'texmath.js', 'parse.js', 'check.js', 'svg.js', 'helpers.js', 'verify.js'];
 const topicFiles = readdirSync(join(root, 'src/topics')).filter((f) => f.endsWith('.js')).sort();
 
 const ctx = { console };
 ctx.globalThis = ctx;
 vm.createContext(ctx);
+const fileOf = {};
 for (const f of [...ENGINE_FILES.map((f) => 'src/' + f), ...topicFiles.map((f) => 'src/topics/' + f)]) {
+  const before = ctx.MX ? ctx.MX.topics.length : 0;
   vm.runInContext(readFileSync(join(root, f), 'utf8'), ctx, { filename: f });
+  ctx.MX.topics.slice(before).forEach((t) => { fileOf[t.id] = f.replace(/^.*\//, ''); });
 }
 const MX = ctx.MX;
 const N = +(process.argv[2] || 60);
@@ -39,7 +44,7 @@ function wrongInput(part) {
 }
 
 for (const t of MX.topics) {
-  if (only && t.id !== only) continue;
+  if (only && t.id !== only && fileOf[t.id] !== only) continue;
   if (!t.lesson || bad(MX.rich(t.lesson))) fail(t.id + ': lesson missing or bad');
   const slots = t.slots || [{ pool: Object.keys(t.variants) }];
   for (const s of slots) for (const k of s.pool) if (!t.variants[k]) fail(t.id + ': slot refers to missing variant ' + k);
@@ -68,6 +73,12 @@ for (const t of MX.topics) {
         let r;
         try { r = MX.check(p, MX.answerInput(p)); } catch (e) { fail(where + ': checker threw ' + e.stack); continue; }
         if (!r.ok) fail(`${where}: correct answer rejected (${p.kind} ${JSON.stringify(p.answer || p.answers || p.value)}) -> ${JSON.stringify(r)}\n   prompt: ${q.prompt}`);
+        const vr = MX.V.run(p);
+        if (vr !== true) fail(`${where}: verifier ${p.verify ? 'rejects the answer key' : 'missing'} (${p.kind} ${JSON.stringify(p.answer ?? p.answers)}): ${vr}\n   prompt: ${q.prompt}`);
+        else {
+          const bad = MX.V.mutate(p, MX.V.decode(p));
+          if (MX.V.run(p, bad) === true) fail(`${where}: verifier accepts a wrong answer key (${p.kind}, ${JSON.stringify(bad)})`);
+        }
         const w = wrongInput(p);
         if (w) {
           const rw = MX.check(p, w);

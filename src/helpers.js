@@ -65,10 +65,14 @@
   };
 
   // shuffle a correct option among distractors -> {options, answer}
-  H.choices = function (rng, correct, distractors) {
-    const all = [{ h: correct, ok: true }, ...distractors.map((h) => ({ h, ok: false }))];
+  // data (optional) = [what the correct option shows, ...what each distractor shows], kept in option order as
+  // `data` so a verifier can check which option is right without trusting `answer`
+  H.choices = function (rng, correct, distractors, data) {
+    const all = [{ h: correct, ok: true, d: data && data[0] }, ...distractors.map((h, k) => ({ h, ok: false, d: data && data[k + 1] }))];
     const sh = rng.shuffle(all);
-    return { options: sh.map((o) => o.h), answer: sh.findIndex((o) => o.ok) };
+    const out = { options: sh.map((o) => o.h), answer: sh.findIndex((o) => o.ok) };
+    if (data) out.data = sh.map((o) => o.d);
+    return out;
   };
 
   // small plane with a curve, for graph multiple-choice
@@ -80,12 +84,15 @@
   };
   H.nlSvg = (val, closed, dir, o = {}) =>
     S.numberLine(Object.assign({ min: -5, max: 5, val, closed, dir, w: 280 }, o));
-  // 4 number-line options for x (op) v
+  // the region a one-arrow number line shows
+  H.nlRegion = (v, closed, dir) => [dir === 'right' ? { lo: rv(v), hi: INF, lc: closed, hc: false } : { lo: -INF, hi: rv(v), lc: false, hc: closed }];
+  // 4 number-line options for x (op) v; data holds the region each option shows
   H.nlChoices = function (rng, op, v, o = {}) {
     const closed = op.includes('=');
     const dir = op[0] === '>' ? 'right' : 'left';
     const other = dir === 'right' ? 'left' : 'right';
-    return H.choices(rng, H.nlSvg(v, closed, dir, o), [H.nlSvg(v, !closed, dir, o), H.nlSvg(v, closed, other, o), H.nlSvg(v, !closed, other, o)]);
+    const opts = [[closed, dir], [!closed, dir], [closed, other], [!closed, other]];
+    return H.choices(rng, H.nlSvg(v, closed, dir, o), opts.slice(1).map(([c, d]) => H.nlSvg(v, c, d, o)), opts.map(([c, d]) => H.nlRegion(v, c, d)));
   };
 
   // ---------- intervals and regions ----------
@@ -145,7 +152,8 @@
     for (const c of [flip, comp, compFlip, neg]) { const k = regKey(c); if (c.length && !seen.has(k)) { seen.add(k); pool.push(c); } }
     let shift = 1;
     while (pool.length < 3) { const c = reg.map((r) => ({ lo: rv(r.lo) + shift, hi: rv(r.hi) + shift, lc: r.lc, hc: r.hc })); const k = regKey(c); if (!seen.has(k)) { seen.add(k); pool.push(c); } shift++; }
-    return H.choices(rng, H.regionSvg(reg, win), pool.slice(0, 3).map((c) => H.regionSvg(c, win)));
+    const plain = (g) => g.map((r) => ({ lo: rv(r.lo), hi: rv(r.hi), lc: !!r.lc, hc: !!r.hc }));
+    return H.choices(rng, H.regionSvg(reg, win), pool.slice(0, 3).map((c) => H.regionSvg(c, win)), [reg, ...pool.slice(0, 3)].map(plain));
   };
 
   // ---------- function plots ----------
