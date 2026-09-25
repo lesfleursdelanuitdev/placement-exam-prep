@@ -12,7 +12,7 @@
     remoteStatus: 'local', // 'local' | 'synced' | 'error'
     listeners: [],
     fresh() {
-      return { v: 1, exam: null, history: [], tut: {}, updated: 0 };
+      return { v: 1, exam: null, history: [], tut: {}, flash: {}, drafts: {}, updated: 0 };
     },
     loadLocal() {
       try {

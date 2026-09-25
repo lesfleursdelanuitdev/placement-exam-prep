@@ -42,7 +42,16 @@
         i = j;
         continue;
       }
-      if (/[a-zA-Z]/.test(c)) { toks.push({ t: 'id', v: c }); i++; continue; }
+      if (/[a-zA-Z]/.test(c)) {
+        const rest = s.slice(i);
+        if (/^log/i.test(rest)) { toks.push({ t: 'log' }); i += 3; continue; }
+        if (/^ln/i.test(rest)) { toks.push({ t: 'ln' }); i += 2; continue; }
+        if (/^inf(inity)?/i.test(rest)) { const m = rest.match(/^inf(inity)?/i); toks.push({ t: 'inf' }); i += m[0].length; continue; }
+        if (c === 'e') { toks.push({ t: 'e' }); i++; continue; }
+        toks.push({ t: 'id', v: c }); i++; continue;
+      }
+      if (c === '∞') { toks.push({ t: 'inf' }); i++; continue; }
+      if (c === '_') { toks.push({ t: '_' }); i++; continue; }
       if (c === '<' || c === '>') {
         if (s[i + 1] === '=') { toks.push({ t: 'rel', v: c + '=' }); i += 2; }
         else { toks.push({ t: 'rel', v: c }); i++; }
@@ -64,7 +73,7 @@
     let p = 0;
     const peek = () => toks[p];
     const next = () => toks[p++];
-    const isAtomStart = (t) => t && (t.t === 'num' || t.t === 'id' || t.t === '(' || t.t === '√');
+    const isAtomStart = (t) => t && (t.t === 'num' || t.t === 'id' || t.t === '(' || t.t === '√' || t.t === 'log' || t.t === 'ln' || t.t === 'e');
 
     function expr() {
       let a = term();
@@ -124,9 +133,19 @@
       if (!t) throw new ParseError('Put something after the √.');
       if (t.t === '(') return unwrap(atom());
       if (t.t === '√') { next(); return { t: 'sqrt', a: radicand() }; }
-      if (t.t !== 'num' && t.t !== 'id') throw new ParseError('Put what’s under the √ right after it, like √(2x).');
+      if (t.t !== 'num' && t.t !== 'id' && t.t !== 'e') throw new ParseError('Put what’s under the √ right after it, like √(2x).');
       let a = power();
-      while (peek() && (peek().t === 'num' || peek().t === 'id')) a = { t: 'mul', a, b: power(), imp: true };
+      while (peek() && (peek().t === 'num' || peek().t === 'id' || peek().t === 'e')) a = { t: 'mul', a, b: power(), imp: true };
+      return a;
+    }
+    // argument of log / ln: (…) or a run like x^2, 8, 5x
+    function logArg() {
+      const t = peek();
+      if (!t) throw new ParseError('Put something after the log.');
+      if (t.t === '(') return unwrap(atom());
+      if (t.t !== 'num' && t.t !== 'id' && t.t !== 'e') throw new ParseError('Put the input of the log in parentheses, like log(x+1).');
+      let a = power();
+      while (peek() && (peek().t === 'num' || peek().t === 'id' || peek().t === 'e')) a = { t: 'mul', a, b: power(), imp: true };
       return a;
     }
     function atom() {
@@ -148,6 +167,20 @@
         return { t: 'abs', a: e };
       }
       if (t.t === '√') return { t: 'sqrt', a: radicand() };
+      if (t.t === 'e') return { t: 'e' };
+      if (t.t === 'inf') throw new ParseError('∞ only belongs in interval answers.');
+      if (t.t === 'ln') return { t: 'log', k: 'ln', b: { t: 'e' }, a: logArg() };
+      if (t.t === 'log') {
+        let base = null;
+        if (peek() && peek().t === '_') {
+          next();
+          const bt = peek();
+          if (!bt) throw new ParseError('Give the log a base, like log_2(8).');
+          base = bt.t === '(' ? unwrap(atom()) : atom();
+        } else if (peek() && peek().t === 'num' && toks[p + 1] && toks[p + 1].t === '(') base = atom();
+        return base ? { t: 'log', k: 'b', b: base, a: logArg() } : { t: 'log', k: 'c', a: logArg() };
+      }
+      if (t.t === '_') throw new ParseError('A “_” (subscript) only goes right after log, as in log_2(8).');
       if (t.t === ')') throw new ParseError('There’s an extra “)”.');
       if (t.t === 'rel') throw new ParseError('Unexpected “' + t.v + '”.');
       throw new ParseError('Unexpected “' + t.t + '”.');
@@ -253,6 +286,12 @@
       }
       case 'sqrt': { const v = ev(n.a, env); return v < -1e-12 ? NaN : Math.sqrt(Math.max(0, v)); }
       case 'abs': return Math.abs(ev(n.a, env));
+      case 'e': return Math.E;
+      case 'log': {
+        const x = ev(n.a, env), b = n.b ? ev(n.b, env) : 10;
+        if (!(x > 0) || !(b > 0) || Math.abs(b - 1) < 1e-12) return NaN;
+        return Math.log(x) / Math.log(b);
+      }
     }
     return NaN;
   }
@@ -311,11 +350,19 @@
       }
       case 'pow': {
         const a = n.a;
-        const base = a.t === 'num' || a.t === 'var' || a.t === 'grp' || a.t === 'sqrt' ? toTex(a) : '\\left(' + toTex(a) + '\\right)';
+        const base = a.t === 'num' || a.t === 'var' || a.t === 'grp' || a.t === 'sqrt' || a.t === 'e' ? toTex(a) : '\\left(' + toTex(a) + '\\right)';
         return base + '^{' + toTex(unwrap(n.b)) + '}';
       }
       case 'sqrt': return '\\sqrt{' + toTex(n.a) + '}';
       case 'abs': return '|' + toTex(n.a) + '|';
+      case 'e': return 'e';
+      case 'log': {
+        const a = unwrap(n.a);
+        const arg = a.t === 'num' || a.t === 'var' || a.t === 'e' ? '\\,' + toTex(a) : '\\left(' + toTex(a) + '\\right)';
+        if (n.k === 'ln') return '\\ln' + arg;
+        if (n.k === 'c' || !n.b) return '\\log' + arg;
+        return '\\log_{' + toTex(unwrap(n.b)) + '}' + arg;
+      }
     }
     return '?';
   }

@@ -168,6 +168,10 @@
           st.prev = 'atom';
           return '<span class="mst">' + a + '</span>';
         }
+        if (['log', 'ln', 'exp', 'sin', 'cos', 'tan'].includes(name)) { st.prev = 'open'; return '<span class="mfn">' + name + '</span>'; }
+        if (name === 'cup') { st.prev = 'op'; return '<span class="mo b">∪</span>'; }
+        if (name === 'in') { st.prev = 'op'; return '<span class="mo r">∈</span>'; }
+        if (name === 'mathbb') { const raw = readRawBraced(); st.prev = 'atom'; return '<span class="mn">' + (raw === 'R' ? 'ℝ' : esc(raw)) + '</span>'; }
         if (name in SPACE) return SPACE[name];
         if (name in SYM) {
           const [ch, kind] = SYM[name];

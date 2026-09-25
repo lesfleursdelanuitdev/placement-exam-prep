@@ -6,16 +6,19 @@
 /*STYLES*/
 </style>
 <header class="bar">
-  <div class="brand"><span class="brand-mark">098</span><span class="brand-t">Final Prep</span></div>
+  <button type="button" class="brand" data-act="view" data-view="home" aria-label="Math 098 Final Prep: home"><span class="brand-mark">098</span><span class="brand-t">Final Prep</span></button>
   <nav class="tabs" aria-label="Sections">
-    <button type="button" data-act="view" data-view="exam" aria-current="page">Exam</button>
+    <button type="button" data-act="view" data-view="home" aria-current="page">Home</button>
+    <button type="button" data-act="view" data-view="exam">Exam</button>
     <button type="button" data-act="view" data-view="tutorials">Tutorials</button>
+    <button type="button" data-act="view" data-view="flashcards">Flashcards</button>
     <button type="button" data-act="view" data-view="progress">Progress</button>
   </nav>
   <div id="score-chip" class="chip" aria-live="polite"></div>
 </header>
 <main>
-  <section id="v-exam" class="v-exam">
+  <section id="v-home"><div id="home-page" class="page home"></div></section>
+  <section id="v-exam" class="v-exam" hidden>
     <aside class="sheet" aria-label="Answer sheet">
       <div class="sheet-h">Answer sheet</div>
       <div id="nav-bubbles" class="bubbles"></div>
@@ -32,22 +35,24 @@
           <div class="sum-b"><span class="sum-l">Accuracy so far</span><span class="sum-n" id="sum-pct">–</span></div>
           <div class="progress" aria-hidden="true"><span id="sum-bar"></span><span id="sum-bar-ok"></span></div>
         </div>
-        <p class="instr"><strong>Show all work</strong> on scratch paper. Type each answer in its blank and press <b>Check</b> (or Enter). Each part is graded once; point values are in parentheses. Use <b>Tutorial</b> to study a topic; your score stays put while you're away.</p>
+        <p class="instr"><strong>Show all work</strong> on scratch paper. Type each answer in its box and press <b>Check</b> (or Enter). Each part is graded once; point values are in parentheses. Use <b>Tutorial</b> to study a topic; your score stays put while you're away. Everything saves as you type, so you can stop and finish later.</p>
         <div class="exam-tools">
           <details class="howto"><summary>How to type answers</summary>
+            <p>Each answer box shows your math the way it will be graded. The symbol buttons appear under the box you're typing in.</p>
             <table>
-              <tr><td>Exponents</td><td><code>x^2</code>, <code>m^7/n^6</code>, <code>D^(3/8)</code></td></tr>
-              <tr><td>Fractions</td><td><code>5/2</code>, <code>(x+2)/(x-3)</code>. Use parentheses around tops and bottoms.</td></tr>
-              <tr><td>Radicals</td><td><code>√(2t)</code> or <code>sqrt(2t)</code>, <code>5t^6√(2t)</code></td></tr>
-              <tr><td>Plus or minus</td><td><code>(-2+-√10)/3</code></td></tr>
+              <tr><td>Exponents</td><td>Type <kbd>^</kbd> and the exponent: <code>x^2</code> shows as <span class="m"><i class="mi">x</i><sup><span class="mn">2</span></sup></span>. Typing <kbd>+</kbd>, <kbd>−</kbd> or <kbd>=</kbd> brings you back down, or press <kbd>→</kbd>.</td></tr>
+              <tr><td>Fractions</td><td>Type <kbd>/</kbd> and the term before it moves on top: <code>(x+2)/</code> then <code>x−3</code>. Press <kbd>→</kbd> to leave the bottom. Or tap the fraction button.</td></tr>
+              <tr><td>Radicals</td><td>Tap <b>√</b> or type <code>sqrt</code>. The bar stretches over what you type; press <kbd>→</kbd> to leave it.</td></tr>
+              <tr><td>±, ≤, ≥</td><td>Tap the buttons, or type <code>+-</code>, <code>&lt;=</code>, <code>&gt;=</code>.</td></tr>
               <tr><td>Points</td><td><code>(3, -2)</code></td></tr>
-              <tr><td>Inequalities</td><td><code>x &gt;= -3</code>, <code>x &lt; 5</code></td></tr>
-              <tr><td>Scientific notation</td><td><code>3.9671 x 10^5</code></td></tr>
-              <tr><td>No solution</td><td><code>no solution</code></td></tr>
+              <tr><td>Scientific notation</td><td><code>3.9671</code> then the <b>×10ⁿ</b> button and <code>5</code></td></tr>
+              <tr><td>Logs</td><td>Type <code>log</code>, <code>ln</code>, or <code>log_2</code> for a base (or tap <b>log□</b>).</td></tr>
+              <tr><td>Intervals</td><td><code>[-3, 5)</code>, <code>(-inf, 2) U (2, inf)</code>; <code>inf</code> becomes ∞.</td></tr>
+              <tr><td>Special answers</td><td>The <b>no solution</b>, <b>prime</b> and <b>all reals</b> buttons.</td></tr>
             </table>
-            The line under each blank shows how your answer was read. The keypad at the bottom of the screen inserts symbols.
+            Use <kbd>←</kbd> <kbd>→</kbd> (also on the button bar) to move between the top and bottom of a fraction, and <kbd>Enter</kbd> to check.
           </details>
-          <div id="exam-finish" hidden><span id="end-row"><button type="button" class="btn ghost" data-act="end-ask">End exam now…</button><span id="end-confirm" hidden>Unanswered parts will score 0. <button type="button" class="btn danger-btn" data-act="end-do">End exam</button> <button type="button" class="btn ghost" data-act="end-cancel">Keep working</button></span></span></div>
+          <div id="exam-finish" hidden><span id="end-row"><button type="button" class="btn" data-act="save-later">Save and finish later</button><button type="button" class="btn ghost" data-act="end-ask">End exam now…</button><span id="end-confirm" hidden>Unanswered parts will score 0. <button type="button" class="btn danger-btn" data-act="end-do">End exam</button> <button type="button" class="btn ghost" data-act="end-cancel">Keep working</button></span></span></div>
         </div>
       </header>
       <section id="results" class="results" hidden aria-live="polite"></section>
@@ -56,9 +61,11 @@
   </section>
   <section id="v-tutorials" hidden><div id="tut-index" class="page"></div></section>
   <section id="v-tutorial" hidden><div id="tut-page" class="page"></div></section>
+  <section id="v-flashcards" hidden><div id="flash-index" class="page"></div></section>
+  <section id="v-deck" hidden><div id="deck-page" class="page deck"></div></section>
   <section id="v-progress" hidden><div id="prog-page" class="page"></div></section>
 </main>
-<div id="keypad" class="keypad" hidden aria-label="Math symbols"></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <script>
 /*SCRIPT*/
 </script>

@@ -156,17 +156,84 @@
     },
   });
 
+  // ---------- sum and difference of cubes ----------
+  // g * v^gx * ((a v)^3 + sign (b w)^3), w = second variable or null
+  function cubes(sign, a, b, v, w, g, gx) {
+    const ord = w ? [v, w] : [v];
+    const Wv = (e) => (w ? { [w]: e } : {});
+    const inner = poly([[a * a * a, { [v]: 3 }], [sign * b * b * b, Wv(3)]], ord);
+    const full = poly([[g * a * a * a, { [v]: 3 + gx }], [g * sign * b * b * b, Object.assign(Wv(3), gx ? { [v]: gx } : {})]], ord);
+    const F1 = poly([[a, { [v]: 1 }], [sign * b, Wv(1)]], ord);
+    const F2 = poly([[a * a, { [v]: 2 }], [-sign * a * b, Object.assign({ [v]: 1 }, Wv(1))], [b * b, Wv(2)]], ord);
+    const At = poly([[a, { [v]: 1 }]]).tex, Bt = poly([[b, Wv(1)]]).tex;
+    const pre = (g === 1 ? '' : String(g)) + (gx ? v + (gx > 1 ? '^' + gx : '') : '');
+    const preT = (g === 1 ? '' : String(g)) + (gx ? v + (gx > 1 ? '^{' + gx + '}' : '') : '');
+    const facs = [];
+    if (g > 1) facs.push(String(g));
+    for (let k = 0; k < gx; k++) facs.push(v);
+    facs.push(F1.asc, F2.asc);
+    const ansT = T`${preT}\left(${F1.tex}\right)\left(${F2.tex}\right)`;
+    const sg = sign > 0 ? '+' : '-', og = sign > 0 ? '-' : '+';
+    const steps = [];
+    if (pre) steps.push(T`Take out the GCF first: \(${full.tex} = ${preT}\left(${inner.tex}\right)\)`);
+    steps.push(T`Both terms are perfect cubes: \(${poly([[a * a * a, { [v]: 3 }]]).tex} = \left(${At}\right)^{3}\) and \(${poly([[b * b * b, Wv(3)]]).tex} = \left(${Bt}\right)^{3}\)`);
+    steps.push(T`Use \(A^{3} ${sg} B^{3} = \left(A ${sg} B\right)\left(A^{2} ${og} AB + B^{2}\right)\) with \(A = ${At}\), \(B = ${Bt}\) (signs: same, opposite, always positive).`);
+    steps.push(T`\(A^{2} = ${poly([[a * a, { [v]: 2 }]]).tex}\), \(AB = ${poly([[a * b, Object.assign({ [v]: 1 }, Wv(1))]], ord).tex}\), \(B^{2} = ${poly([[b * b, Wv(2)]]).tex}\)`);
+    steps.push(T`\(${H.box(ansT)}\) (the quadratic factor doesn’t factor any further)`);
+    return {
+      prompt: T`Factor completely: \(${full.tex}\)`,
+      parts: [{ kind: 'factor', answer: pre + '(' + F1.asc + ')(' + F2.asc + ')', factors: facs, show: ansT, points: 3 }],
+      solution: steps,
+    };
+  }
+  const cubeVar = (rng) => rng.pick(['x', 'x', 'y', 'a', 'm', 't']);
+  function perfectSquare(rng, withGcf) {
+    const v = rng.pick(['x', 'x', 'y', 'n']);
+    let a, b;
+    do { a = withGcf ? 1 : rng.int(1, 5); b = rng.int(1, 9); } while (MX.gcd(a, b) !== 1 || (a === 1 && b === 1));
+    const s = rng.sign(), g = withGcf ? rng.int(2, 5) : 1;
+    const E = MX.quad(g * a * a, g * 2 * a * b * s, g * b * b, v), In = MX.quad(a * a, 2 * a * b * s, b * b, v);
+    const F = poly([[a, { [v]: 1 }], [s * b, {}]]);
+    const pre = g > 1 ? String(g) : '';
+    const ansT = T`${pre}\left(${F.tex}\right)^{2}`;
+    const steps = [];
+    if (g > 1) steps.push(T`Take out the GCF: \(${E.tex} = ${g}\left(${In.tex}\right)\)`);
+    steps.push(T`First and last terms are perfect squares: \(${poly([[a * a, { [v]: 2 }]]).tex} = \left(${poly([[a, { [v]: 1 }]]).tex}\right)^{2}\) and \(${b * b} = ${b}^{2}\)`);
+    steps.push(T`Middle term check: \(2\cdot${poly([[a, { [v]: 1 }]]).tex}\cdot${b} = ${poly([[2 * a * b, { [v]: 1 }]]).tex}\) ✓, with a ${s < 0 ? 'minus' : 'plus'} sign.`);
+    steps.push(T`So it is \(\left(A ${s < 0 ? '-' : '+'} B\right)^{2}\): \(${H.box(ansT)}\)`);
+    return {
+      prompt: T`Factor completely: \(${E.tex}\)`,
+      parts: [{ kind: 'factor', answer: pre + '(' + F.asc + ')^2', factors: (g > 1 ? [String(g)] : []).concat([F.asc, F.asc]), show: ansT, points: 3 }],
+      solution: steps,
+    };
+  }
+  const SPECIAL_LESSON = T`<p>Four patterns to recognize on sight:</p>
+\[a^{2} - b^{2} = \left(a - b\right)\left(a + b\right)\]
+\[a^{3} - b^{3} = \left(a - b\right)\left(a^{2} + ab + b^{2}\right)\]
+\[a^{3} + b^{3} = \left(a + b\right)\left(a^{2} - ab + b^{2}\right)\]
+\[a^{2} \pm 2ab + b^{2} = \left(a \pm b\right)^{2}\]
+<p><strong>Perfect squares</strong>: 1, 4, 9, 16, 25, 36, 49, 64, 81, 100 and even powers like \(x^{2}, x^{4}, y^{6}\).<br>
+<strong>Perfect cubes</strong>: 1, 8, 27, 64, 125, 216 and powers divisible by 3 like \(x^{3}, x^{6}\).</p>
+<p class="key">Cube signs, <strong>SOAP</strong>: the first sign is the <strong>S</strong>ame as the original, the second is the <strong>O</strong>pposite, the last is <strong>A</strong>lways <strong>P</strong>ositive.</p>
+<ol><li>Take out any GCF first: \(2x^{3} - 54 = 2\left(x^{3} - 27\right)\).</li><li>Identify \(a\) and \(b\) (what gets squared or cubed).</li><li>Fill in the pattern and simplify.</li><li>Check whether a factor can still be factored: \(x^{4} - 16 = \left(x^{2} + 4\right)\left(x - 2\right)\left(x + 2\right)\).</li></ol>
+<p class="warn">A sum of squares like \(x^{2} + 9\) is prime, and the quadratic factor \(a^{2} \pm ab + b^{2}\) from a cube pattern never factors further.</p>`;
+  const DOS_POOL = ['dos', 'dosGcf', 'dosTwice'], DOC_POOL = ['doc', 'docGcf', 'docCoef', 'sixth'], SOC_POOL = ['soc', 'socGcf', 'socCoef'];
   MX.register({
-    id: 'factor-dos', section: SEC, title: 'Difference of squares', kind: 'skill',
-    sources: ['Exam 2 #12'],
-    lesson: T`<p>\[A^{2} - B^{2} = (A - B)(A + B)\]</p>
-<p>Recognize each term as a perfect square: \(9x^{2} = (3x)^{2}\) and \(4y^{4} = (2y^{2})^{2}\). Then write the two factors.</p>
-<ul><li>Take out a GCF first if there is one: \(2x^{2} - 50 = 2(x^{2} - 25)\).</li>
-<li>A <em>sum</em> of squares like \(x^{2} + 4\) does not factor.</li>
-<li>Keep going if a factor is still a difference of squares: \(x^{4} - 16 = (x^{2} + 4)(x - 2)(x + 2)\).</li></ul>`,
+    id: 'factor-special', section: SEC, title: 'Special factoring patterns', kind: 'skill',
+    sources: ['Exam 2 #12', 'added: sum & difference of cubes, perfect squares'],
+    slots: [
+      { label: 'Difference of squares', source: 'Exam 2 #12', pool: DOS_POOL },
+      { label: 'Difference of squares', source: 'Exam 2 #12', pool: DOS_POOL },
+      { label: 'Difference of cubes', source: 'Added', pool: DOC_POOL },
+      { label: 'Difference of cubes', source: 'Added', pool: DOC_POOL },
+      { label: 'Sum of cubes', source: 'Added', pool: SOC_POOL },
+      { label: 'Sum of cubes', source: 'Added', pool: SOC_POOL },
+      { label: 'Perfect-square trinomial', source: 'Added', pool: ['pst', 'pstGcf'] },
+    ],
+    lesson: SPECIAL_LESSON,
     variants: {
-      basic: {
-        name: 'Two variables',
+      dos: {
+        name: 'Difference of squares',
         gen(rng) {
           let a, b;
           do { a = rng.int(1, 9); b = rng.int(1, 9); } while (MX.gcd(a, b) !== 1 || a * b === 1);
@@ -185,8 +252,8 @@
           };
         },
       },
-      gcf: {
-        name: 'GCF first',
+      dosGcf: {
+        name: 'Difference of squares with a GCF',
         gen(rng) {
           const g = rng.int(2, 7), c = rng.int(2, 9), v = rng.pick(['x', 'n', 'p']);
           const E = poly([[g, { [v]: 2 }], [-g * c * c, {}]]);
@@ -201,8 +268,8 @@
           };
         },
       },
-      fourth: {
-        name: 'Factor twice',
+      dosTwice: {
+        name: 'Difference of squares twice',
         gen(rng) {
           const c = rng.int(1, 3), v = rng.pick(['x', 'y', 'm']);
           const E = poly([[1, { [v]: 4 }], [-Math.pow(c, 4), {}]]);
@@ -215,6 +282,155 @@
               T`\(${H.box(T`\left(${v}^{2} + ${c * c}\right)\left(${v} - ${c}\right)\left(${v} + ${c}\right)`)}\)`,
             ],
           };
+        },
+      },
+      doc: {
+        name: 'Difference of cubes',
+        gen(rng) { let a, b; do { a = rng.int(1, 5); b = rng.int(1, 6); } while (MX.gcd(a, b) !== 1 || a * b === 1); return cubes(-1, a, b, cubeVar(rng), null, 1, 0); },
+      },
+      docCoef: {
+        name: 'Difference of cubes, two variables',
+        gen(rng) { let a, b; do { a = rng.int(1, 5); b = rng.int(1, 5); } while (MX.gcd(a, b) !== 1 || a * b === 1); return cubes(-1, a, b, 'x', 'y', 1, 0); },
+      },
+      docGcf: {
+        name: 'Difference of cubes with a GCF',
+        gen(rng) { return cubes(-1, 1, rng.int(1, 5), cubeVar(rng), null, rng.int(2, 6), rng.chance(0.35) ? 1 : 0); },
+      },
+      sixth: {
+        name: 'Squares and cubes together',
+        gen(rng) {
+          const c = rng.pick([1, 2]), v = rng.pick(['x', 'y']);
+          const E = poly([[1, { [v]: 6 }], [-Math.pow(c, 6), {}]]);
+          const f = [`${v}-${c}`, `${v}+${c}`, `${v}^2+${c}${v}+${c * c}`, `${v}^2-${c}${v}+${c * c}`].map((x) => x.replace(/\+1([a-z])/, '+$1').replace(/-1([a-z])/, '-$1'));
+          const ft = [poly([[1, { [v]: 1 }], [-c, {}]]), poly([[1, { [v]: 1 }], [c, {}]]), MX.quad(1, c, c * c, v), MX.quad(1, -c, c * c, v)];
+          const ansT = ft.map((x) => T`\left(${x.tex}\right)`).join('');
+          return {
+            prompt: T`Factor completely: \(${E.tex}\)`,
+            parts: [{ kind: 'factor', answer: f.map((x) => '(' + x + ')').join(''), factors: f, show: ansT, points: 3 }],
+            solution: [
+              T`\(${v}^{6} = \left(${v}^{3}\right)^{2}\) and \(${Math.pow(c, 6)} = ${c * c * c}^{2}\): start with a difference of squares, \(\left(${v}^{3} - ${c * c * c}\right)\left(${v}^{3} + ${c * c * c}\right)\).`,
+              T`Now each factor is a cube pattern: \(${v}^{3} - ${c * c * c} = ${T`\left(${ft[0].tex}\right)\left(${ft[2].tex}\right)`}\) and \(${v}^{3} + ${c * c * c} = ${T`\left(${ft[1].tex}\right)\left(${ft[3].tex}\right)`}\).`,
+              T`\(${H.box(ansT)}\)`,
+            ],
+          };
+        },
+      },
+      soc: {
+        name: 'Sum of cubes',
+        gen(rng) { let a, b; do { a = rng.int(1, 5); b = rng.int(1, 6); } while (MX.gcd(a, b) !== 1 || a * b === 1); return cubes(1, a, b, cubeVar(rng), null, 1, 0); },
+      },
+      socCoef: {
+        name: 'Sum of cubes, two variables',
+        gen(rng) { let a, b; do { a = rng.int(1, 5); b = rng.int(1, 5); } while (MX.gcd(a, b) !== 1 || a * b === 1); return cubes(1, a, b, 'x', 'y', 1, 0); },
+      },
+      socGcf: {
+        name: 'Sum of cubes with a GCF',
+        gen(rng) { return cubes(1, 1, rng.int(1, 5), cubeVar(rng), null, rng.int(2, 6), rng.chance(0.35) ? 1 : 0); },
+      },
+      pst: { name: 'Perfect-square trinomial', gen: (rng) => perfectSquare(rng, false) },
+      pstGcf: { name: 'Perfect-square trinomial with a GCF', gen: (rng) => perfectSquare(rng, true) },
+    },
+  });
+
+  // ---------- factoring strategy ----------
+  function primePoly(rng) {
+    const v = rng.pick(['x', 'y', 'n']);
+    if (rng.chance(0.4)) {
+      const a = rng.pick([1, 1, 4, 9]), c = rng.int(1, 9);
+      const E = poly([[a, { [v]: 2 }], [c * c, {}]]);
+      return { E, why: [T`Two terms added together: \(${E.tex}\) is a <em>sum</em> of squares.`, T`A sum of squares has no real factors, and there is no common factor to take out.`] };
+    }
+    let b, c;
+    do { b = rng.nz(-9, 9); c = rng.nz(-15, 15); } while (MX.isPerfectSquare(b * b - 4 * c));
+    const E = MX.quad(1, b, c, v);
+    const pairs = [];
+    for (let k = 1; k <= Math.abs(c); k++) if (Math.abs(c) % k === 0 && k <= Math.abs(c) / k) pairs.push(k + ' and ' + Math.abs(c) / k);
+    return { E, why: [T`No common factor. Look for two numbers that multiply to ${c} and add to ${b}.`, T`Factor pairs of ${Math.abs(c)}: ${pairs.join('; ')}. With either sign, none of them add to ${b}.`] };
+  }
+  MX.register({
+    id: 'factor-strategy', section: SEC, title: 'Factoring strategy', kind: 'skill',
+    sources: ['added'],
+    slots: [{ label: 'Factor completely', source: 'Added', pool: ['gcfOnly', 'prime', 'mixed'] }],
+    lesson: T`<p>A checklist that works for every "factor completely" problem:</p>
+<ol><li><strong>GCF first.</strong> Take out the greatest common factor of all the terms (numbers and variables).</li>
+<li><strong>Count the terms</strong> of what's left:
+<ul><li>2 terms: difference of squares, difference of cubes, or sum of cubes. A sum of squares is prime.</li>
+<li>3 terms: perfect-square trinomial? Otherwise the trinomial method (AC method when the leading coefficient isn't 1).</li>
+<li>4 terms: factor by grouping.</li></ul></li>
+<li><strong>Check every factor</strong> and keep going until nothing factors further.</li>
+<li>If nothing works and there's no GCF, the polynomial is <strong>prime</strong>. Type <code>prime</code>.</li></ol>
+<p class="warn">Taking out a GCF is not the end: \(3x^{3} - 12x = 3x\left(x^{2} - 4\right) = 3x\left(x - 2\right)\left(x + 2\right)\).</p>`,
+    variants: {
+      gcfOnly: {
+        name: 'Greatest common factor only',
+        gen(rng) {
+          let g, p, q, a, b, c;
+          do { g = rng.int(2, 9); p = rng.int(1, 3); q = rng.int(1, 2); a = rng.int(1, 7); b = rng.int(1, 7) * rng.sign(); c = rng.int(1, 7) * rng.sign(); } while (MX.gcdAll([a, b, c]) !== 1);
+          const inner = poly([[a, { x: 1 }], [b, { y: 1 }], [c, {}]], ['x', 'y']);
+          const full = poly([[g * a, { x: p + 1, y: q }], [g * b, { x: p, y: q + 1 }], [g * c, { x: p, y: q }]], ['x', 'y']);
+          const mono = MX.poly([[g, { x: p, y: q }]], ['x', 'y']);
+          const facs = [String(g)];
+          for (let k = 0; k < p; k++) facs.push('x');
+          for (let k = 0; k < q; k++) facs.push('y');
+          facs.push(inner.asc);
+          const ansT = T`${mono.tex}\left(${inner.tex}\right)`;
+          return {
+            prompt: T`Factor completely. If the polynomial can't be factored, type prime. \(${full.tex}\)`,
+            parts: [{ kind: 'factor', answer: mono.asc + '(' + inner.asc + ')', factors: facs, show: ansT, points: 3 }],
+            solution: [
+              T`GCF of the numbers: ${g}. Smallest power of \(x\): \(x^{${p}}\); of \(y\): \(y^{${q}}\). So the GCF is \(${mono.tex}\).`,
+              T`Divide each term by \(${mono.tex}\): \(${inner.tex}\)`,
+              T`What's left has three terms with no pattern and no common factor, so we're done. \(${H.box(ansT)}\)`,
+            ],
+          };
+        },
+      },
+      prime: {
+        name: 'Prime polynomials',
+        gen(rng) {
+          const { E, why } = primePoly(rng);
+          return {
+            prompt: T`Factor completely. If the polynomial can't be factored, type prime. \(${E.tex}\)`,
+            parts: [{ kind: 'factor', answer: 'prime', poly: E.asc, show: '\\text{prime}', points: 3 }],
+            solution: [...why, T`\(${H.box('\\text{prime}')}\)`],
+          };
+        },
+      },
+      mixed: {
+        name: 'Choose the method',
+        gen(rng) {
+          const v = rng.pick(['x', 'y', 'n']);
+          const kind = rng.int(0, 3);
+          const g = rng.int(2, 5);
+          if (kind === 0) { // g v (v^2 - c^2)
+            const c = rng.int(1, 7);
+            const E = poly([[g, { [v]: 3 }], [-g * c * c, { [v]: 1 }]]);
+            const ansT = T`${g}${v}\left(${v} - ${c}\right)\left(${v} + ${c}\right)`;
+            return { prompt: T`Factor completely. If the polynomial can't be factored, type prime. \(${E.tex}\)`, parts: [{ kind: 'factor', answer: `${g}${v}(${v}-${c})(${v}+${c})`, factors: [String(g), v, `${v}-${c}`, `${v}+${c}`], show: ansT, points: 3 }],
+              solution: [T`GCF: \(${g}${v}\), leaving \(${v}^{2} - ${c * c}\).`, T`Two terms, a difference of squares: \(\left(${v} - ${c}\right)\left(${v} + ${c}\right)\)`, T`\(${H.box(ansT)}\)`] };
+          }
+          if (kind === 1) { // g (v^2 + (r+s) v + rs)
+            let r, s2; do { r = rng.nz(-7, 7); s2 = rng.nz(-7, 7); } while (r === s2 || r + s2 === 0);
+            const E = MX.quad(g, g * (r + s2), g * r * s2, v), In = MX.quad(1, r + s2, r * s2, v);
+            const F1 = poly([[1, { [v]: 1 }], [r, {}]]), F2 = poly([[1, { [v]: 1 }], [s2, {}]]);
+            const ansT = T`${g}\left(${F1.tex}\right)\left(${F2.tex}\right)`;
+            return { prompt: T`Factor completely. If the polynomial can't be factored, type prime. \(${E.tex}\)`, parts: [{ kind: 'factor', answer: `${g}(${F1.asc})(${F2.asc})`, factors: [String(g), F1.asc, F2.asc], show: ansT, points: 3 }],
+              solution: [T`GCF: ${g}, leaving \(${In.tex}\).`, T`Three terms: two numbers that multiply to ${r * s2} and add to ${r + s2} are ${r} and ${s2}.`, T`\(${H.box(ansT)}\)`] };
+          }
+          if (kind === 2) { // g (v^2 + c^2): GCF then prime part
+            const c = rng.int(1, 6);
+            const E = poly([[g, { [v]: 2 }], [g * c * c, {}]]);
+            const ansT = T`${g}\left(${v}^{2} + ${c * c}\right)`;
+            return { prompt: T`Factor completely. If the polynomial can't be factored, type prime. \(${E.tex}\)`, parts: [{ kind: 'factor', answer: `${g}(${v}^2+${c * c})`, factors: [String(g), `${v}^2+${c * c}`], show: ansT, points: 3 }],
+              solution: [T`GCF: ${g}, leaving \(${v}^{2} + ${c * c}\).`, T`That's a sum of squares, which doesn't factor. The polynomial isn't prime, because the GCF came out.`, T`\(${H.box(ansT)}\)`] };
+          }
+          // four terms: grouping
+          let a, b; do { a = rng.nz(-6, 6); b = rng.int(1, 5); } while (Math.abs(a) === b);
+          const E = poly([[1, { [v]: 3 }], [a, { [v]: 2 }], [-b * b, { [v]: 1 }], [-a * b * b, {}]]);
+          const F1 = poly([[1, { [v]: 1 }], [a, {}]]);
+          const ansT = T`\left(${F1.tex}\right)\left(${v} - ${b}\right)\left(${v} + ${b}\right)`;
+          return { prompt: T`Factor completely. If the polynomial can't be factored, type prime. \(${E.tex}\)`, parts: [{ kind: 'factor', answer: `(${F1.asc})(${v}-${b})(${v}+${b})`, factors: [F1.asc, `${v}-${b}`, `${v}+${b}`], show: ansT, points: 3 }],
+            solution: [T`No GCF. Four terms, so group: \(${v}^{2}\left(${F1.tex}\right) - ${b * b}\left(${F1.tex}\right) = \left(${F1.tex}\right)\left(${v}^{2} - ${b * b}\right)\)`, T`Check each factor: \(${v}^{2} - ${b * b}\) is a difference of squares.`, T`\(${H.box(ansT)}\)`] };
         },
       },
     },

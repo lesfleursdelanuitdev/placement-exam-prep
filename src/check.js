@@ -10,7 +10,7 @@
   const A = MX.ast;
   const unwrap = MX.unwrap;
 
-  const close = (a, b, tol) => Math.abs(a - b) <= (tol != null ? tol : 1e-9 * Math.max(1, Math.abs(a), Math.abs(b)));
+  const close = (a, b, tol) => a === b || Math.abs(a - b) <= (tol != null ? tol : 1e-9 * Math.max(1, Math.abs(a), Math.abs(b)));
 
   function safe(fn) {
     try { return fn(); }
@@ -174,7 +174,7 @@
   function hasVarDiv(n) { let f = false; A.walk(n, (x) => { if (x.t === 'div' && A.vars(x.b).size) f = true; }); return f; }
 
   // ---------- form checks for expressions ----------
-  function formIssue(form, user, expected) {
+  function formIssue(form, user, expected, raw) {
     switch (form) {
       case 'expanded': {
         const terms = sumTerms(user);
@@ -215,6 +215,39 @@
         });
         return unreduced ? 'Reduce the fraction in the exponent.' : null;
       }
+      case 'logexpand': {
+        let issue = null;
+        A.walk(user, (x) => {
+          if (issue || x.t !== 'log') return;
+          const a = unwrap(x.a);
+          if (a.t === 'mul' || a.t === 'div' || a.t === 'pow' || a.t === 'sqrt' || a.t === 'neg') { issue = 'Keep expanding: a log of a product, quotient, power or root can be split up.'; return; }
+          if (a.t === 'num' || a.t === 'e') {
+            const b = x.k === 'ln' ? Math.E : x.k === 'c' || !x.b ? 10 : MX.evalAST(x.b, {});
+            const k = Math.log(MX.evalAST(a, {})) / Math.log(b);
+            if (isFinite(k) && Math.abs(k - Math.round(k)) < 1e-9) issue = 'Evaluate the numerical log (it comes out to a whole number).';
+          }
+        });
+        return issue;
+      }
+      case 'logcondense': {
+        const n = A.count(user, 'log');
+        if (n > 1) return 'Combine everything into a single logarithm.';
+        let u = unwrap(user);
+        if (u.t !== 'log') return 'Move every coefficient inside the log as an exponent, so the answer is one log.';
+        return null;
+      }
+      case 'cob': {
+        const logs = [];
+        A.walk(user, (x) => { if (x.t === 'log') logs.push(x); });
+        const u = unwrap(user);
+        const baseKey = (x) => (x.k === 'ln' ? 'e' : x.k === 'c' || !x.b ? '10' : String(MX.evalAST(x.b, {})));
+        if (logs.length !== 2 || u.t !== 'div' || baseKey(logs[0]) !== baseKey(logs[1])) return 'Write it as a quotient of two logs with the same base, like ln(20)/ln(3).';
+        return null;
+      }
+      case 'exactlog':
+        if (raw != null && usedDecimal(raw)) return 'Give the exact answer using logs, not a rounded decimal.';
+        if (!A.count(user, 'log')) return 'Leave the exact answer in terms of logs, like ln(12)/ln(5).';
+        return null;
       case 'rational': {
         if (!isSingleFraction(user)) return 'Combine everything into a single fraction.';
         const ru = MX.toRat(user), re = MX.toRat(expected);
@@ -260,6 +293,7 @@
         if (part.tol != null && close(v, e, part.tol * 3 + 0.01)) return { ok: false, msg: 'Close, but check your rounding.' };
         return { ok: false };
       }
+      if (part.nolog && A.count(r.ast, 'log')) return { nudge: 'Right value. Now evaluate it: the answer should be a number, not a log.' };
       if (part.frac) {
         const u = unwrap(r.ast);
         if (usedDecimal(str) && !Number.isInteger(e)) return { nudge: 'Right value. Write it as a simplified fraction instead of a decimal.' };
@@ -335,9 +369,13 @@
           const tight = fixCase(part.lhs ? MX.parse(String(str).split('=').pop()) : MX.parse(str, { tight: true }), allowed);
           if (MX.equivalent(tight, expected, vl)) return { nudge: 'Add parentheses so it reads the way you mean: for example 1/(2x) instead of 1/2x.' };
         } catch (e) { /* ignore */ }
+        if (part.form === 'exactlog' && !A.vars(ast).size) {
+          const v = MX.evalAST(ast, {}), e = MX.evalAST(expected, {});
+          if (Math.abs(v - e) < 0.01 * Math.max(1, Math.abs(e))) return { nudge: 'Close, but give the exact answer using logs, like ln(12)/ln(5).' };
+        }
         return { ok: false };
       }
-      const issue = part.form ? formIssue(part.form, ast, expected) : null;
+      const issue = part.form ? formIssue(part.form, ast, expected, str) : null;
       if (issue) return { nudge: 'That’s equivalent, but not finished. ' + issue };
       return { ok: true };
     });
@@ -355,8 +393,21 @@
     out.push({ ast: n, m: mult });
     return out;
   }
+  const PRIME = /^\s*(prime|not\s*factorable|does\s*n[o']?t\s*factor|cannot\s*be\s*factored|can'?t\s*be\s*factored|irreducible)\s*\.?\s*$/i;
+  MX.isPrimeWord = (s) => PRIME.test(String(s || ''));
   CHECK.factor = function (part, input) {
     return safe(() => {
+      if (part.answer === 'prime') {
+        if (PRIME.test(input.value)) return { ok: true };
+        if (!String(input.value || '').trim()) throw new MX.ParseError('Type your answer first (or “prime”).');
+        try {
+          const orig = MX.parse(part.poly);
+          const ast = MX.parse(input.value);
+          if (MX.equivalent(ast, orig)) return { ok: false, msg: 'That is just the original polynomial. It has no factors, so it is prime.' };
+        } catch (e) { /* fall through */ }
+        return { ok: false, msg: 'That doesn’t multiply back to the original polynomial.' };
+      }
+      if (PRIME.test(input.value)) return { ok: false, msg: 'This one does factor.' };
       const expected = MX.parse(part.answer);
       const allowed = [...A.vars(expected)];
       let ast = fixCase(MX.parse(input.value), allowed);
@@ -564,6 +615,154 @@
     });
   };
 
+  // ---------- exponential <-> logarithmic form ----------
+  // part: {shape:'exp'|'log', base, exp, val} meaning base^exp = val  <=>  log_base(val) = exp
+  CHECK.eqform = function (part, input) {
+    return safe(() => {
+      const r = MX.parseRel(input.value);
+      if (r.op !== '=') throw new MX.ParseError('This needs an “=” sign.');
+      const L = unwrap(r.lhs), R = unwrap(r.rhs);
+      let form = null, Pn, Qn;
+      if (L.t === 'pow') { form = 'exp'; Pn = L; Qn = R; }
+      else if (R.t === 'pow') { form = 'exp'; Pn = R; Qn = L; }
+      else if (L.t === 'log') { form = 'log'; Pn = L; Qn = R; }
+      else if (R.t === 'log') { form = 'log'; Pn = R; Qn = L; }
+      const eb = MX.parse(part.base), ee = MX.parse(part.exp), evv = MX.parse(part.val);
+      const vl = [...new Set([...A.vars(eb), ...A.vars(ee), ...A.vars(evv)])];
+      const eqv = (x, y) => MX.equivalent(x, y, vl);
+      let comps = false;
+      if (form === 'exp') comps = eqv(Pn.a, eb) && eqv(Pn.b, ee) && eqv(Qn, evv);
+      else if (form === 'log') {
+        const base = Pn.k === 'ln' ? { t: 'e' } : Pn.k === 'c' || !Pn.b ? { t: 'num', v: 10 } : Pn.b;
+        comps = eqv(base, eb) && eqv(Pn.a, evv) && eqv(Qn, ee);
+      }
+      if (!form) return { ok: false, msg: part.shape === 'exp' ? 'The answer should look like base^exponent = value.' : 'The answer should look like log_base(value) = exponent.' };
+      if (!comps) return { ok: false };
+      if (form !== part.shape) return { nudge: part.shape === 'exp' ? 'That’s the same statement. Now write it in exponential form: base^exponent = value.' : 'That’s the same statement. Now write it in logarithmic form: log_base(value) = exponent.' };
+      return { ok: true };
+    });
+  };
+
+  // ---------- sets {a, b, c} ----------
+  function splitTop(s, sep) {
+    const out = [];
+    let depth = 0, cur = '';
+    for (const ch of s) {
+      if ('([{'.includes(ch)) depth++;
+      if (')]}'.includes(ch)) depth--;
+      if (ch === sep && depth === 0) { out.push(cur); cur = ''; } else cur += ch;
+    }
+    out.push(cur);
+    return out.map((x) => x.trim());
+  }
+  function readSet(str) {
+    const s = String(str || '').trim().replace(/^\{\s*/, '').replace(/\s*\}$/, '');
+    if (!s) throw new MX.ParseError('Type the values, like {-2, 0, 3}.');
+    return splitTop(s, ',').map((p) => {
+      if (!p) throw new MX.ParseError('There’s an empty spot between commas.');
+      const a = MX.parse(p);
+      if (A.vars(a).size) throw new MX.ParseError('List numbers only, like {-2, 0, 3}.');
+      const v = MX.evalAST(a, {});
+      if (!isFinite(v)) throw new MX.ParseError('One of the values isn’t a number.');
+      return v;
+    });
+  }
+  CHECK.set = function (part, input) {
+    return safe(() => {
+      const got = readSet(input.value);
+      const exp = part.answers.map((a) => MX.evalAST(MX.parse(a), {}));
+      const uniq = [];
+      got.forEach((v) => { if (!uniq.some((u) => close(u, v))) uniq.push(v); });
+      const missing = exp.filter((e) => !uniq.some((v) => close(v, e)));
+      const extra = uniq.filter((v) => !exp.some((e) => close(v, e)));
+      if (missing.length || extra.length) {
+        if (!extra.length) return { ok: false, msg: missing.length === 1 ? 'One value is missing.' : 'Some values are missing.' };
+        if (!missing.length) return { ok: false, msg: 'There’s at least one value that doesn’t belong.' };
+        return { ok: false };
+      }
+      if (uniq.length < got.length) return { nudge: 'Right values. In a set, list each value only once.' };
+      return { ok: true };
+    });
+  };
+
+  // ---------- intervals / domain and range ----------
+  const INF = Infinity;
+  function endpoint(t) {
+    const s = t.replace(/\s+/g, '');
+    if (/^\+?(∞|inf(inity)?)$/i.test(s)) return INF;
+    if (/^-(∞|inf(inity)?)$/i.test(s)) return -INF;
+    if (!s) throw new MX.ParseError('An endpoint is missing.');
+    const a = MX.parse(s);
+    if (A.vars(a).size) throw new MX.ParseError('Endpoints should be numbers or ∞.');
+    const v = MX.evalAST(a, {});
+    if (!isFinite(v)) throw new MX.ParseError('An endpoint isn’t a number.');
+    return v;
+  }
+  function mergeRegion(iv) {
+    iv.sort((a, b) => a.lo - b.lo || (b.lc ? 1 : 0) - (a.lc ? 1 : 0));
+    const out = [];
+    for (const x of iv) {
+      const last = out[out.length - 1];
+      if (last && (x.lo < last.hi || (x.lo === last.hi && (x.lc || last.hc)))) {
+        if (x.hi > last.hi || (x.hi === last.hi && x.hc)) { last.hi = x.hi; last.hc = x.hc; }
+      } else out.push(Object.assign({}, x));
+    }
+    return out;
+  }
+  function readRegion(str) {
+    let s = String(str || '').trim()
+      .replace(/[−–—]/g, '-').replace(/≤|=</g, '<=').replace(/≥|=>/g, '>=').replace(/≠|!=|<>/g, '!=')
+      .replace(/infinity|inf/gi, '∞');
+    if (!s) throw new MX.ParseError('Type an answer first.');
+    if (/^(all\s*real(s|\s*numbers?)?|real\s*numbers|ℝ|r)\.?$/i.test(s)) return [{ lo: -INF, hi: INF, lc: false, hc: false }];
+    if (/[<>=!]/.test(s)) {
+      const out = [];
+      for (const piece of s.split(/\s+or\s+|∪/i)) {
+        const toks = piece.split(/(<=|>=|!=|<|>)/).map((x) => x.trim()).filter((x) => x !== '');
+        const isVar = (x) => /^[a-zA-Z]$/.test(x);
+        if (toks.length === 3) {
+          let [a, op, b] = toks;
+          if (isVar(b) && !isVar(a)) { [a, b] = [b, a]; op = { '<': '>', '>': '<', '<=': '>=', '>=': '<=', '!=': '!=' }[op]; }
+          if (!isVar(a)) throw new MX.ParseError('Write it like x ≥ -3 or -3 ≤ x < 5.');
+          const v = endpoint(b);
+          if (op === '<') out.push({ lo: -INF, hi: v, lc: false, hc: false });
+          else if (op === '<=') out.push({ lo: -INF, hi: v, lc: false, hc: true });
+          else if (op === '>') out.push({ lo: v, hi: INF, lc: false, hc: false });
+          else if (op === '>=') out.push({ lo: v, hi: INF, lc: true, hc: false });
+          else { out.push({ lo: -INF, hi: v, lc: false, hc: false }); out.push({ lo: v, hi: INF, lc: false, hc: false }); }
+        } else if (toks.length === 5 && isVar(toks[2]) && /^<=?$/.test(toks[1]) && /^<=?$/.test(toks[3])) {
+          const lo = endpoint(toks[0]), hi = endpoint(toks[4]);
+          if (!(lo < hi)) throw new MX.ParseError('The smaller number goes on the left.');
+          out.push({ lo, hi, lc: toks[1] === '<=', hc: toks[3] === '<=' });
+        } else throw new MX.ParseError('Write it like x ≥ -3, -3 ≤ x < 5, or in interval notation like [-3, 5).');
+      }
+      return mergeRegion(out);
+    }
+    const pieces = s.replace(/([)\]])\s*(∪|u|U)\s*([([])/g, '$1∪$3').split('∪').map((x) => x.trim());
+    const out = [];
+    for (const piece of pieces) {
+      const m = piece.match(/^([([])(.*)([)\]])$/);
+      if (!m) throw new MX.ParseError('Use interval notation like [-3, 5) or (-∞, 2) ∪ (2, ∞).');
+      const parts = splitTop(m[2], ',');
+      if (parts.length !== 2) throw new MX.ParseError('Each interval needs exactly two endpoints separated by a comma.');
+      const lo = endpoint(parts[0]), hi = endpoint(parts[1]);
+      if ((lo === -INF && m[1] === '[') || (hi === INF && m[3] === ']')) throw new MX.ParseError('Infinity always takes a parenthesis, never a bracket.');
+      if (!(lo < hi)) throw new MX.ParseError('Write the smaller endpoint first.');
+      out.push({ lo, hi, lc: m[1] === '[', hc: m[3] === ']' });
+    }
+    return mergeRegion(out);
+  }
+  MX.readRegion = readRegion;
+  CHECK.interval = function (part, input) {
+    return safe(() => {
+      const got = readRegion(input.value), exp = readRegion(part.answer);
+      const sameEnds = got.length === exp.length && got.every((g, k) => close(g.lo, exp[k].lo) && close(g.hi, exp[k].hi));
+      if (sameEnds && got.every((g, k) => (g.lo === -INF || g.lc === exp[k].lc) && (g.hi === INF || g.hc === exp[k].hc))) return { ok: true };
+      if (sameEnds) return { ok: false, msg: 'Check the brackets: [ ] means the endpoint is included, ( ) means it isn’t.' };
+      return { ok: false };
+    });
+  };
+
   MX.check = function (part, input) {
     const fn = CHECK[part.kind];
     if (!fn) return { error: 'Unknown answer type ' + part.kind };
@@ -577,16 +776,38 @@
       case 'points': return { values: part.answers.slice() };
       case 'choice': return { choice: part.answer };
       case 'sci': return { value: part.answer };
+      case 'set': case 'interval': case 'eqform': return { value: part.answer };
       case 'num': return { value: part.answer === 'nosol' ? 'no solution' : part.answer, unit: part.units ? part.units.answer : undefined };
       default: return { value: part.answer };
     }
   };
+  // plain-text interval / set answers -> TeX for display
+  function regionTex(s) {
+    return String(s)
+      .replace(/infinity|inf/gi, '∞')
+      .replace(/([)\]])\s*[uU]\s*([([])/g, '$1∪$2')
+      .split(/(∞|∪|<=|>=|!=|≤|≥|≠|\{|\}|[a-zA-Z]+)/)
+      .map((tok) => {
+        if (tok === '∞') return '\\infty ';
+        if (tok === '∪') return '\\cup ';
+        if (tok === '<=' || tok === '≤') return '\\le ';
+        if (tok === '>=' || tok === '≥') return '\\ge ';
+        if (tok === '!=' || tok === '≠') return '\\ne ';
+        if (tok === '{') return '\\{';
+        if (tok === '}') return '\\}';
+        if (/^[a-zA-Z]{2,}$/.test(tok)) return '\\text{' + tok + '}';
+        return tok.replace(/</g, '\\lt ').replace(/>/g, '\\gt ');
+      }).join('');
+  }
+  MX.regionTex = regionTex;
   // live preview TeX for an input string (null when unreadable)
   MX.previewTex = function (kind, str) {
     const s = String(str || '').trim();
     if (!s) return null;
     try {
       if (MX.isNoSolution(s)) return '\\text{no solution}';
+      if (MX.isPrimeWord(s)) return '\\text{prime}';
+      if (kind === 'set' || kind === 'interval') return regionTex(s);
       if (kind === 'point') {
         const [a, b] = MX.parsePoint(s);
         return '\\left(' + MX.astTex(a) + ', ' + MX.astTex(b) + '\\right)';
