@@ -6,6 +6,20 @@
   const SEC = 'Rational expressions';
   const bin = (q, v) => poly([[1, { [v]: 1 }], [q, {}]]); // v + q
   const L = (t) => T`\left(${t}\right)`;
+  // a num answer to "simplify this expression" (whose variable cancels out): the displayed expression
+  // takes the answer's value at several values of v away from its poles
+  const constIs = (expr, v) => MX.V.custom((a) => {
+    if (typeof a !== 'number') return 'expected a number';
+    const f = MX.V.fn(expr, v);
+    let n = 0;
+    for (const x of [-7.31, -2.13, 0.71, 1.93, 4.37, 11.71, 13.13, 17.57]) {
+      const y = f(x);
+      if (!isFinite(y)) continue;
+      if (!MX.V.close(y, a, 1e-9)) return 'the expression equals ' + MX.num(y, 6) + ' at ' + v + ' = ' + x + ', not ' + MX.num(a, 6);
+      n++;
+    }
+    return n >= 4 || 'could not test the expression at enough points';
+  });
 
   MX.register({
     id: 'rat-simplify', section: SEC, title: 'Simplifying rational expressions', kind: 'skill',
@@ -24,7 +38,7 @@
           const Num = MX.quad(1, r + s, r * s, v), Den = bin(r, v), R = bin(s, v);
           return {
             prompt: T`Simplify: \(\dfrac{${Num.tex}}{${Den.tex}}\)`,
-            parts: [{ kind: 'expr', form: 'rational', answer: R.asc, show: R.tex, points: 3 }],
+            parts: [{ kind: 'expr', form: 'rational', answer: R.asc, show: R.tex, points: 3, verify: MX.V.equiv(`(${Num.asc})/(${Den.asc})`) }],
             solution: [
               T`Factor the numerator: \(${Num.tex} = ${L(Den.tex)}${L(R.tex)}\)`,
               T`\(\dfrac{\strike{${L(Den.tex)}}${L(R.tex)}}{\strike{${Den.tex}}}\)`,
@@ -44,7 +58,7 @@
           const ansT = T`\frac{${Fb.tex}}{${Fc.tex}}`;
           return {
             prompt: T`Simplify: \(\dfrac{${Num.tex}}{${Den.tex}}\)`,
-            parts: [{ kind: 'expr', form: 'rational', answer: '(' + Fb.asc + ')/(' + Fc.asc + ')', show: ansT, points: 3 }],
+            parts: [{ kind: 'expr', form: 'rational', answer: '(' + Fb.asc + ')/(' + Fc.asc + ')', show: ansT, points: 3, verify: MX.V.equiv(`(${Num.asc})/(${Den.asc})`) }],
             solution: [
               T`Numerator: \(${Num.tex} = ${L(Fa.tex)}${L(Fb.tex)}\)`,
               T`Denominator: \(${Den.tex} = ${L(Fa.tex)}${L(Fc.tex)}\)`,
@@ -62,7 +76,7 @@
           const R = k === 1 ? { tex: T`-\frac{1}{${v} + ${c}}`, asc: `-1/(${v}+${c})` } : { tex: T`-\frac{${k}}{${v} + ${c}}`, asc: `-${k}/(${v}+${c})` };
           return {
             prompt: T`Simplify: \(\dfrac{${Num.tex}}{${Den.tex}}\)`,
-            parts: [{ kind: 'expr', form: 'rational', answer: R.asc, show: R.tex, points: 3 }],
+            parts: [{ kind: 'expr', form: 'rational', answer: R.asc, show: R.tex, points: 3, verify: MX.V.equiv(`(${Num.asc})/(${Den.asc})`) }],
             solution: [
               T`Factor: numerator \(${k === 1 ? '' : k}\left(${c} - ${v}\right)\), denominator \(\left(${v} - ${c}\right)\left(${v} + ${c}\right)\)`,
               T`\(${c} - ${v} = -\left(${v} - ${c}\right)\), so those factors cancel to \(-1\).`,
@@ -93,7 +107,7 @@
           const ans = new Q(-k, m);
           return {
             prompt: T`Divide: \(\dfrac{${k}}{${v} - ${a}} \div \dfrac{${m}}{${a} - ${v}}\)`,
-            parts: [{ kind: 'num', frac: true, answer: ans.str(), show: ans.tex(), points: 3 }],
+            parts: [{ kind: 'num', frac: true, answer: ans.str(), show: ans.tex(), points: 3, verify: constIs(`(${k}/(${v}-${a}))/(${m}/(${a}-${v}))`, v) }],
             solution: [
               T`Multiply by the reciprocal: \(\dfrac{${k}}{${v} - ${a}} \cdot \dfrac{${a} - ${v}}{${m}}\)`,
               T`\(${a} - ${v} = -\left(${v} - ${a}\right)\), so \(\frac{${a} - ${v}}{${v} - ${a}} = -1\).`,
@@ -118,7 +132,7 @@
           const ansA = `-${C.n === 1 ? '' : C.n}(${Fa.asc})/(${C.d}(${Fc.asc}))`;
           return {
             prompt: T`Divide: \(\dfrac{${N1.tex}}{${D1.tex}} \div \dfrac{${N2.tex}}{${D2.tex}}\)`,
-            parts: [{ kind: 'expr', form: 'rational', answer: ansA, show: ansT, points: 4 }],
+            parts: [{ kind: 'expr', form: 'rational', answer: ansA, show: ansT, points: 4, verify: MX.V.equiv(`((${N1.asc})/(${D1.asc}))/((${N2.asc})/(${D2.asc}))`) }],
             solution: [
               T`Flip and multiply: \(\dfrac{${N1.tex}}{${D1.tex}} \cdot \dfrac{${D2.tex}}{${N2.tex}}\)`,
               T`Factor: \(\dfrac{${p}${L(Fa.tex)}}{${q}\left(${b} - x\right)} \cdot \dfrac{${s}\left(x - ${b}\right)}{${r}${L(Fc.tex)}}\)`,
@@ -138,7 +152,7 @@
           const ansT = T`\frac{x + ${c}}{${k}}`;
           return {
             prompt: T`Multiply: \(\dfrac{${N1.tex}}{${D1.tex}} \cdot \dfrac{${N2.tex}}{${D2.tex}}\)`,
-            parts: [{ kind: 'expr', form: 'rational', answer: `(x+${c})/${k}`, show: ansT, points: 3 }],
+            parts: [{ kind: 'expr', form: 'rational', answer: `(x+${c})/${k}`, show: ansT, points: 3, verify: MX.V.equiv(`((${N1.asc})/(${D1.asc}))*((${N2.asc})/(${D2.asc}))`) }],
             solution: [
               T`Factor: \(\dfrac{\left(x - ${c}\right)\left(x + ${c}\right)}{${k}${L(N2.tex)}} \cdot \dfrac{${N2.tex}}{x - ${c}}\)`,
               T`Cancel \(${L(N2.tex)}\) and \(\left(x - ${c}\right)\).`,
@@ -171,7 +185,7 @@
           const ansT = T`\frac{${Nm.tex}}{${v}\left(${Fb.tex}\right)}`;
           return {
             prompt: T`${sg < 0 ? 'Subtract' : 'Add'}: \(\dfrac{${a}}{${Fb.tex}} ${sg < 0 ? '-' : '+'} \dfrac{${c}}{${v}}\)`,
-            parts: [{ kind: 'expr', form: 'rational', answer: `(${Nm.asc})/(${v}(${Fb.asc}))`, show: ansT, points: 3 }],
+            parts: [{ kind: 'expr', form: 'rational', answer: `(${Nm.asc})/(${v}(${Fb.asc}))`, show: ansT, points: 3, verify: MX.V.equiv(`${a}/(${Fb.asc})${sg < 0 ? '-' : '+'}${c}/${v}`) }],
             solution: [
               T`The LCD is \(${v}\left(${Fb.tex}\right)\).`,
               T`\(\dfrac{${a}\cdot ${v}}{${v}\left(${Fb.tex}\right)} ${sg < 0 ? '-' : '+'} \dfrac{${MX.coef(c)}\left(${Fb.tex}\right)}{${v}\left(${Fb.tex}\right)}\)`,
@@ -195,7 +209,7 @@
           const ansT = T`\frac{${Nm.tex}}{${Lc}${v}^{2}}`;
           return {
             prompt: T`${sg < 0 ? 'Subtract' : 'Add'}: \(\dfrac{${a}}{${d1}${v}} ${sg < 0 ? '-' : '+'} \dfrac{${c}}{${d2}${v}^{2}}\)`,
-            parts: [{ kind: 'expr', form: 'rational', answer: `(${Nm.asc})/(${Lc}${v}^2)`, show: ansT, points: 3 }],
+            parts: [{ kind: 'expr', form: 'rational', answer: `(${Nm.asc})/(${Lc}${v}^2)`, show: ansT, points: 3, verify: MX.V.equiv(`${a}/(${d1}${v})${sg < 0 ? '-' : '+'}${c}/(${d2}${v}^2)`) }],
             solution: [
               T`LCD: \(\text{lcm}(${d1}, ${d2}) = ${Lc}\), and the highest power of \(${v}\) is \(${v}^{2}\), so the LCD is \(${Lc}${v}^{2}\).`,
               T`\(\dfrac{${a}}{${d1}${v}}\cdot\dfrac{${Lc / d1}${v}}{${Lc / d1}${v}} = \dfrac{${al}${v}}{${Lc}${v}^{2}}\) and \(\dfrac{${c}}{${d2}${v}^{2}}\cdot\dfrac{${Lc / d2}}{${Lc / d2}} = \dfrac{${be}}{${Lc}${v}^{2}}\)`,
@@ -217,7 +231,7 @@
           const combined = poly([[A, { [v]: 1 }], [B, {}], [-m * C, { [v]: 1 }], [-m * D, {}]]).tex;
           return {
             prompt: T`Subtract: \(\dfrac{${N1.tex}}{${D1.tex}} - \dfrac{${N2.tex}}{${Fr.tex}}\)`,
-            parts: [{ kind: 'num', frac: true, answer: ans.str(), show: ans.tex(), points: 3 }],
+            parts: [{ kind: 'num', frac: true, answer: ans.str(), show: ans.tex(), points: 3, verify: constIs(`(${N1.asc})/(${D1.asc})-(${N2.asc})/(${Fr.asc})`, v) }],
             solution: [
               T`Factor the first denominator: \(${D1.tex} = ${m}\left(${Fr.tex}\right)\). The LCD is \(${m}\left(${Fr.tex}\right)\).`,
               T`\(\dfrac{${N1.tex}}{${m}\left(${Fr.tex}\right)} - \dfrac{${m}\left(${N2.tex}\right)}{${m}\left(${Fr.tex}\right)}\)`,
@@ -255,7 +269,7 @@
           const Fa = bin(a, 'x');
           return {
             prompt: T`Solve: \(\dfrac{${Fa.tex}}{x} ${pq.n < 0 ? '-' : '+'} ${pq.abs().tex()} = ${rs.tex()}\)`,
-            parts: [{ kind: 'num', frac: true, var: 'x', answer: String(x0), show: T`x = ${x0}`, points: 4 }],
+            parts: [{ kind: 'num', frac: true, var: 'x', answer: String(x0), show: T`x = ${x0}`, points: 4, verify: MX.V.solves(`(${Fa.asc})/x${pq.n < 0 ? '-' : '+'}(${pq.abs().str()})=(${rs.str()})`) }],
             solution: [
               T`\(x \ne 0\). Multiply every term by the LCD \(${Lc}x\):`,
               T`\(${Lc}\left(${Fa.tex}\right) ${pX.n < 0 ? '-' : '+'} ${H.cq(pX.abs())}x = ${H.cq(rhsX)}x\)`,
@@ -279,7 +293,7 @@
           const Fb = bin(-b, 'x'), Fd = bin(d, 'x');
           return {
             prompt: T`Solve: \(\dfrac{${A}}{${Fb.tex}} = \dfrac{${C}}{${Fd.tex}}\)`,
-            parts: [{ kind: 'num', frac: true, var: 'x', answer: String(x0), show: T`x = ${x0}`, points: 3 }],
+            parts: [{ kind: 'num', frac: true, var: 'x', answer: String(x0), show: T`x = ${x0}`, points: 3, verify: MX.V.solves(`${A}/(${Fb.asc})=${C}/(${Fd.asc})`) }],
             solution: [
               T`Cross-multiply: \(${A}\left(${Fd.tex}\right) = ${C}\left(${Fb.tex}\right)\)`,
               T`\(${poly([[A, { x: 1 }], [A * d, {}]]).tex} = ${poly([[C, { x: 1 }], [-C * b, {}]]).tex}\)`,
@@ -295,7 +309,7 @@
           const c = rng.int(2, 7), k = rng.int(1, 4);
           return {
             prompt: T`Solve: \(\dfrac{x}{x - ${c}} + ${k} = \dfrac{${c}}{x - ${c}}\)`,
-            parts: [{ kind: 'num', var: 'x', answer: 'nosol', show: T`\text{no solution}`, points: 4 }],
+            parts: [{ kind: 'num', var: 'x', answer: 'nosol', show: T`\text{no solution}`, points: 4, verify: MX.V.solves(`x/(x-${c})+${k}=${c}/(x-${c})`) }],
             solution: [
               T`\(x \ne ${c}\). Multiply every term by \(x - ${c}\): \(x + ${k}\left(x - ${c}\right) = ${c}\)`,
               T`\(${k + 1}x - ${k * c} = ${c}\), so \(${k + 1}x = ${c * (k + 1)}\) and \(x = ${c}\).`,

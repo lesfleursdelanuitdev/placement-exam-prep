@@ -44,7 +44,7 @@
   // independent verifier (src/verify.js) agrees with it. A question that fails is replaced by one from the
   // next seed (and then by another variant of the same topic), so a generator bug never reaches a student.
   // A sound question keeps its original seed, so saved exams and practice rebuild exactly the same questions.
-  MX.V.opts.n = 4000; // a lighter sample count than the tests use; this is the safety net, not the audit
+  Object.assign(MX.V.opts, { fine: 0.05, coarse: 1 }); // a lighter grid than the tests use: this is the safety net, not the audit
   MX.unsound = [];
   function soundGen(t, vk, seed, key) {
     const tryGen = (v, k) => {

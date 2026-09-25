@@ -28,6 +28,27 @@
   const bank = (x, y) => S.poly([[x, y + 20], [x + 40, y], [x + 80, y + 20]], 'ln soft2') + [0, 1, 2, 3].map((k) => S.rect(x + 8 + k * 18, y + 24, 8, 36, 'ln paperf')).join('') + S.rect(x, y + 62, 80, 8, 'ln soft2') + S.text(x + 40, y + 16, '$', { cls: 'tx small', w: 700 });
   const dish = (x, y, n) => { let b = S.ellipse(x, y, 24, 16, 'ln paperf'); for (let k = 0; k < n; k++) b += S.circle(x - 12 + (k % 4) * 8, y - 6 + Math.floor(k / 4) * 8, 2.6, 'leaf nostroke'); return b; };
 
+  // ---------- verifiers (built from the stated formula and numbers) ----------
+  const V = MX.V;
+  // a is exact correctly rounded to `places` decimals
+  const roundedOK = (a, exact, places) => {
+    if (typeof a !== 'number' || !isFinite(exact)) return 'expected a number';
+    const s = Math.pow(10, places);
+    if (Math.abs(a * s - Math.round(a * s)) > 1e-6) return 'the answer is not rounded to ' + places + ' places';
+    return Math.abs(a - exact) <= 0.5 / s + 1e-9 * Math.max(1, Math.abs(exact)) ? true : 'the exact value is ' + MX.num(exact, 6) + ', which does not round to ' + a;
+  };
+  // the value of a stated formula (parser syntax), rounded
+  const roundedValue = (expr, places) => V.custom((a) => roundedOK(a, V.num(expr), places));
+  // the only real root of the stated equation, rounded
+  const roundedRoot = (eq, places, o = {}) => {
+    let rs = null;
+    return V.custom((a) => {
+      rs = rs || V.roots(eq, o);
+      if (!Array.isArray(rs) || rs.length !== 1) return 'expected exactly one solution of ' + eq;
+      return roundedOK(a, rs[0], places);
+    });
+  };
+
   const variants = {};
   // ---------- money ----------
   const FREQ = [[1, 'annually'], [2, 'semiannually'], [4, 'quarterly'], [12, 'monthly']];
@@ -40,7 +61,7 @@
       return {
         prompt: T`You deposit ${money2(P)} in an account that pays ${r}% interest compounded ${word}. How much is in the account after ${t} years? Use \(A = P\left(1 + \frac{r}{n}\right)^{nt}\) and round to the nearest cent.`,
         visual: withIcon(bank(14, 30), c, 'An account balance growing over time'),
-        parts: [{ kind: 'num', pre: 'A = $', tol: 0.011, answer: MX.money(Ar), show: '\\$' + MX.commas(MX.money(Ar)), points: 3 }],
+        parts: [{ kind: 'num', pre: 'A = $', tol: 0.011, answer: MX.money(Ar), show: '\\$' + MX.commas(MX.money(Ar)), points: 3, verify: roundedValue(`${P}(1+(${r}/100)/${n})^(${n}*${t})`, 2) }],
         solution: [
           T`\(P = ${P}\), \(r = ${r / 100}\) (as a decimal), \(n = ${n}\) (${word}), \(t = ${t}\).`,
           T`\(A = ${P}\left(1 + \frac{${r / 100}}{${n}}\right)^{${n}\cdot${t}} = ${P}\left(${MX.num(1 + r / 100 / n, 6)}\right)^{${n * t}}\)`,
@@ -58,7 +79,7 @@
       return {
         prompt: T`${money2(P)} is invested at ${r}% interest compounded continuously. Use \(A = Pe^{rt}\) to find the balance after ${t} years, to the nearest cent.`,
         visual: withIcon(bank(14, 30), c, 'An account balance growing continuously'),
-        parts: [{ kind: 'num', pre: 'A = $', tol: 0.011, answer: MX.money(Ar), show: '\\$' + MX.commas(MX.money(Ar)), points: 3 }],
+        parts: [{ kind: 'num', pre: 'A = $', tol: 0.011, answer: MX.money(Ar), show: '\\$' + MX.commas(MX.money(Ar)), points: 3, verify: roundedValue(`${P}e^((${r}/100)*${t})`, 2) }],
         solution: [T`\(P = ${P}\), \(r = ${r / 100}\), \(t = ${t}\).`, T`\(A = ${P}e^{${r / 100}\cdot${t}} = ${P}e^{${MX.num((r / 100) * t, 4)}}\)`, T`\(e^{${MX.num((r / 100) * t, 4)}} \approx ${MX.num(Math.exp((r / 100) * t), 5)}\), so \(A \approx ${H.box('\\$' + MX.commas(MX.money(Ar)))}\)`],
       };
     },
@@ -76,7 +97,8 @@
           ? T`${money2(P)} is invested at ${r}% compounded continuously (\(A = Pe^{rt}\)). How many years until the account reaches ${money2(Tg)}? Round to the nearest tenth of a year.`
           : T`${money2(P)} is invested at ${r}% interest compounded annually (\(A = P\left(1 + r\right)^{t}\)). How many years until the account reaches ${money2(Tg)}? Round to the nearest tenth of a year.`,
         visual: withIcon(bank(14, 30), c, 'Balance curve reaching a savings goal'),
-        parts: [{ kind: 'num', tol: 0.051, post: 'years', answer: tr.toFixed(1), show: tr.toFixed(1) + '\\text{ years}', points: 3 }],
+        parts: [{ kind: 'num', tol: 0.051, post: 'years', answer: tr.toFixed(1), show: tr.toFixed(1) + '\\text{ years}', points: 3,
+          verify: roundedRoot(cont ? `${P}e^((${r}/100)t)=${Tg}` : `${P}(1+${r}/100)^t=${Tg}`, 1, { v: 't', lo: -10, hi: 100, n: 5000 }) }],
         solution: cont
           ? [T`\(${Tg} = ${P}e^{${r / 100}t}\), so \(e^{${r / 100}t} = ${mult}\)`, T`Take \(\ln\): \(${r / 100}t = \ln ${mult}\), so \(t = \dfrac{\ln ${mult}}{${r / 100}}\)`, T`\(t \approx ${H.box(tr.toFixed(1) + '\\text{ years}')}\)`]
           : [T`\(${Tg} = ${P}\left(${1 + r / 100}\right)^{t}\), so \(\left(${1 + r / 100}\right)^{t} = ${mult}\)`, T`Take \(\ln\): \(t\ln ${1 + r / 100} = \ln ${mult}\), so \(t = \dfrac{\ln ${mult}}{\ln ${1 + r / 100}}\)`, T`\(t \approx ${H.box(tr.toFixed(1) + '\\text{ years}')}\)`],
@@ -96,7 +118,7 @@
       return {
         prompt: T`A town has ${MX.commas(P0)} people and grows continuously at ${k}% per year, so \(P = ${MX.commas(P0)}e^{${k / 100}t}\). Estimate the population after ${t} years, to the nearest whole person.`,
         visual: withIcon(city, c, 'A town and its growing population curve'),
-        parts: [{ kind: 'num', tol: 1.01, answer: String(Pr), show: MX.commas(Pr) + '\\text{ people}', post: 'people', points: 3 }],
+        parts: [{ kind: 'num', tol: 1.01, answer: String(Pr), show: MX.commas(Pr) + '\\text{ people}', post: 'people', points: 3, verify: roundedValue(`${P0}e^(${k / 100}*${t})`, 0) }],
         solution: [T`\(P = ${MX.commas(P0)}e^{${k / 100}\cdot${t}} = ${MX.commas(P0)}e^{${MX.num((k / 100) * t, 4)}}\)`, T`\(e^{${MX.num((k / 100) * t, 4)}} \approx ${MX.num(Math.exp((k / 100) * t), 5)}\)`, T`\(P \approx ${H.box(MX.commas(Pr))}\) people`],
       };
     },
@@ -112,7 +134,7 @@
       return {
         prompt: T`A culture starts with ${N0} bacteria and doubles every ${d} hours, so \(N = ${N0}\cdot 2^{t/${d}}\). How many hours until there are ${MX.commas(N)} bacteria? Round to the nearest tenth.`,
         visual: S.svg(250, 120, v, 'A bacteria culture doubling'),
-        parts: [{ kind: 'num', tol: 0.051, post: 'hours', answer: tr.toFixed(1), show: tr.toFixed(1) + '\\text{ hours}', points: 3 }],
+        parts: [{ kind: 'num', tol: 0.051, post: 'hours', answer: tr.toFixed(1), show: tr.toFixed(1) + '\\text{ hours}', points: 3, verify: roundedRoot(`${N0}*2^(t/${d})=${N}`, 1, { v: 't', lo: -10, hi: 100, n: 5000 }) }],
         solution: [T`\(${MX.commas(N)} = ${N0}\cdot 2^{t/${d}}\), so \(2^{t/${d}} = ${mult}\)`, T`Take \(\ln\): \(\dfrac{t}{${d}}\ln 2 = \ln ${mult}\), so \(t = \dfrac{${d}\ln ${mult}}{\ln 2}\)`, T`\(t \approx ${H.box(tr.toFixed(1) + '\\text{ hours}')}\)`],
       };
     },
@@ -129,7 +151,7 @@
         return {
           prompt: T`The half-life of ${what} is ${MX.commas(h)} ${hUnit}. Starting with ${A0} mg, how long until ${MX.num(A)} mg remain? Use \(A = A_{0}\left(\frac{1}{2}\right)^{t/h}\) and round to the nearest ${big ? 'whole number' : 'tenth'}.`,
           visual: S.svg(c.W + 10, c.H, S.g(c.body, 'translate(10 0)'), 'A decay curve falling to a target amount'),
-          parts: [{ kind: 'num', tol: big ? 0.51 : 0.051, post: hUnit, answer: big ? String(tr) : tr.toFixed(1), show: (big ? MX.commas(tr) : tr.toFixed(1)) + '\\text{ ' + hUnit + '}', points: 3 }],
+          parts: [{ kind: 'num', tol: big ? 0.51 : 0.051, post: hUnit, verify: roundedRoot(`${A0}(1/2)^(t/${h})=${MX.num(A)}`, big ? 0 : 1, { v: 't', lo: -10, hi: 30000, n: 20000 }), answer: big ? String(tr) : tr.toFixed(1), show: (big ? MX.commas(tr) : tr.toFixed(1)) + '\\text{ ' + hUnit + '}', points: 3 }],
           solution: [T`\(${MX.num(A)} = ${A0}\left(\frac{1}{2}\right)^{t/${h}}\), so \(\left(\frac{1}{2}\right)^{t/${h}} = ${frac}\)`, T`Take \(\ln\): \(\dfrac{t}{${h}}\ln\frac{1}{2} = \ln ${frac}\), so \(t = \dfrac{${h}\ln ${frac}}{\ln 0.5}\)`, T`\(t \approx ${H.box((big ? MX.commas(tr) : tr.toFixed(1)) + '\\text{ ' + hUnit + '}')}\)`],
         };
       }
@@ -138,7 +160,7 @@
       return {
         prompt: T`The half-life of ${what} is ${MX.commas(h)} ${hUnit}. How much of a ${A0} mg sample is left after ${MX.commas(t)} ${hUnit}? Use \(A = A_{0}\left(\frac{1}{2}\right)^{t/h}\) and round to the nearest hundredth.`,
         visual: S.svg(c.W + 10, c.H, S.g(c.body, 'translate(10 0)'), 'A half-life decay curve'),
-        parts: [{ kind: 'num', tol: 0.011, post: 'mg', answer: Ar.toFixed(2), show: Ar.toFixed(2) + '\\text{ mg}', points: 3 }],
+        parts: [{ kind: 'num', tol: 0.011, post: 'mg', answer: Ar.toFixed(2), show: Ar.toFixed(2) + '\\text{ mg}', points: 3, verify: roundedValue(`${A0}(1/2)^(${t}/${h})`, 2) }],
         solution: [T`\(t/h = ${MX.commas(t)}/${MX.commas(h)} = ${MX.num(t / h)}\) half-lives.`, T`\(A = ${A0}\left(\frac{1}{2}\right)^{${MX.num(t / h)}}\)`, T`\(A \approx ${H.box(Ar.toFixed(2) + '\\text{ mg}')}\)`],
       };
     },
@@ -161,7 +183,7 @@
         return {
           prompt: T`The pH of a solution is \(\text{pH} = -\log\left[\text{H}^{+}\right]\). Find the pH when \(\left[\text{H}^{+}\right] = ${MX.num(a)} \times 10^{-${k}}\) moles per liter. Round to the nearest hundredth.`,
           visual: phBar(null),
-          parts: [{ kind: 'num', tol: 0.006, pre: 'pH =', answer: pr.toFixed(2), show: pr.toFixed(2), points: 3 }],
+          parts: [{ kind: 'num', tol: 0.006, pre: 'pH =', answer: pr.toFixed(2), show: pr.toFixed(2), points: 3, verify: roundedValue(`-log(${MX.num(a)}*10^(-${k}))`, 2) }],
           solution: [T`\(\text{pH} = -\log\left(${MX.num(a)} \times 10^{-${k}}\right) = -\left(\log ${MX.num(a)} + \log 10^{-${k}}\right)\)`, T`\(= -\left(${MX.num(Math.log10(a), 4)} - ${k}\right) = ${k} - ${MX.num(Math.log10(a), 4)}\)`, T`\(\approx ${H.box(pr.toFixed(2))}\)`],
         };
       }
@@ -170,7 +192,7 @@
       return {
         prompt: T`${n1[0].toUpperCase() + n1.slice(1)} has a pH of ${p1} and ${n2} has a pH of ${p2}. Since \(\text{pH} = -\log\left[\text{H}^{+}\right]\), how many times greater is the hydrogen-ion concentration of the ${n1}?`,
         visual: phBar(p1),
-        parts: [{ kind: 'num', answer: String(Math.pow(10, d)), show: MX.commas(Math.pow(10, d)) + '\\text{ times}', post: 'times', points: 3 }],
+        parts: [{ kind: 'num', answer: String(Math.pow(10, d)), show: MX.commas(Math.pow(10, d)) + '\\text{ times}', post: 'times', points: 3, verify: V.value(`10^(-${p1})/10^(-${p2})`) }],
         solution: [T`\(\left[\text{H}^{+}\right] = 10^{-\text{pH}}\): \(10^{-${p1}}\) versus \(10^{-${p2}}\).`, T`\(\dfrac{10^{-${p1}}}{10^{-${p2}}} = 10^{${p2} - ${p1}} = 10^{${d}}\)`, T`Each 1 unit of pH is a factor of 10: \(${H.box(MX.commas(Math.pow(10, d)))}\) times.`],
       };
     },
@@ -184,7 +206,7 @@
         return {
           prompt: T`Sound level in decibels is \(L = 10\log\dfrac{I}{I_{0}}\), where \(I_{0} = 10^{-12}\) W/m². Find the level of a sound with intensity \(I = ${MX.num(a)} \times 10^{-${k}}\) W/m². Round to the nearest tenth.`,
           visual: S.svg(200, 110, spk + S.text(150, 104, 'I = ' + MX.num(a) + ' × 10^-' + k, { cls: 'tx small' }), 'A speaker producing sound'),
-          parts: [{ kind: 'num', tol: 0.051, post: 'dB', answer: Lr.toFixed(1), show: Lr.toFixed(1) + '\\text{ dB}', points: 3 }],
+          parts: [{ kind: 'num', tol: 0.051, post: 'dB', answer: Lr.toFixed(1), show: Lr.toFixed(1) + '\\text{ dB}', points: 3, verify: roundedValue(`10log((${MX.num(a)}*10^(-${k}))/10^(-12))`, 1) }],
           solution: [T`\(\dfrac{I}{I_{0}} = \dfrac{${MX.num(a)} \times 10^{-${k}}}{10^{-12}} = ${MX.num(a)} \times 10^{${12 - k}}\)`, T`\(L = 10\left(\log ${MX.num(a)} + ${12 - k}\right) = 10\left(${MX.num(Math.log10(a), 4)} + ${12 - k}\right)\)`, T`\(L \approx ${H.box(Lr.toFixed(1) + '\\text{ dB}')}\)`],
         };
       }
@@ -193,7 +215,7 @@
       return {
         prompt: T`${s1[0].toUpperCase() + s1.slice(1)} measures ${L1} dB and ${s2} measures ${L2} dB. Using \(L = 10\log\dfrac{I}{I_{0}}\), how many times more intense is ${s1}?`,
         visual: S.svg(200, 110, spk + S.text(150, 104, L1 + ' dB vs ' + L2 + ' dB', { cls: 'tx small' }), 'A speaker producing sound'),
-        parts: [{ kind: 'num', answer: String(Math.pow(10, d)), show: MX.commas(Math.pow(10, d)) + '\\text{ times}', post: 'times', points: 3 }],
+        parts: [{ kind: 'num', answer: String(Math.pow(10, d)), show: MX.commas(Math.pow(10, d)) + '\\text{ times}', post: 'times', points: 3, verify: V.value(`10^(${L1}/10)/10^(${L2}/10)`) }],
         solution: [T`\(I = I_{0}\cdot 10^{L/10}\).`, T`\(\dfrac{I_{1}}{I_{2}} = 10^{(${L1} - ${L2})/10} = 10^{${d}}\)`, T`Every 10 dB is a factor of 10: \(${H.box(MX.commas(Math.pow(10, d)))}\) times.`],
       };
     },
@@ -209,7 +231,7 @@
         return {
           prompt: T`Magnitude is \(M = \log\dfrac{I}{I_{0}}\). How many times more intense is a magnitude ${MX.num(m1)} earthquake than a magnitude ${MX.num(m2)} earthquake?`,
           visual: S.svg(340, 110, wave + S.text(70, 104, 'M ' + MX.num(m2), { cls: 'tx small' }) + S.text(240, 104, 'M ' + MX.num(m1), { cls: 'tx small', w: 700 }), 'Seismograph traces of two earthquakes'),
-          parts: [{ kind: 'num', answer: String(Math.pow(10, d)), show: MX.commas(Math.pow(10, d)) + '\\text{ times}', post: 'times', points: 3 }],
+          parts: [{ kind: 'num', answer: String(Math.pow(10, d)), show: MX.commas(Math.pow(10, d)) + '\\text{ times}', post: 'times', points: 3, verify: V.value(`10^(${MX.num(m1)})/10^(${MX.num(m2)})`) }],
           solution: [T`\(I = I_{0}\cdot 10^{M}\), so the ratio is \(10^{${MX.num(m1)} - ${MX.num(m2)}} = 10^{${d}}\)`, T`Each whole step in magnitude is a factor of 10.`, T`\(${H.box(MX.commas(Math.pow(10, d)))}\) times`],
         };
       }
@@ -217,7 +239,7 @@
       return {
         prompt: T`An earthquake is ${MX.commas(f)} times as intense as a magnitude ${MX.num(m2)} earthquake. Using \(M = \log\dfrac{I}{I_{0}}\), what is its magnitude? Round to the nearest tenth.`,
         visual: S.svg(340, 110, wave + S.text(70, 104, 'M ' + MX.num(m2), { cls: 'tx small' }) + S.text(240, 104, MX.commas(f) + '× as intense', { cls: 'tx small', w: 700 }), 'Seismograph traces of two earthquakes'),
-        parts: [{ kind: 'num', tol: 0.051, pre: 'M =', answer: mr.toFixed(1), show: mr.toFixed(1), points: 3 }],
+        parts: [{ kind: 'num', tol: 0.051, pre: 'M =', answer: mr.toFixed(1), show: mr.toFixed(1), points: 3, verify: roundedRoot(`10^M=${f}*10^(${MX.num(m2)})`, 1, { v: 'M', lo: 0, hi: 20, n: 4000 }) }],
         solution: [T`\(M = \log\dfrac{${MX.commas(f)}\,I}{I_{0}} = \log ${MX.commas(f)} + \log\dfrac{I}{I_{0}}\)`, T`\(= ${MX.num(Math.log10(f), 4)} + ${MX.num(m2)}\)`, T`\(\approx ${H.box(mr.toFixed(1))}\)`],
       };
     },

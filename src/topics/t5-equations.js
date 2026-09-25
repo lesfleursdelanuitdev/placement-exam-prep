@@ -86,31 +86,31 @@
   // ---------- literal equations ----------
   const FORMULAS = {
     frac: [
-      { f: T`n = \frac{2A}{B + d}`, v: 'A', vars: ['n', 'A', 'B', 'd'], a: 'n(B+d)/2', t: T`\frac{n\left(B + d\right)}{2}`, s: [T`Multiply both sides by \(\left(B + d\right)\): \(n\left(B + d\right) = 2A\)`, T`Divide by 2.`] },
-      { f: T`K = \frac{ma}{F}`, v: 'm', vars: ['K', 'm', 'a', 'F'], a: 'KF/a', t: T`\frac{KF}{a}`, s: [T`Multiply both sides by \(F\): \(KF = ma\)`, T`Divide by \(a\).`] },
-      { f: T`K = \frac{ma}{F}`, v: 'F', vars: ['K', 'm', 'a', 'F'], a: 'ma/K', t: T`\frac{ma}{K}`, s: [T`Multiply both sides by \(F\): \(KF = ma\)`, T`Divide by \(K\).`] },
-      { f: T`A = \frac{h\left(a + b\right)}{2}`, v: 'h', vars: ['A', 'h', 'a', 'b'], a: '2A/(a+b)', t: T`\frac{2A}{a + b}`, s: [T`Multiply both sides by 2: \(2A = h\left(a + b\right)\)`, T`Divide by \(\left(a + b\right)\).`] },
-      { f: T`V = \frac{1}{3}Bh`, v: 'h', vars: ['V', 'B', 'h'], a: '3V/B', t: T`\frac{3V}{B}`, s: [T`Multiply both sides by 3: \(3V = Bh\)`, T`Divide by \(B\).`] },
+      { f: T`n = \frac{2A}{B + d}`, v: 'A', e: 'n=2A/(B+d)', vars: ['n', 'A', 'B', 'd'], a: 'n(B+d)/2', t: T`\frac{n\left(B + d\right)}{2}`, s: [T`Multiply both sides by \(\left(B + d\right)\): \(n\left(B + d\right) = 2A\)`, T`Divide by 2.`] },
+      { f: T`K = \frac{ma}{F}`, v: 'm', e: 'K=ma/F', vars: ['K', 'm', 'a', 'F'], a: 'KF/a', t: T`\frac{KF}{a}`, s: [T`Multiply both sides by \(F\): \(KF = ma\)`, T`Divide by \(a\).`] },
+      { f: T`K = \frac{ma}{F}`, v: 'F', e: 'K=ma/F', vars: ['K', 'm', 'a', 'F'], a: 'ma/K', t: T`\frac{ma}{K}`, s: [T`Multiply both sides by \(F\): \(KF = ma\)`, T`Divide by \(K\).`] },
+      { f: T`A = \frac{h\left(a + b\right)}{2}`, v: 'h', e: 'A=h(a+b)/2', vars: ['A', 'h', 'a', 'b'], a: '2A/(a+b)', t: T`\frac{2A}{a + b}`, s: [T`Multiply both sides by 2: \(2A = h\left(a + b\right)\)`, T`Divide by \(\left(a + b\right)\).`] },
+      { f: T`V = \frac{1}{3}Bh`, v: 'h', e: 'V=(1/3)Bh', vars: ['V', 'B', 'h'], a: '3V/B', t: T`\frac{3V}{B}`, s: [T`Multiply both sides by 3: \(3V = Bh\)`, T`Divide by \(B\).`] },
     ],
     linear: [
-      { f: T`P = 2l + 2w`, v: 'w', vars: ['P', 'l', 'w'], a: '(P-2l)/2', t: T`\frac{P - 2l}{2}`, s: [T`Subtract \(2l\): \(P - 2l = 2w\)`, T`Divide by 2.`] },
-      { f: T`P = 2l + 2w`, v: 'l', vars: ['P', 'l', 'w'], a: '(P-2w)/2', t: T`\frac{P - 2w}{2}`, s: [T`Subtract \(2w\): \(P - 2w = 2l\)`, T`Divide by 2.`] },
-      { f: T`y = mx + b`, v: 'x', vars: ['y', 'm', 'x', 'b'], a: '(y-b)/m', t: T`\frac{y - b}{m}`, s: [T`Subtract \(b\): \(y - b = mx\)`, T`Divide by \(m\).`] },
-      { f: T`ax + by = c`, v: 'y', vars: ['a', 'x', 'b', 'y', 'c'], a: '(c-ax)/b', t: T`\frac{c - ax}{b}`, s: [T`Subtract \(ax\): \(by = c - ax\)`, T`Divide by \(b\).`] },
-      { f: T`A = P + Prt`, v: 'r', vars: ['A', 'P', 'r', 't'], a: '(A-P)/(Pt)', t: T`\frac{A - P}{Pt}`, s: [T`Subtract \(P\): \(A - P = Prt\)`, T`Divide by \(Pt\).`] },
+      { f: T`P = 2l + 2w`, v: 'w', e: 'P=2l+2w', vars: ['P', 'l', 'w'], a: '(P-2l)/2', t: T`\frac{P - 2l}{2}`, s: [T`Subtract \(2l\): \(P - 2l = 2w\)`, T`Divide by 2.`] },
+      { f: T`P = 2l + 2w`, v: 'l', e: 'P=2l+2w', vars: ['P', 'l', 'w'], a: '(P-2w)/2', t: T`\frac{P - 2w}{2}`, s: [T`Subtract \(2w\): \(P - 2w = 2l\)`, T`Divide by 2.`] },
+      { f: T`y = mx + b`, v: 'x', e: 'y=mx+b', vars: ['y', 'm', 'x', 'b'], a: '(y-b)/m', t: T`\frac{y - b}{m}`, s: [T`Subtract \(b\): \(y - b = mx\)`, T`Divide by \(m\).`] },
+      { f: T`ax + by = c`, v: 'y', e: 'ax+by=c', vars: ['a', 'x', 'b', 'y', 'c'], a: '(c-ax)/b', t: T`\frac{c - ax}{b}`, s: [T`Subtract \(ax\): \(by = c - ax\)`, T`Divide by \(b\).`] },
+      { f: T`A = P + Prt`, v: 'r', e: 'A=P+Prt', vars: ['A', 'P', 'r', 't'], a: '(A-P)/(Pt)', t: T`\frac{A - P}{Pt}`, s: [T`Subtract \(P\): \(A - P = Prt\)`, T`Divide by \(Pt\).`] },
     ],
     mixed: [
-      { f: T`I = Prt`, v: 't', vars: ['I', 'P', 'r', 't'], a: 'I/(Pr)', t: T`\frac{I}{Pr}`, s: [T`\(t\) is multiplied by \(Pr\).`, T`Divide both sides by \(Pr\).`] },
-      { f: T`C = \frac{5}{9}\left(F - 32\right)`, v: 'F', vars: ['C', 'F'], a: '9C/5+32', t: T`\frac{9}{5}C + 32`, s: [T`Multiply both sides by \(\frac{9}{5}\): \(\frac{9}{5}C = F - 32\)`, T`Add 32.`] },
-      { f: T`S = \frac{a}{1 - r}`, v: 'a', vars: ['S', 'a', 'r'], a: 'S(1-r)', t: T`S\left(1 - r\right)`, s: [T`Multiply both sides by \(\left(1 - r\right)\).`, T`That leaves \(a\) by itself.`] },
-      { f: T`m = \frac{y - k}{x - h}`, v: 'y', vars: ['m', 'y', 'k', 'x', 'h'], a: 'm(x-h)+k', t: T`m\left(x - h\right) + k`, s: [T`Multiply both sides by \(\left(x - h\right)\): \(m\left(x - h\right) = y - k\)`, T`Add \(k\).`] },
+      { f: T`I = Prt`, v: 't', e: 'I=Prt', vars: ['I', 'P', 'r', 't'], a: 'I/(Pr)', t: T`\frac{I}{Pr}`, s: [T`\(t\) is multiplied by \(Pr\).`, T`Divide both sides by \(Pr\).`] },
+      { f: T`C = \frac{5}{9}\left(F - 32\right)`, v: 'F', e: 'C=(5/9)(F-32)', vars: ['C', 'F'], a: '9C/5+32', t: T`\frac{9}{5}C + 32`, s: [T`Multiply both sides by \(\frac{9}{5}\): \(\frac{9}{5}C = F - 32\)`, T`Add 32.`] },
+      { f: T`S = \frac{a}{1 - r}`, v: 'a', e: 'S=a/(1-r)', vars: ['S', 'a', 'r'], a: 'S(1-r)', t: T`S\left(1 - r\right)`, s: [T`Multiply both sides by \(\left(1 - r\right)\).`, T`That leaves \(a\) by itself.`] },
+      { f: T`m = \frac{y - k}{x - h}`, v: 'y', e: 'm=(y-k)/(x-h)', vars: ['m', 'y', 'k', 'x', 'h'], a: 'm(x-h)+k', t: T`m\left(x - h\right) + k`, s: [T`Multiply both sides by \(\left(x - h\right)\): \(m\left(x - h\right) = y - k\)`, T`Add \(k\).`] },
     ],
   };
   function literal(rng, key) {
     const F = rng.pick(FORMULAS[key]);
     return {
       prompt: T`Solve for \(${F.v}\): \(${F.f}\)`,
-      parts: [{ kind: 'expr', lhs: F.v, vars: F.vars.filter((x) => x !== F.v), answer: F.a, show: F.v + ' = ' + F.t, pre: F.v + ' =', points: 2 }],
+      parts: [{ kind: 'expr', lhs: F.v, vars: F.vars.filter((x) => x !== F.v), answer: F.a, show: F.v + ' = ' + F.t, pre: F.v + ' =', points: 2, verify: MX.V.solvesFor(F.e, F.v) }],
       solution: [...F.s, T`\(${H.box(F.v + ' = ' + F.t)}\)`],
     };
   }
@@ -130,12 +130,16 @@
   });
 
   // ---------- linear inequalities ----------
-  function ineqParts(rng, op, v, solutionPre) {
+  // endpoints here are whole numbers in [-5, 5]; a narrower, coarser scan keeps the region checks fast
+  // (V.region still bisects every boundary it finds and probes far outside the window)
+  const RO = { lo: -30, hi: 30, n: 3000 };
+  function ineqParts(rng, op, v, solutionPre, spec) {
+    // spec: the inequality as displayed, in parser syntax
     const nl = H.nlChoices(rng, op, v);
     return {
       parts: [
-        { label: 'a', ask: T`Solve the inequality for \(x\).`, kind: 'ineq', var: 'x', answer: 'x' + op + v, show: T`x ${H.rel(op)} ${v}`, points: 2 },
-        { label: 'b', ask: 'Which graph shows the solution?', kind: 'choice', options: nl.options, answer: nl.answer, graph: true, points: 2 },
+        { label: 'a', ask: T`Solve the inequality for \(x\).`, kind: 'ineq', var: 'x', answer: 'x' + op + v, show: T`x ${H.rel(op)} ${v}`, points: 2, verify: MX.V.region(spec, RO) },
+        { label: 'b', ask: 'Which graph shows the solution?', kind: 'choice', options: nl.options, answer: nl.answer, data: nl.data, graph: true, points: 2, verify: MX.V.choiceRegion(spec, RO) },
       ],
       solution: [
         ...solutionPre,
@@ -166,7 +170,7 @@
           const r = ineqParts(rng, op, v, [
             T`${a > 0 ? 'Subtract ' + a : 'Add ' + -a} on both sides: \(${c.n < 0 ? '-' : ''}\frac{${Math.abs(c.n)}}{${c.d}}x ${H.rel(opIn)} ${b - a}\)`,
             T`Multiply both sides by \(${new Q(c.d, c.n).tex()}\)${c.n < 0 ? ' (negative, so flip the sign)' : ''}: \(x ${H.rel(op)} ${v}\)`,
-          ]);
+          ], `(${c.str()})x+(${a}) ${opIn} ${b}`);
           return Object.assign({ prompt: T`Solve the inequality \(${lhs} ${H.rel(opIn)} ${b}\) for \(x\). Then graph the solution set.` }, r);
         },
       },
@@ -179,7 +183,7 @@
             T`Distribute the negative: \(-${a} - ${b}x ${H.rel(opIn)} ${cRHS}\)`,
             T`Add ${a}: \(-${b}x ${H.rel(opIn)} ${cRHS + a}\)`,
             T`Divide by \(-${b}\) and flip the sign: \(x ${H.rel(op)} ${v}\)`,
-          ]);
+          ], `-(${a}+${b}x) ${opIn} ${cRHS}`);
           return Object.assign({ prompt: T`Consider the inequality \(-\left(${a} + ${b}x\right) ${H.rel(opIn)} ${cRHS}\). Solve it for \(x\) and graph the solution.` }, r);
         },
       },
@@ -193,7 +197,7 @@
           const r = ineqParts(rng, op, v, [
             T`Move \(x\) terms left and numbers right: \(${MX.coef(k)}x ${H.rel(opIn)} ${d - b}\)`,
             T`Divide by ${k}${k < 0 ? ' (negative, so flip the sign)' : ''}: \(x ${H.rel(op)} ${v}\)`,
-          ]);
+          ], `${poly([[a, { x: 1 }], [b, {}]]).asc} ${opIn} ${poly([[c, { x: 1 }], [d, {}]]).asc}`);
           return Object.assign({ prompt: T`Solve \(${poly([[a, { x: 1 }], [b, {}]]).tex} ${H.rel(opIn)} ${poly([[c, { x: 1 }], [d, {}]]).tex}\) for \(x\), then graph the solution.` }, r);
         },
       },
@@ -221,7 +225,7 @@
           if (ans.isInt() && rng.chance(0.5)) return this.gen(rng);
           return {
             prompt: T`Solve for \(x\): \(${b}^{${ex.tex}} = ${Math.pow(b, k)}\). Write your answer as a simplified fraction if needed.`,
-            parts: [{ kind: 'num', frac: true, var: 'x', answer: ans.str(), show: T`x = ${ans.tex()}`, points: 3 }],
+            parts: [{ kind: 'num', frac: true, var: 'x', answer: ans.str(), show: T`x = ${ans.tex()}`, points: 3, verify: MX.V.solves(`${b}^(${ex.asc})=${Math.pow(b, k)}`, { lo: -60, hi: 60 }) }],
             solution: [
               T`\(${Math.pow(b, k)} = ${b}^{${k}}\), so \(${b}^{${ex.tex}} = ${b}^{${k}}\)`,
               T`Set exponents equal: \(${ex.tex} = ${k}\)`,
@@ -240,7 +244,7 @@
           const L = poly([[m, { x: 1 }], [r, {}]]), R = poly([[n, { x: 1 }], [s, {}]]);
           return {
             prompt: T`Solve for \(x\): \(${A}^{${L.tex}} = ${C}^{${R.tex}}\)`,
-            parts: [{ kind: 'num', frac: true, var: 'x', answer: ans.str(), show: T`x = ${ans.tex()}`, points: 3 }],
+            parts: [{ kind: 'num', frac: true, var: 'x', answer: ans.str(), show: T`x = ${ans.tex()}`, points: 3, verify: MX.V.solves(`${A}^(${L.asc})=${C}^(${R.asc})`, { lo: -60, hi: 60 }) }],
             solution: [
               T`\(${A} = ${g}^{${al}}\) and \(${C} = ${g}^{${be}}\), so \(${g}^{${al}\left(${L.tex}\right)} = ${g}^{${be}\left(${R.tex}\right)}\)`,
               T`Set exponents equal: \(${poly([[al * m, { x: 1 }], [al * r, {}]]).tex} = ${poly([[be * n, { x: 1 }], [be * s, {}]]).tex}\)`,
@@ -258,7 +262,7 @@
           const ex = poly([[p, { x: 1 }], [q, {}]]);
           return {
             prompt: T`Solve: \(${b}^{${ex.tex}} = \dfrac{1}{${Math.pow(b, k)}}\)`,
-            parts: [{ kind: 'num', frac: true, var: 'x', answer: ans.str(), show: T`x = ${ans.tex()}`, points: 3 }],
+            parts: [{ kind: 'num', frac: true, var: 'x', answer: ans.str(), show: T`x = ${ans.tex()}`, points: 3, verify: MX.V.solves(`${b}^(${ex.asc})=1/${Math.pow(b, k)}`, { lo: -60, hi: 60 }) }],
             solution: [
               T`\(\frac{1}{${Math.pow(b, k)}} = \frac{1}{${b}^{${k}}} = ${b}^{-${k}}\)`,
               T`Set exponents equal: \(${ex.tex} = -${k}\)`,
@@ -290,7 +294,7 @@
           const F1 = poly([[1, { [v]: 1 }], [r, {}]]), F2 = poly([[1, { [v]: 1 }], [s, {}]]);
           return {
             prompt: T`Solve for \(${v}\) by factoring: \(${E.tex} = 0\)`,
-            parts: [{ kind: 'nums', count: 2, var: v, pre: v + ' =', joiner: 'or', answers: [String(-r), String(-s)], show: rootsShow([-r, -s], v), points: 3 }],
+            parts: [{ kind: 'nums', count: 2, var: v, pre: v + ' =', joiner: 'or', answers: [String(-r), String(-s)], show: rootsShow([-r, -s], v), points: 3, verify: MX.V.solves(`${E.asc}=0`, { v }) }],
             solution: [
               T`Two numbers that multiply to ${r * s} and add to ${r + s}: ${r} and ${s}.`,
               T`\(\left(${F1.tex}\right)\left(${F2.tex}\right) = 0\)`,
@@ -306,7 +310,7 @@
           const E = poly([[a, { x: 2 }], [-a * k, { x: 1 }]]);
           return {
             prompt: T`Solve the equation for \(x\): \(${E.tex} = 0\)`,
-            parts: [{ kind: 'nums', count: 2, var: 'x', pre: 'x =', joiner: 'or', answers: ['0', String(k)], show: rootsShow([0, k]), points: 3 }],
+            parts: [{ kind: 'nums', count: 2, var: 'x', pre: 'x =', joiner: 'or', answers: ['0', String(k)], show: rootsShow([0, k]), points: 3, verify: MX.V.solves(`${E.asc}=0`) }],
             solution: [
               T`Factor out \(${a}x\): \(${a}x\left(x ${MX.sgnTerm(-k)}\right) = 0\)`,
               T`\(${a}x = 0\) or \(x ${MX.sgnTerm(-k)} = 0\)`,
@@ -325,7 +329,7 @@
           const lead = (g === 1 ? '' : g) + 'x';
           return {
             prompt: T`Solve by factoring: \(${E.tex} = 0\)`,
-            parts: [{ kind: 'nums', count: 3, var: 'x', pre: 'x =', joiner: 'or', answers: ['0', String(-r), String(-s)], show: rootsShow([0, -r, -s]), points: 4 }],
+            parts: [{ kind: 'nums', count: 3, var: 'x', pre: 'x =', joiner: 'or', answers: ['0', String(-r), String(-s)], show: rootsShow([0, -r, -s]), points: 4, verify: MX.V.solves(`${E.asc}=0`) }],
             solution: [
               T`Factor out \(${lead}\): \(${lead}\left(${In.tex}\right) = 0\)`,
               T`Factor the trinomial: \(${lead}\left(x ${MX.sgnTerm(r)}\right)\left(x ${MX.sgnTerm(s)}\right) = 0\)`,
@@ -343,7 +347,7 @@
           const r1 = new Q(-q, p), r2 = new Q(-s, r);
           return {
             prompt: T`Solve by factoring: \(${E.tex} = 0\)`,
-            parts: [{ kind: 'nums', count: 2, var: 'x', pre: 'x =', joiner: 'or', frac: true, answers: [r1.str(), r2.str()], show: rootsShow([r1, r2]), points: 3 }],
+            parts: [{ kind: 'nums', count: 2, var: 'x', pre: 'x =', joiner: 'or', frac: true, answers: [r1.str(), r2.str()], show: rootsShow([r1, r2]), points: 3, verify: MX.V.solves(`${E.asc}=0`) }],
             solution: [
               T`Factor (AC method): \(\left(${poly([[p, { x: 1 }], [q, {}]]).tex}\right)\left(x ${MX.sgnTerm(s)}\right) = 0\)`,
               T`\(${poly([[p, { x: 1 }], [q, {}]]).tex} = 0 \Rightarrow x = ${r1.tex()}\); \(x ${MX.sgnTerm(s)} = 0 \Rightarrow x = ${r2.tex()}\)`,
@@ -375,7 +379,7 @@
           const B = poly([[a, { [v]: 1 }], [b, {}]]);
           return {
             prompt: T`Solve \(\left(${B.tex}\right)^{2} = ${c * c}\) for \(${v}\) by using the square root property.`,
-            parts: [{ kind: 'nums', count: 2, var: v, pre: v + ' =', joiner: 'or', frac: true, exact: true, answers: [r1.str(), r2.str()], show: rootsShow([r1, r2], v), points: 3 }],
+            parts: [{ kind: 'nums', count: 2, var: v, pre: v + ' =', joiner: 'or', frac: true, exact: true, answers: [r1.str(), r2.str()], show: rootsShow([r1, r2], v), points: 3, verify: MX.V.solves(`(${B.asc})^2=${c * c}`, { v }) }],
             solution: [
               T`Square root of both sides: \(${B.tex} = \pm ${c}\)`,
               T`\(${B.tex} = ${c}\) gives \(${v} = ${r1.tex()}\); \(${B.tex} = -${c}\) gives \(${v} = ${r2.tex()}\)`,
@@ -390,7 +394,7 @@
           const a = rng.int(2, 9), r = rng.int(1, 9);
           return {
             prompt: T`Solve the equation for \(x\): \(${a}x^{2} = ${a * r * r}\)`,
-            parts: [{ kind: 'nums', count: 2, var: 'x', pre: 'x =', joiner: 'or', exact: true, answers: [String(r), String(-r)], show: T`x = \pm ${r}`, points: 2 }],
+            parts: [{ kind: 'nums', count: 2, var: 'x', pre: 'x =', joiner: 'or', exact: true, answers: [String(r), String(-r)], show: T`x = \pm ${r}`, points: 2, verify: MX.V.solves(`${a}x^2=${a * r * r}`) }],
             solution: [T`Divide by ${a}: \(x^{2} = ${r * r}\)`, T`\(x = \pm\sqrt{${r * r}} = \pm ${r}\)`, T`\(${H.box(T`x = ${r} \text{ or } x = -${r}`)}\)`],
           };
         },
@@ -402,7 +406,7 @@
           const N = s * s * f;
           return {
             prompt: T`Use the square root property to solve \(${a}x^{2} - ${a * N} = 0\). Leave your answer in simplified radical form.`,
-            parts: [{ kind: 'nums', count: 2, var: 'x', pre: 'x =', joiner: 'or', exact: true, radical: true, answers: [`${s}√(${f})`, `-${s}√(${f})`], show: T`x = \pm ${s}\sqrt{${f}}`, points: 3 }],
+            parts: [{ kind: 'nums', count: 2, var: 'x', pre: 'x =', joiner: 'or', exact: true, radical: true, answers: [`${s}√(${f})`, `-${s}√(${f})`], show: T`x = \pm ${s}\sqrt{${f}}`, points: 3, verify: MX.V.solves(`${a}x^2-${a * N}=0`) }],
             solution: [T`\(${a}x^{2} = ${a * N}\), so \(x^{2} = ${N}\)`, T`\(x = \pm\sqrt{${N}} = \pm\sqrt{${s * s}\cdot${f}}\)`, T`\(${H.box(T`x = \pm ${s}\sqrt{${f}}`)}\)`],
           };
         },
@@ -412,6 +416,17 @@
 
   // ---------- quadratic formula ----------
   const r2 = (x) => Math.round(x * 100) / 100;
+  // rounded answers: find the exact roots of the displayed equation numerically, and require the key to be
+  // exactly those roots rounded to the nearest hundredth (one key value per root)
+  const roundedRoots = (eq) => {
+    let rs = null;
+    return MX.V.custom((a) => {
+      rs = rs || MX.V.roots(eq);
+      if (rs === 'all' || !Array.isArray(a) || a.length !== rs.length) return 'expected ' + (rs === 'all' ? 'a finite set' : rs.length) + ' rounded roots';
+      const want = rs.map((x) => Math.round(x * 100) / 100);
+      return MX.V.sameSet(a, want, 1e-9) || 'the roots round to ' + want.join(', ');
+    });
+  };
   function qfSteps(a, b, c, D) {
     return [
       T`Identify \(a = ${a}\), \(b = ${b}\), \(c = ${c}\).`,
@@ -437,7 +452,7 @@
           const x1 = new Q(-q, p), x2 = new Q(-s, 1);
           return {
             prompt: T`Solve \(${MX.quad(a, b, c).tex} = 0\) for \(x\) using the quadratic formula.`,
-            parts: [{ kind: 'nums', count: 2, var: 'x', pre: 'x =', joiner: 'or', frac: true, answers: [x1.str(), x2.str()], show: rootsShow([x1, x2]), points: 3 }],
+            parts: [{ kind: 'nums', count: 2, var: 'x', pre: 'x =', joiner: 'or', frac: true, answers: [x1.str(), x2.str()], show: rootsShow([x1, x2]), points: 3, verify: MX.V.solves(`${MX.quad(a, b, c).asc}=0`) }],
             solution: [...qfSteps(a, b, c, D), T`\(\sqrt{${D}} = ${Math.sqrt(D)}\): \(x = \frac{${-b} + ${Math.sqrt(D)}}{${2 * a}} = ${x1.eq(new Q(-b + Math.sqrt(D), 2 * a)) ? x1.tex() : x2.tex()}\) and \(x = \frac{${-b} - ${Math.sqrt(D)}}{${2 * a}} = ${x1.eq(new Q(-b + Math.sqrt(D), 2 * a)) ? x2.tex() : x1.tex()}\)`, T`\(${H.box(rootsShow([x1, x2]))}\)`],
           };
         },
@@ -450,7 +465,7 @@
           const x1 = r2((-b + Math.sqrt(D)) / (2 * a)), x2 = r2((-b - Math.sqrt(D)) / (2 * a));
           return {
             prompt: T`Use the quadratic formula to solve \(${MX.quad(a, b, c).tex} = 0\) for \(x\). Round your answers to the nearest hundredth.`,
-            parts: [{ kind: 'nums', count: 2, var: 'x', pre: 'x ≈', joiner: 'or', tol: 0.006, answers: [x1.toFixed(2), x2.toFixed(2)], show: T`x \approx ${x1.toFixed(2)},\quad x \approx ${x2.toFixed(2)}`, points: 4 }],
+            parts: [{ kind: 'nums', count: 2, var: 'x', pre: 'x ≈', joiner: 'or', tol: 0.006, answers: [x1.toFixed(2), x2.toFixed(2)], show: T`x \approx ${x1.toFixed(2)},\quad x \approx ${x2.toFixed(2)}`, points: 4, verify: roundedRoots(`${MX.quad(a, b, c).asc}=0`) }],
             solution: [...qfSteps(a, b, c, D), T`\(\sqrt{${D}} \approx ${MX.num(Math.sqrt(D), 4)}\)`, T`\(x = \frac{${-b} + ${MX.num(Math.sqrt(D), 4)}}{${2 * a}} \approx ${x1.toFixed(2)}\) and \(x = \frac{${-b} - ${MX.num(Math.sqrt(D), 4)}}{${2 * a}} \approx ${x2.toFixed(2)}\)`, T`\(${H.box(T`x \approx ${x1.toFixed(2)} \text{ or } x \approx ${x2.toFixed(2)}`)}\)`],
           };
         },
@@ -464,7 +479,7 @@
           const x1 = r2((-b + Math.sqrt(D)) / (2 * a)), x2 = r2((-b - Math.sqrt(D)) / (2 * a));
           return {
             prompt: T`Use the quadratic formula to solve \(${poly([[a, { x: 2 }], [b, { x: 1 }]]).tex} = ${k}\) for \(x\). Round your answers to the nearest hundredth.`,
-            parts: [{ kind: 'nums', count: 2, var: 'x', pre: 'x ≈', joiner: 'or', tol: 0.006, answers: [x1.toFixed(2), x2.toFixed(2)], show: T`x \approx ${x1.toFixed(2)},\quad x \approx ${x2.toFixed(2)}`, points: 4 }],
+            parts: [{ kind: 'nums', count: 2, var: 'x', pre: 'x ≈', joiner: 'or', tol: 0.006, answers: [x1.toFixed(2), x2.toFixed(2)], show: T`x \approx ${x1.toFixed(2)},\quad x \approx ${x2.toFixed(2)}`, points: 4, verify: roundedRoots(`${poly([[a, { x: 2 }], [b, { x: 1 }]]).asc}=${k}`) }],
             solution: [T`Move everything to one side: \(${MX.quad(a, b, c).tex} = 0\)`, ...qfSteps(a, b, c, D), T`\(\sqrt{${D}} \approx ${MX.num(Math.sqrt(D), 4)}\)`, T`\(x = \frac{${-b} + ${MX.num(Math.sqrt(D), 4)}}{${2 * a}} \approx ${x1.toFixed(2)}\) and \(x = \frac{${-b} - ${MX.num(Math.sqrt(D), 4)}}{${2 * a}} \approx ${x2.toFixed(2)}\)`, T`\(${H.box(T`x \approx ${x1.toFixed(2)} \text{ or } x \approx ${x2.toFixed(2)}`)}\)`],
           };
         },

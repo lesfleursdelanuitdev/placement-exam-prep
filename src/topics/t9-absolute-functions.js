@@ -8,6 +8,7 @@
   const ADDED = 'Added';
   const A = (t) => T`\left|${t}\right|`;
   const lin = (a, b, v = 'x') => MX.lin(a, b, v);
+  const V = MX.V;
   const qv = (q) => (q instanceof Q ? q : new Q(q));
   // a solution set part: vals are Q or numbers
   function setPart(vals, points, v = 'x') {
@@ -17,22 +18,55 @@
     if (!u.length) return { kind: 'set', answers: [], answer: 'no solution', show: '\\text{no solution}', points };
     return { kind: 'set', answers: u.map((q) => q.str()), answer: '{' + u.map((q) => q.str()).join(', ') + '}', show: u.map((q) => v + ' = ' + q.tex()).join('\\ \\text{ or }\\ '), points };
   }
+  // Every real solution of an equation in x on [-200, 200]. V.roots finds sign changes; |f| can also touch 0
+  // at a corner (|3x + 2| = 0 at x = -2/3) between two samples without a sign change, which V.roots misses,
+  // so local minima of |lhs - rhs| are refined here too and kept when they reach 0.
+  function allRoots(eq) {
+    const r = V.rel(eq)[0], d = (x) => MX.evalAST(r.lhs, { x }) - MX.evalAST(r.rhs, { x }), g = (x) => Math.abs(d(x));
+    const n = 4000, lo = -200, hi = 200, X = (k) => lo + ((hi - lo) * k) / n, gr = (Math.sqrt(5) - 1) / 2;
+    const ds = []; for (let k = 0; k <= n; k++) ds.push(d(X(k)));
+    if (ds.every((v) => v === 0)) return 'all';
+    const out = [];
+    const add = (x) => {
+      for (let q = 1; q <= 1000; q++) { const s = Math.round(x * q) / q; if (Math.abs(s - x) < 1e-6 && g(s) === 0) { x = s; break; } }
+      if (g(x) <= 1e-9 && !out.some((y) => V.close(x, y))) out.push(x);
+    };
+    for (let k = 0; k <= n; k++) {
+      if (ds[k] === 0) { add(X(k)); continue; }
+      if (k < n && ds[k] * ds[k + 1] < 0) { // sign change: bisect
+        let p = X(k), q = X(k + 1);
+        for (let i = 0; i < 80; i++) { const m = (p + q) / 2; if ((d(m) < 0) === (ds[k] < 0)) p = m; else q = m; }
+        add((p + q) / 2);
+      }
+      if (k > 0 && k < n && Math.abs(ds[k]) <= Math.abs(ds[k - 1]) && Math.abs(ds[k]) <= Math.abs(ds[k + 1])) { // dip: golden section
+        let p = X(k - 1), q = X(k + 1);
+        for (let i = 0; i < 90; i++) { const m1 = q - gr * (q - p), m2 = p + gr * (q - p); if (g(m1) < g(m2)) q = m2; else p = m1; }
+        add((p + q) / 2);
+      }
+    }
+    return out.sort((a, b) => a - b);
+  }
+  const solvesAll = (eq) => { let rs0 = null; return V.custom((a) => {
+    const rs = rs0 || (rs0 = allRoots(eq));
+    if (rs === 'all') return 'the equation is an identity';
+    return V.sameSet(a, rs) || 'the solutions are ' + (rs.length ? rs.map((x) => MX.num(x, 6)).join(', ') : 'none');
+  }); };
   const SET_HINT = 'List every solution, separated by commas. If there is none, use the “no solution” button.';
 
   // ================= absolute value expressions =================
   function absTerm(rng) {
     const kind = rng.pick(['negabs', 'diff', 'coef', 'plain']);
-    if (kind === 'negabs') { const a = rng.int(2, 12); return { tex: T`-${A('-' + a)}`, val: -a, step: T`\(${A('-' + a)} = ${a}\), so \(-${A('-' + a)} = -${a}\)` }; }
-    if (kind === 'diff') { let b, c; do { b = rng.int(-9, 12); c = rng.int(-9, 12); } while (b === c); return { tex: A(b + ' - ' + MX.par(c)), val: Math.abs(b - c), step: T`\(${A(b + ' - ' + MX.par(c))} = ${A(b - c)} = ${Math.abs(b - c)}\)` }; }
-    if (kind === 'coef') { const k = rng.int(2, 5), d = -rng.int(2, 9); return { tex: T`${k}${A(d)}`, val: k * -d, step: T`\(${k}${A(d)} = ${k}\cdot${-d} = ${k * -d}\)` }; }
-    const e = rng.nz(-15, 15); return { tex: A(e), val: Math.abs(e), step: T`\(${A(e)} = ${Math.abs(e)}\)` };
+    if (kind === 'negabs') { const a = rng.int(2, 12); return { tex: T`-${A('-' + a)}`, asc: `-|-${a}|`, val: -a, step: T`\(${A('-' + a)} = ${a}\), so \(-${A('-' + a)} = -${a}\)` }; }
+    if (kind === 'diff') { let b, c; do { b = rng.int(-9, 12); c = rng.int(-9, 12); } while (b === c); return { tex: A(b + ' - ' + MX.par(c)), asc: `|${b}-(${c})|`, val: Math.abs(b - c), step: T`\(${A(b + ' - ' + MX.par(c))} = ${A(b - c)} = ${Math.abs(b - c)}\)` }; }
+    if (kind === 'coef') { const k = rng.int(2, 5), d = -rng.int(2, 9); return { tex: T`${k}${A(d)}`, asc: `${k}|${d}|`, val: k * -d, step: T`\(${k}${A(d)} = ${k}\cdot${-d} = ${k * -d}\)` }; }
+    const e = rng.nz(-15, 15); return { tex: A(e), asc: `|${e}|`, val: Math.abs(e), step: T`\(${A(e)} = ${Math.abs(e)}\)` };
   }
   const CMP = [
-    { tex: (n) => A('-' + n), val: (n) => n },
-    { tex: (n) => T`-${A(n)}`, val: (n) => -n },
-    { tex: (n) => T`-${A('-' + n)}`, val: (n) => -n },
-    { tex: (n) => T`-\left(-${n}\right)`, val: (n) => n },
-    { tex: (n) => A(n), val: (n) => n },
+    { tex: (n) => A('-' + n), asc: (n) => `|-${n}|`, val: (n) => n },
+    { tex: (n) => T`-${A(n)}`, asc: (n) => `-|${n}|`, val: (n) => -n },
+    { tex: (n) => T`-${A('-' + n)}`, asc: (n) => `-|-${n}|`, val: (n) => -n },
+    { tex: (n) => T`-\left(-${n}\right)`, asc: (n) => `-(-${n})`, val: (n) => n },
+    { tex: (n) => A(n), asc: (n) => `|${n}|`, val: (n) => n },
   ];
   MX.register({
     id: 'abs-value', section: SEC, title: 'Absolute value expressions', kind: 'skill', sources: [ADDED],
@@ -48,12 +82,12 @@
         name: 'Simplify',
         gen(rng) {
           const n = rng.int(2, 3), terms = Array.from({ length: n }, () => absTerm(rng)), ops = terms.map((t, k) => (k ? rng.pick(['+', '-']) : ''));
-          let v = 0, tex = '';
-          terms.forEach((t, k) => { const s = ops[k] === '-' ? -1 : 1; v += s * t.val; tex += (k ? ' ' + ops[k] + ' ' : '') + t.tex; });
+          let v = 0, tex = '', asc = '';
+          terms.forEach((t, k) => { const s = ops[k] === '-' ? -1 : 1; v += s * t.val; tex += (k ? ' ' + ops[k] + ' ' : '') + t.tex; asc += (k ? ops[k] + '(' + t.asc + ')' : t.asc); });
           const valsTex = terms.map((t, k) => (k ? ' ' + ops[k] + ' ' + MX.par(t.val) : String(t.val))).join('');
           return {
             prompt: T`Simplify: \(${tex}\)`,
-            parts: [{ kind: 'num', answer: String(v), points: 2 }],
+            parts: [{ kind: 'num', answer: String(v), points: 2, verify: V.value(asc) }],
             solution: [...terms.map((t) => t.step), T`\(${valsTex} = ${H.box(String(v))}\)`],
           };
         },
@@ -66,7 +100,7 @@
           const inner = Math.abs(c - d), v = a - b * inner;
           return {
             prompt: T`Simplify: \(${a} - ${b}${A(c + ' - ' + MX.par(d))}\)`,
-            parts: [{ kind: 'num', answer: String(v), points: 2 }],
+            parts: [{ kind: 'num', answer: String(v), points: 2, verify: V.value(`${a}-${b}|${c}-(${d})|`) }],
             solution: [
               T`Inside the bars first: \(${c} - ${MX.par(d)} = ${c - d}\), and \(${A(c - d)} = ${inner}\).`,
               T`Multiply before subtracting: \(${b}\cdot${inner} = ${b * inner}\).`,
@@ -85,9 +119,10 @@
           return {
             prompt: T`Fill in the box with \(\lt\), \(=\) or \(\gt\): \(${L.tex(n)} \quad \square \quad ${R.tex(n)}\)`,
             parts: [
-              { label: 'a', ask: T`Value of \(${L.tex(n)}\)`, kind: 'num', answer: String(lv), points: 1 },
-              { label: 'b', ask: T`Value of \(${R.tex(n)}\)`, kind: 'num', answer: String(rvv), points: 1 },
-              { label: 'c', ask: 'Which sign goes in the box?', kind: 'choice', options: ['&lt;', '=', '&gt;'], inline: true, answer: rel, points: 1 },
+              { label: 'a', ask: T`Value of \(${L.tex(n)}\)`, kind: 'num', answer: String(lv), points: 1, verify: V.value(L.asc(n)) },
+              { label: 'b', ask: T`Value of \(${R.tex(n)}\)`, kind: 'num', answer: String(rvv), points: 1, verify: V.value(R.asc(n)) },
+              { label: 'c', ask: 'Which sign goes in the box?', kind: 'choice', options: ['&lt;', '=', '&gt;'], inline: true, answer: rel, points: 1,
+                verify: V.choice((i) => { const l = V.num(L.asc(n)), r = V.num(R.asc(n)); return [l < r, l === r, l > r][i]; }) },
             ],
             solution: [T`\(${L.tex(n)} = ${lv}\) and \(${R.tex(n)} = ${rvv}\).`, T`\(${lv} ${['\\lt', '=', '\\gt'][rel]} ${rvv}\)`],
           };
@@ -98,16 +133,16 @@
         gen(rng) {
           const x = rng.nz(-9, 9), y = rng.nz(-9, 9);
           const forms = [
-            { tex: A('x - y'), val: Math.abs(x - y), sub: A(x + ' - ' + MX.par(y)) },
-            { tex: T`${A('x')} - ${A('y')}`, val: Math.abs(x) - Math.abs(y), sub: T`${A(x)} - ${A(y)}` },
-            { tex: A('2x + y'), val: Math.abs(2 * x + y), sub: A('2' + MX.par(x) + ' + ' + MX.par(y)) },
-            { tex: T`-${A('x')} + 3${A('y')}`, val: -Math.abs(x) + 3 * Math.abs(y), sub: T`-${A(x)} + 3${A(y)}` },
-            { tex: T`${A('x y')}`, val: Math.abs(x * y), sub: A(MX.par(x) + '\\cdot' + MX.par(y)) },
+            { tex: A('x - y'), asc: '|x-y|', val: Math.abs(x - y), sub: A(x + ' - ' + MX.par(y)) },
+            { tex: T`${A('x')} - ${A('y')}`, asc: '|x|-|y|', val: Math.abs(x) - Math.abs(y), sub: T`${A(x)} - ${A(y)}` },
+            { tex: A('2x + y'), asc: '|2x+y|', val: Math.abs(2 * x + y), sub: A('2' + MX.par(x) + ' + ' + MX.par(y)) },
+            { tex: T`-${A('x')} + 3${A('y')}`, asc: '-|x|+3|y|', val: -Math.abs(x) + 3 * Math.abs(y), sub: T`-${A(x)} + 3${A(y)}` },
+            { tex: T`${A('x y')}`, asc: '|x y|', val: Math.abs(x * y), sub: A(MX.par(x) + '\\cdot' + MX.par(y)) },
           ];
           const F = rng.pick(forms);
           return {
             prompt: T`Evaluate \(${F.tex}\) when \(x = ${x}\) and \(y = ${y}\).`,
-            parts: [{ kind: 'num', answer: String(F.val), points: 2 }],
+            parts: [{ kind: 'num', answer: String(F.val), points: 2, verify: V.value(() => V.fn(F.asc)({ x, y })) }],
             solution: [T`Substitute: \(${F.sub}\)`, T`Simplify inside each pair of bars, take absolute values, then finish: \(${H.box(String(F.val))}\)`],
           };
         },
@@ -124,7 +159,8 @@
           return {
             prompt: T`Use absolute value to find the distance between \(${a}\) and \(${b}\) on the number line.`,
             visual: S.svg(W, Hh, v, 'Two points on a number line'),
-            parts: [{ kind: 'num', answer: String(d), points: 2 }],
+            // distance on the line: count unit steps from the left point to the right one
+            parts: [{ kind: 'num', answer: String(d), points: 2, verify: V.value(() => { let n = 0; for (let t = Math.min(a, b); t < Math.max(a, b); t++) n++; return n; }) }],
             solution: [T`Distance \(= ${A('a - b')}\).`, T`\(${A(a + ' - ' + MX.par(b))} = ${A(a - b)} = ${H.box(String(d))}\)`, T`(Either order works: \(${A(b + ' - ' + MX.par(a))}\) is also ${d}.)`],
           };
         },
@@ -154,7 +190,7 @@
           const q = absEq(rng);
           return {
             prompt: T`Solve: \(${A(q.e.tex)} = ${q.c}\)`,
-            parts: [Object.assign(setPart([q.s1, q.s2], 3), { ask: SET_HINT })],
+            parts: [Object.assign(setPart([q.s1, q.s2], 3), { ask: SET_HINT, verify: solvesAll(`|${q.e.asc}|=${q.c}`) })],
             solution: [
               T`Two cases: \(${q.e.tex} = ${q.c}\) or \(${q.e.tex} = -${q.c}\).`,
               T`\(${q.e.tex} = ${q.c}\) gives \(x = ${q.s1.tex()}\); \(${q.e.tex} = -${q.c}\) gives \(x = ${q.s2.tex()}\).`,
@@ -169,7 +205,7 @@
           const q = absEq(rng), k = rng.pick([2, 3, 4, -2, -3]), m = rng.nz(-12, 12), n = k * q.c + m;
           return {
             prompt: T`Solve: \(${k === -1 ? '-' : k}${A(q.e.tex)} ${MX.sgnTerm(m)} = ${n}\)`,
-            parts: [Object.assign(setPart([q.s1, q.s2], 3), { ask: SET_HINT })],
+            parts: [Object.assign(setPart([q.s1, q.s2], 3), { ask: SET_HINT, verify: solvesAll(`${k}|${q.e.asc}|+(${m})=${n}`) })],
             solution: [
               T`${m > 0 ? 'Subtract ' + m : 'Add ' + -m}: \(${k}${A(q.e.tex)} = ${n - m}\). Divide by ${k}: \(${A(q.e.tex)} = ${q.c}\).`,
               T`\(${q.e.tex} = ${q.c}\) or \(${q.e.tex} = -${q.c}\), so \(x = ${q.s1.tex()}\) or \(x = ${q.s2.tex()}\).`,
@@ -186,7 +222,7 @@
           const L = lin(a, b), R = lin(c, d);
           return {
             prompt: T`Solve: \(${A(L.tex)} = ${A(R.tex)}\)`,
-            parts: [Object.assign(setPart([s1, s2], 3), { ask: SET_HINT })],
+            parts: [Object.assign(setPart([s1, s2], 3), { ask: SET_HINT, verify: solvesAll(`|${L.asc}|=|${R.asc}|`) })],
             solution: [
               T`The insides are equal or opposites: \(${L.tex} = ${R.tex}\) or \(${L.tex} = -\left(${R.tex}\right)\).`,
               T`First: \(${a - c}x = ${d - b}\), so \(x = ${s1.tex()}\). Second: \(${L.tex} = ${lin(-c, -d).tex}\), so \(${a + c}x = ${-d - b}\) and \(x = ${s2.tex()}\).`,
@@ -201,7 +237,7 @@
           const q = absEq(rng), m = rng.nz(-9, 9);
           return {
             prompt: T`Solve: \(${A(q.e.tex)} ${MX.sgnTerm(m)} = ${m}\)`,
-            parts: [Object.assign(setPart([new Q(-q.b, q.a)], 3), { ask: SET_HINT })],
+            parts: [Object.assign(setPart([new Q(-q.b, q.a)], 3), { ask: SET_HINT, verify: solvesAll(`|${q.e.asc}|+(${m})=${m}`) })],
             solution: [T`Isolate: \(${A(q.e.tex)} = 0\).`, T`Only 0 has absolute value 0, so \(${q.e.tex} = 0\) and \(x = ${new Q(-q.b, q.a).tex()}\).`, T`\(${H.box(T`x = ${new Q(-q.b, q.a).tex()}`)}\)`],
           };
         },
@@ -212,7 +248,7 @@
           const q = absEq(rng), k = rng.pick([1, 2, 3]), m = rng.int(2, 12), n = m - k * rng.int(1, 6);
           return {
             prompt: T`Solve: \(${k === 1 ? '' : k}${A(q.e.tex)} + ${m} = ${n}\)`,
-            parts: [Object.assign(setPart([], 3), { ask: SET_HINT })],
+            parts: [Object.assign(setPart([], 3), { ask: SET_HINT, verify: solvesAll(`${k}|${q.e.asc}|+${m}=${n}`) })],
             solution: [T`Subtract ${m}: \(${k === 1 ? '' : k}${A(q.e.tex)} = ${n - m}\)${k === 1 ? '' : T`, so \(${A(q.e.tex)} = ${new Q(n - m, k).tex()}\)`}.`, T`An absolute value is never negative, so nothing works.`, T`\(${H.box('\\text{no solution}')}\)`],
           };
         },
@@ -222,9 +258,9 @@
 
   // ================= piecewise functions =================
   const PIECE = {
-    lin: (rng) => { const m = rng.pick([-2, -1, 1, 2, 0.5, -0.5]), b = rng.int(-4, 4); return { f: (x) => m * x + b, tex: MX.lin(new Q(m * 2, 2), b).tex }; },
-    con: (rng) => { const k = rng.int(-5, 6); return { f: () => k, tex: String(k) }; },
-    sq: (rng) => { const k = rng.int(-4, 2); return { f: (x) => x * x + k, tex: T`x^{2} ${k ? MX.sgnTerm(k) : ''}` }; },
+    lin: (rng) => { const m = rng.pick([-2, -1, 1, 2, 0.5, -0.5]), b = rng.int(-4, 4); const L = MX.lin(new Q(m * 2, 2), b); return { f: (x) => m * x + b, tex: L.tex, asc: L.asc }; },
+    con: (rng) => { const k = rng.int(-5, 6); return { f: () => k, tex: String(k), asc: String(k) }; },
+    sq: (rng) => { const k = rng.int(-4, 2); return { f: (x) => x * x + k, tex: T`x^{2} ${k ? MX.sgnTerm(k) : ''}`, asc: `x^2+(${k})` }; },
   };
   // two or three pieces split at integer breakpoints
   function makePiecewise(rng, nPieces) {
@@ -235,19 +271,51 @@
     const conds = pcs.map((p, i) => {
       const lo = i ? breaks[i - 1] : null, hi = i < breaks.length ? breaks[i] : null;
       const loIn = lo != null && !leftClosed[i - 1], hiIn = hi != null && leftClosed[i];
-      let tex;
-      if (lo == null) tex = T`x ${hiIn ? '\\le' : '\\lt'} ${hi}`;
-      else if (hi == null) tex = T`x ${loIn ? '\\ge' : '\\gt'} ${lo}`;
-      else tex = T`${lo} ${loIn ? '\\le' : '\\lt'} x ${hiIn ? '\\le' : '\\lt'} ${hi}`;
-      return { lo, hi, loIn, hiIn, tex };
+      let tex, asc;
+      if (lo == null) { tex = T`x ${hiIn ? '\\le' : '\\lt'} ${hi}`; asc = `x ${hiIn ? '<=' : '<'} ${hi}`; }
+      else if (hi == null) { tex = T`x ${loIn ? '\\ge' : '\\gt'} ${lo}`; asc = `x ${loIn ? '>=' : '>'} ${lo}`; }
+      else { tex = T`${lo} ${loIn ? '\\le' : '\\lt'} x ${hiIn ? '\\le' : '\\lt'} ${hi}`; asc = `${lo} ${loIn ? '<=' : '<'} x ${hiIn ? '<=' : '<'} ${hi}`; }
+      return { lo, hi, loIn, hiIn, tex, asc };
     });
     const f = (x) => { for (let i = 0; i < pcs.length; i++) { const c = conds[i]; if ((c.lo == null || x > c.lo || (x === c.lo && c.loIn)) && (c.hi == null || x < c.hi || (x === c.hi && c.hiIn))) return pcs[i].f(x); } return NaN; };
     const which = (x) => conds.findIndex((c) => (c.lo == null || x > c.lo || (x === c.lo && c.loIn)) && (c.hi == null || x < c.hi || (x === c.hi && c.hiIn)));
-    return { pcs, conds, breaks, f, which, rows: pcs.map((p, i) => [p.tex, conds[i].tex]) };
+    return { pcs, conds, breaks, f, which, rows: pcs.map((p, i) => [p.tex, conds[i].tex]), rowsAsc: pcs.map((p, i) => [p.asc, conds[i].asc]) };
+  }
+  // value of a piecewise definition written as rows [[formula, condition], …] (parser syntax) at x = t:
+  // exactly one condition must hold, and its formula is evaluated. NaN when none or several hold.
+  const memo = (fn) => { const m = new Map(); return (s, v) => { const key = s + '|' + v; if (!m.has(key)) m.set(key, fn(s, v)); return m.get(key); }; };
+  const truthOf = memo((s) => V.truth(s)), fnOf = memo((s, v) => V.fn(s, v));
+  function pwEval(rows, t, v = 'x') {
+    const hit = rows.filter(([, c]) => truthOf(c)({ [v]: t }));
+    return hit.length === 1 ? fnOf(hit[0][0], v)(t) : NaN;
+  }
+  // what a plot drawn from fnPlot pieces shows at x = t: the heights of the curves passing through t
+  // and of the closed endpoint dots at t (open dots show nothing); NaN unless exactly one height
+  function plotAt(pieces, t, win = 8) {
+    const ys = [];
+    pieces.forEach((pc) => {
+      const a = pc.from == null ? -Infinity : pc.from, z = pc.to == null ? Infinity : pc.to;
+      if (t > a && t < z) ys.push(pc.f(t));
+      if ((t === a && !pc.openFrom) || (t === z && !pc.openTo)) { const y = pc.f(t); if (Math.abs(y) <= win) ys.push(y); }
+    });
+    return ys.length && ys.every((y) => isFinite(y) && V.close(y, ys[0])) ? ys[0] : NaN;
+  }
+  // does the plot show exactly the piecewise definition on the window [-8, 8]? (curves between the integers,
+  // and the filled dot at each integer)
+  function plotShows(pieces, rows) {
+    for (let k = 0; k <= 160; k++) {
+      const t = -8 + k / 10 + (k % 10 ? 0.0137 : 0);
+      if (t > 8) break;
+      const want = pwEval(rows, t), got = plotAt(pieces, t);
+      if (Math.abs(want) > 7.5 && Number.isInteger(t)) continue; // a dot off the window cannot be shown
+      if (!(isFinite(want) && isFinite(got) && V.close(want, got))) return false;
+    }
+    return true;
   }
   // does the piece stay on the 8 × 8 grid for a stretch of its interval next to the breakpoint?
   const visibleSpan = (f, a, z) => { let n = 0; for (let k = 0; k <= 8; k++) { const y = f(a + ((z - a) * k) / 8); if (isFinite(y) && Math.abs(y) <= 7.5) n++; } return n >= 5; };
-  const plotPw = (pw, o = {}) => H.fnPlot({ r: 8, pieces: pw.pcs.map((p, i) => ({ f: o.swap ? pw.pcs[(i + 1) % pw.pcs.length].f : p.f, from: pw.conds[i].lo == null ? -Infinity : pw.conds[i].lo, to: pw.conds[i].hi == null ? Infinity : pw.conds[i].hi, openFrom: o.flip ? pw.conds[i].loIn : !pw.conds[i].loIn, openTo: o.flip ? pw.conds[i].hiIn : !pw.conds[i].hiIn })), label: 'graph of a piecewise function' });
+  const pwPieces = (pw, o = {}) => pw.pcs.map((p, i) => ({ f: o.swap ? pw.pcs[(i + 1) % pw.pcs.length].f : p.f, from: pw.conds[i].lo == null ? -Infinity : pw.conds[i].lo, to: pw.conds[i].hi == null ? Infinity : pw.conds[i].hi, openFrom: o.flip ? pw.conds[i].loIn : !pw.conds[i].loIn, openTo: o.flip ? pw.conds[i].hiIn : !pw.conds[i].hiIn }));
+  const plotPw = (pw, o = {}) => H.fnPlot({ r: 8, pieces: pwPieces(pw, o), label: 'graph of a piecewise function' });
   const numTex = (v) => MX.texNum(Math.round(v * 100) / 100);
   MX.register({
     id: 'fn-piecewise', section: FSEC, title: 'Piecewise functions', kind: 'skill', sources: [ADDED],
@@ -267,7 +335,7 @@
           const uniq = [...new Set(pts)];
           return {
             prompt: T`Let ${H.piecewiseHTML('f(x)', pw.rows)}`,
-            parts: uniq.map((t, k) => ({ label: 'abc'[k], ask: T`\(f(${t})\)`, kind: 'num', answer: MX.num(pw.f(t)), points: 1 })),
+            parts: uniq.map((t, k) => ({ label: 'abc'[k], ask: T`\(f(${t})\)`, kind: 'num', answer: MX.num(pw.f(t)), points: 1, verify: V.value(() => pwEval(pw.rowsAsc, t)) })),
             solution: uniq.map((t) => { const i = pw.which(t); return T`\(x = ${t}\) satisfies \(${pw.conds[i].tex}\), so use \(${pw.pcs[i].tex}\): \(f(${t}) = ${numTex(pw.f(t))}\)`; }),
           };
         },
@@ -281,10 +349,11 @@
             pw = makePiecewise(rng, 2); b0 = pw.breaks[0];
             yL = pw.pcs[0].f(b0); yR = pw.pcs[1].f(b0); tries++;
           } while (tries < 60 && (Math.abs(yL - yR) < 1.5 || Math.abs(yL) > 6.5 || Math.abs(yR) > 6.5 || !visibleSpan(pw.pcs[0].f, b0 - 4, b0) || !visibleSpan(pw.pcs[1].f, b0, b0 + 4)));
-          const ch = H.choices(rng, plotPw(pw), [plotPw(pw, { flip: true }), plotPw(pw, { swap: true }), plotPw(pw, { swap: true, flip: true })]);
+          const looks = [{}, { flip: true }, { swap: true }, { swap: true, flip: true }];
+          const ch = H.choices(rng, plotPw(pw), looks.slice(1).map((o) => plotPw(pw, o)), looks.map((o) => pwPieces(pw, o)));
           return {
             prompt: T`Which graph shows ${H.piecewiseHTML('f(x)', pw.rows)}`,
-            parts: [{ kind: 'choice', graph: true, options: ch.options, answer: ch.answer, points: 3 }],
+            parts: [{ kind: 'choice', graph: true, options: ch.options, answer: ch.answer, data: ch.data, points: 3, verify: V.choiceData((pieces) => plotShows(pieces, pw.rowsAsc)) }],
             solution: [
               T`Left of \(x = ${pw.breaks[0]}\) the graph follows \(${pw.pcs[0].tex}\); to the right it follows \(${pw.pcs[1].tex}\).`,
               T`At \(x = ${pw.breaks[0]}\): the dot on the ${pw.conds[0].hiIn ? 'left piece is closed (●) and the right piece is open (○)' : 'left piece is open (○) and the right piece is closed (●)'}, because of the ${pw.conds[0].hiIn ? '\\(\\le\\)' : '\\(\\lt\\)'} in the first condition.`,
@@ -298,10 +367,11 @@
           const pw = makePiecewise(rng, 2);
           const b0 = pw.breaks[0], xs = rng.shuffle([b0, b0 - rng.int(1, 3), b0 + rng.int(1, 3)]);
           if (xs.some((x) => Math.abs(pw.f(x)) > 7.5 || !Number.isInteger(pw.f(x) * 2)) || new Set(xs.map((x) => pw.f(x))).size < 2) return this.gen(rng);
+          const shown = pwPieces(pw);
           return {
             prompt: T`The graph of a piecewise function \(f\) is shown. Use it to find each value.`,
-            visual: plotPw(pw),
-            parts: xs.map((t, k) => ({ label: 'abc'[k], ask: T`\(f(${t})\)`, kind: 'num', answer: MX.num(pw.f(t)), points: 1 })),
+            visual: H.fnPlot({ r: 8, pieces: shown, label: 'graph of a piecewise function' }),
+            parts: xs.map((t, k) => ({ label: 'abc'[k], ask: T`\(f(${t})\)`, kind: 'num', answer: MX.num(pw.f(t)), points: 1, verify: V.value(() => plotAt(shown, t)) })),
             solution: [T`Go to each \(x\)-value and read the height of the graph there. At the boundary \(x = ${b0}\), use the closed dot ●, not the open one.`, ...xs.map((t) => T`\(f(${t}) = ${numTex(pw.f(t))}\)`)],
           };
         },
@@ -309,15 +379,19 @@
       abs: {
         name: 'Absolute value as a piecewise function',
         gen(rng) {
-          const h = rng.nz(-6, 6), e = lin(1, -h).tex;
+          const h = rng.nz(-6, 6), E = lin(1, -h), e = E.tex, ea = E.asc;
           const right = [[e, T`x \ge ${h}`], [T`-\left(${e}\right)`, T`x \lt ${h}`]];
           const w1 = [[e, T`x \ge ${-h}`], [T`-\left(${e}\right)`, T`x \lt ${-h}`]];
           const w2 = [[T`-\left(${e}\right)`, T`x \ge ${h}`], [e, T`x \lt ${h}`]];
           const w3 = [[e, T`x \ge 0`], [T`-\left(${e}\right)`, T`x \lt 0`]];
-          const ch = H.choices(rng, H.piecewiseHTML('f(x)', right), [w1, w2, w3].map((r) => H.piecewiseHTML('f(x)', r)));
+          // the same four definitions in parser syntax, carried as option data
+          const rowsAsc = [[[ea, `x>=${h}`], [`-(${ea})`, `x<${h}`]], [[ea, `x>=${-h}`], [`-(${ea})`, `x<${-h}`]], [[`-(${ea})`, `x>=${h}`], [ea, `x<${h}`]], [[ea, 'x>=0'], [`-(${ea})`, 'x<0']]];
+          const ch = H.choices(rng, H.piecewiseHTML('f(x)', right), [w1, w2, w3].map((r) => H.piecewiseHTML('f(x)', r)), rowsAsc);
+          const absF = V.fn(`|${ea}|`, 'x');
+          const agrees = (rows) => { for (let k = -48; k <= 48; k++) { const t = k / 4; if (!V.close(pwEval(rows, t), absF(t))) return false; } return true; };
           return {
             prompt: T`Which piecewise definition is equal to \(f(x) = ${A(e)}\)?`,
-            parts: [{ kind: 'choice', options: ch.options, answer: ch.answer, points: 2 }],
+            parts: [{ kind: 'choice', options: ch.options, answer: ch.answer, data: ch.data, points: 2, verify: V.choiceData(agrees) }],
             solution: [T`\(${A(e)} = ${e}\) when the inside is \(\ge 0\), that is \(x \ge ${h}\).`, T`When the inside is negative (\(x \lt ${h}\)), the absolute value flips its sign: \(-\left(${e}\right)\).`],
           };
         },
@@ -329,13 +403,14 @@
           const C = (w) => (w <= cut ? base : base + extra * (w - cut));
           const w1 = rng.int(1, cut), w2 = cut + rng.int(2, 6);
           const rows = [[String(base), T`0 \lt w \le ${cut}`], [T`${base} + ${extra}\left(w - ${cut}\right)`, T`w \gt ${cut}`]];
+          const rowsAsc = [[String(base), `0<w<=${cut}`], [`${base}+${extra}(w-${cut})`, `w>${cut}`]];
           const vis = H.fnPlot({ win: { xmin: 0, xmax: cut + 8, ymin: 0, ymax: Math.ceil(C(cut + 8) / 5) * 5 + 5 }, w: 240, h: 170, step: 1, labelEvery: 2, ystep: 5, ylabelEvery: 10, pieces: [{ f: () => base, from: 0, to: cut, openFrom: true }, { f: C, from: cut, to: cut + 8, openFrom: true, dotTo: false }], label: 'shipping cost graph' });
           return {
             prompt: T`A shop charges shipping by weight \(w\) (in pounds): ${H.piecewiseHTML('C(w)', rows)} in dollars.`,
             visual: vis,
             parts: [
-              { label: 'a', ask: T`Cost to ship a ${w1}-pound package, \(C(${w1})\)`, kind: 'num', pre: '$', answer: MX.money(C(w1)), tol: 0.005, show: '\\$' + MX.money(C(w1)), points: 1 },
-              { label: 'b', ask: T`Cost to ship a ${w2}-pound package, \(C(${w2})\)`, kind: 'num', pre: '$', answer: MX.money(C(w2)), tol: 0.005, show: '\\$' + MX.money(C(w2)), points: 2 },
+              { label: 'a', ask: T`Cost to ship a ${w1}-pound package, \(C(${w1})\)`, kind: 'num', pre: '$', answer: MX.money(C(w1)), tol: 0.005, show: '\\$' + MX.money(C(w1)), points: 1, verify: V.value(() => pwEval(rowsAsc, w1, 'w')) },
+              { label: 'b', ask: T`Cost to ship a ${w2}-pound package, \(C(${w2})\)`, kind: 'num', pre: '$', answer: MX.money(C(w2)), tol: 0.005, show: '\\$' + MX.money(C(w2)), points: 2, verify: V.value(() => pwEval(rowsAsc, w2, 'w')) },
             ],
             solution: [T`\(${w1} \le ${cut}\), so the flat rate applies: \(C(${w1}) = ${base}\).`, T`\(${w2} \gt ${cut}\): \(C(${w2}) = ${base} + ${extra}\left(${w2} - ${cut}\right) = ${base} + ${MX.num(extra * (w2 - cut))} = ${MX.money(C(w2))}\)`],
           };
@@ -375,6 +450,49 @@
     do { a = rng.pick(o.simpleA || key === 'recip' ? [1, 1, -1] : [1, 1, -1, 2, -2, 0.5]); h = rng.int(-5, 5); k = rng.int(-5, 5); } while ((o.needHK && (!h || !k)) || (!h && !k && a === 1));
     return { key, P, a, h, k };
   }
+  // ----- independent checks for transformations -----
+  // the basic functions in parser syntax, keyed by how the prompt writes them
+  const BASE = { 'x^{2}': 'x^2', 'x^{3}': 'x^3', '\\sqrt{x}': '√(x)', '\\left|x\\right|': '|x|', '\\frac{1}{x}': '1/(x)', '\\sqrt[3]{x}': '(x)^(1/3)' };
+  const subX = (s, u) => s.replace(/x/g, '(' + u + ')');
+  // follow a description like "Shift left 2 units, reflect across the x-axis, shift up 3 units." step by step,
+  // starting from the basic function (parser syntax); null if a step is not understood
+  function applyWords(text, base) {
+    let s = base;
+    for (const st of text.replace(/\.$/, '').toLowerCase().split(/,\s*/)) {
+      let m;
+      if ((m = /^shift (left|right) (\d+) units?$/.exec(st))) s = subX(s, 'x' + (m[1] === 'right' ? '-' : '+') + m[2]);
+      else if ((m = /^shift (up|down) (\d+) units?$/.exec(st))) s = '(' + s + ')' + (m[1] === 'up' ? '+' : '-') + m[2];
+      else if ((m = /^stretch vertically by a factor of (\d+)$/.exec(st))) s = m[1] + '*(' + s + ')';
+      else if ((m = /^compress vertically by a factor of 1\/(\d+)$/.exec(st))) s = '(1/' + m[1] + ')*(' + s + ')';
+      else if (st === 'reflect across the x-axis') s = '-(' + s + ')';
+      else return null;
+    }
+    return s;
+  }
+  // two functions (parser strings, ASTs or JS functions of x) agree on the window: same domain, same values
+  const asFn = (f) => (typeof f === 'function' ? f : ((n) => (x) => MX.evalAST(n, { x }))(V.parse(f)));
+  function sameFn(f, g, R = 8) {
+    const F = asFn(f), G2 = asFn(g);
+    let n = 0;
+    for (let k = 0; k <= 160; k++) {
+      const x = -R + (2 * R * k) / 160 + 0.0173, u = F(x), w = G2(x);
+      if (isFinite(u) !== isFinite(w)) return false;
+      if (isFinite(u)) { if (!V.close(u, w, 1e-7)) return false; n++; }
+    }
+    return n >= 20;
+  }
+  // a point answer for y = (expression in f): the point must be on the graph for every f through (p, q).
+  // gOf(F) builds the displayed right-hand side with F(u) (u = what is inside f) written out in parser syntax.
+  const onEveryF = (p, q, gOf) => V.point((x, y) => {
+    for (const c of [0.5, -1.7, 2.3]) {
+      const g = V.fn(gOf((u) => `(${q}+(${c})*((${u})-(${p})))`), 'x')(x);
+      if (!V.close(g, y)) return 'the point is not on the graph of g when f is the line through (' + p + ', ' + q + ') with slope ' + c;
+    }
+    return true;
+  });
+  const kAsc = (k) => (k ? (k > 0 ? '+' : '-') + Math.abs(k) : '');
+  // the displayed g(x) = a f(x - h) + k in parser syntax, built from the basic function as written
+  const gShown = (P, a, h, k) => aAsc(a) + subX(BASE[P.plain], inner(h).asc) + kAsc(k);
   const tPlot = (P, a, h, k, o = {}) => H.fnPlot({ r: 8, pieces: [{ f: gFn(P, a, h, k) }], label: 'graph of a transformed function', ...o });
   MX.register({
     id: 'fn-transform', section: FSEC, title: 'Transformations of functions', kind: 'skill', sources: [ADDED],
@@ -396,7 +514,7 @@
           const ch = H.choices(rng, describe(a, h, k), [describe(a, -h, k), describe(a, h, -k), describe(-a, -h, k)]);
           return {
             prompt: T`How is the graph of \(g(x) = ${gTex(P, a, h, k)}\) obtained from the graph of \(f(x) = ${P.plain}\)?`,
-            parts: [{ kind: 'choice', options: ch.options, answer: ch.answer, points: 2 }],
+            parts: [{ kind: 'choice', options: ch.options, answer: ch.answer, points: 2, verify: V.choice((i) => { const w = applyWords(ch.options[i], BASE[P.plain]); return !!w && sameFn(w, gShown(P, a, h, k)); }) }],
             solution: [T`Match \(g(x) = a\,f(x - h) + k\): \(a = ${MX.num(a)}\), \(h = ${h}\), \(k = ${k}\).`, T`${h > 0 ? T`\(x - ${h}\) moves it right ${h}` : T`\(x + ${-h}\) moves it left ${-h}`}; ${k > 0 ? 'up' : 'down'} ${Math.abs(k)}${a < 0 ? '; the negative reflects it across the x-axis' : ''}${Math.abs(a) !== 1 ? (Math.abs(a) > 1 ? '; ' + Math.abs(a) + ' stretches it' : '; 1/2 compresses it') : ''}.`, describe(a, h, k)],
           };
         },
@@ -408,7 +526,8 @@
           const words = describe(a, h, k).replace(/\.$/, '').toLowerCase();
           return {
             prompt: T`Start with \(f(x) = ${P.plain}\), then ${words}. Write the equation of the new function \(g\).`,
-            parts: [{ kind: 'expr', pre: 'g(x) =', vars: ['x'], answer: gAsc(P, a, h, k), show: 'g(x) = ' + gTex(P, a, h, k), points: 3 }],
+            parts: [{ kind: 'expr', pre: 'g(x) =', vars: ['x'], answer: gAsc(P, a, h, k), show: 'g(x) = ' + gTex(P, a, h, k), points: 3,
+              verify: V.custom((ans) => { const w = applyWords(words, BASE[P.plain]); return !w ? 'could not read the description' : sameFn(ans, w) || 'the answer does not follow the described steps'; }) }],
             solution: [T`Use \(g(x) = a\,f(x - h) + k\) with ${h ? (h > 0 ? T`\(h = ${h}\) (right)` : T`\(h = ${h}\) (left)`) : 'no horizontal shift'}, \(a = ${MX.num(a)}\) and \(k = ${k}\).`, T`\(${H.box('g(x) = ' + gTex(P, a, h, k))}\)`],
           };
         },
@@ -417,10 +536,11 @@
         name: 'Choose the graph',
         gen(rng) {
           const { P, a, h, k } = pickTransform(rng, { simpleA: true, needHK: true });
-          const ch = H.choices(rng, tPlot(P, a, h, k), [tPlot(P, a, -h, k), tPlot(P, a, h, -k), tPlot(P, -a, h, k)]);
+          const drawn = [[a, h, k], [a, -h, k], [a, h, -k], [-a, h, k]];
+          const ch = H.choices(rng, tPlot(P, a, h, k), drawn.slice(1).map(([a2, h2, k2]) => tPlot(P, a2, h2, k2)), drawn.map(([a2, h2, k2]) => gFn(P, a2, h2, k2)));
           return {
             prompt: T`Which graph shows \(g(x) = ${gTex(P, a, h, k)}\)?`,
-            parts: [{ kind: 'choice', graph: true, options: ch.options, answer: ch.answer, points: 3 }],
+            parts: [{ kind: 'choice', graph: true, options: ch.options, answer: ch.answer, data: ch.data, points: 3, verify: V.choiceData((f) => sameFn(f, gShown(P, a, h, k))) }],
             solution: [T`Start from the graph of \(${P.plain}\).`, describe(a, h, k), T`Check one point: \(g(${h + 1}) = ${MX.num(a * P.f(1) + k)}\), so the graph passes through \((${h + 1}, ${MX.num(a * P.f(1) + k)})\).`],
           };
         },
@@ -436,7 +556,7 @@
           const ans = H.pt(np[0], np[1]);
           return {
             prompt: T`The point \((${p}, ${q})\) is on the graph of \(y = f(x)\). Which point must be on the graph of \(y = ${gT}\)?`,
-            parts: [{ kind: 'point', answer: ans.asc, show: ans.tex, points: 2 }],
+            parts: [{ kind: 'point', answer: ans.asc, show: ans.tex, points: 2, verify: onEveryF(p, q, (F) => (yflip ? F('-x') : aAsc(a) + F(inner(h).asc)) + kAsc(k)) }],
             solution: yflip
               ? [T`\(f(-x)\) reflects across the \(y\)-axis: \(x\) changes sign. Then ${k ? T`add ${k} to \(y\)` : 'nothing else'}.`, T`\((${p}, ${q}) \to ${H.box(ans.tex)}\)`]
               : [T`\(x\): the input \(x ${MX.sgnTerm(-h)}\) equals ${p} when \(x = ${p + h}\) (shift ${h >= 0 ? 'right' : 'left'} ${Math.abs(h)}).`, T`\(y\): multiply by ${a}, then add ${k}: \(${a}\cdot${MX.par(q)} ${MX.sgnTerm(k)} = ${a * q + k}\).`, T`\(${H.box(ans.tex)}\)`],
@@ -459,11 +579,20 @@
             ? [`Stretch horizontally by a factor of ${b}`, `Stretch vertically by a factor of ${b}`, `Compress vertically by a factor of 1/${b}`]
             : ['Compress horizontally by a factor of 1/2', 'Compress vertically by a factor of 1/2', 'Stretch vertically by a factor of 2'];
           const ch = H.choices(rng, right, wrong);
+          // what each described change does to a test function, compared with f(bx)
+          const testF = (t) => t * t * t + t + 1;
+          const bNum = V.num(b === 0.5 ? '1/2' : String(b));
+          const doesBx = (text) => {
+            const m = /^(Compress|Stretch) (horizontally|vertically) by a factor of (1\/)?(\d+)$/.exec(text);
+            if (!m) return false;
+            const c = m[3] ? 1 / +m[4] : +m[4];
+            return sameFn(m[2] === 'horizontally' ? (x) => testF(x / c) : (x) => c * testF(x), (x) => testF(bNum * x), 3);
+          };
           return {
             prompt: T`The point \((${p}, ${q})\) is on the graph of \(y = f(x)\). Let \(g(x) = ${gT}\).`,
             parts: [
-              { label: 'a', ask: T`What does the \(${bTex}x\) inside \(f\) do to the graph?`, kind: 'choice', options: ch.options, answer: ch.answer, points: 1 },
-              { label: 'b', ask: T`Which point must be on the graph of \(g\)?`, kind: 'point', answer: ans.asc, show: ans.tex, points: 2 },
+              { label: 'a', ask: T`What does the \(${bTex}x\) inside \(f\) do to the graph?`, kind: 'choice', options: ch.options, answer: ch.answer, points: 1, verify: V.choice((i) => doesBx(ch.options[i])) },
+              { label: 'b', ask: T`Which point must be on the graph of \(g\)?`, kind: 'point', answer: ans.asc, show: ans.tex, points: 2, verify: onEveryF(p, q, (F) => F(`${bNum}x`) + kAsc(k)) },
             ],
             solution: [
               T`The input \(${bTex}x\) must equal ${p}, so \(x = ${MX.par(p)} \div ${bTex} = ${MX.num(nx)}\). Every \(x\)-value is divided by \(${bTex}\): ${right.toLowerCase()}.`,
@@ -482,7 +611,9 @@
           return {
             prompt: T`Which basic function is graphed below?`,
             visual: tPlot(P, 1, 0, 0, { r: 5, labelEvery: 1 }),
-            parts: [{ kind: 'choice', options: ch.options, answer: ch.answer, inline: true, points: 1 }],
+            parts: [{ kind: 'choice', options: ch.options, answer: ch.answer, inline: true, points: 1,
+              // read the formula off each option and compare it with the plotted curve
+              verify: V.choice((i) => { const m = /^\\\(f\(x\) = (.*)\\\)$/.exec(ch.options[i]); return !!m && !!BASE[m[1]] && sameFn(BASE[m[1]], gFn(P, 1, 0, 0), 5); }) }],
             solution: [
               { sq: 'A U-shaped parabola with its lowest point at the origin: \\(x^{2}\\).', cube: 'Rises left to right, flattening at the origin and turning the other way: \\(x^{3}\\).', sqrt: 'Starts at the origin and rises slowly to the right only: \\(\\sqrt{x}\\).', abs: 'A V with its point at the origin: \\(|x|\\).', recip: 'Two separate branches that never touch the axes: \\(\\frac{1}{x}\\).', cbrt: 'An S-shape through the origin that keeps rising slowly in both directions: \\(\\sqrt[3]{x}\\).' }[key],
             ],
@@ -495,10 +626,11 @@
           const key = rng.pick(['abs', 'sq', 'abs', 'sqrt']), P = PARENT[key];
           let a, h, k;
           do { a = rng.pick([1, -1]); h = rng.int(-4, 4); k = rng.int(-4, 4); } while (a === 1 && !h && !k);
+          const curve = gFn(P, a, h, k);
           return {
             prompt: T`The graph is a transformation of \(f(x) = ${P.plain}\) (no stretch). Write its equation.`,
-            visual: H.fnPlot({ r: 8, pieces: [{ f: gFn(P, a, h, k) }], dots: [[h, k, true]] }),
-            parts: [{ kind: 'expr', pre: 'g(x) =', vars: ['x'], answer: gAsc(P, a, h, k), show: 'g(x) = ' + gTex(P, a, h, k), points: 3 }],
+            visual: H.fnPlot({ r: 8, pieces: [{ f: curve }], dots: [[h, k, true]] }),
+            parts: [{ kind: 'expr', pre: 'g(x) =', vars: ['x'], answer: gAsc(P, a, h, k), show: 'g(x) = ' + gTex(P, a, h, k), points: 3, verify: V.custom((ans) => sameFn(ans, curve) || 'the answer does not match the graph') }],
             solution: [T`The ${key === 'abs' ? 'point of the V' : key === 'sq' ? 'vertex' : 'starting point'} moved from \((0, 0)\) to \((${h}, ${k})\): \(h = ${h}\), \(k = ${k}\).`, T`It opens ${a > 0 ? (key === 'sqrt' ? 'upward' : 'up') : (key === 'sqrt' ? 'downward' : 'down')}, so \(a = ${a}\).`, T`\(${H.box('g(x) = ' + gTex(P, a, h, k))}\)`],
           };
         },

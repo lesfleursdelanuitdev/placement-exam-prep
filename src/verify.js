@@ -42,7 +42,8 @@
   };
   // does env satisfy the relation? equality is judged with a relative tolerance so 1/3 works in floating point
   function holds(r, env, tol = 1e-9) {
-    const L = MX.evalAST(r.lhs, env), R = MX.evalAST(r.rhs, env);
+    if (!r.fl) Object.defineProperties(r, { fl: { value: compile(r.lhs) }, fr: { value: compile(r.rhs) } });
+    const L = r.fl(env), R = r.fr(env);
     if (!isFinite(L) || !isFinite(R)) return false;
     const d = L - R, eq = Math.abs(d) <= tol * Math.max(1, Math.abs(L), Math.abs(R));
     switch (r.op) {
@@ -68,12 +69,63 @@
   // does the point / assignment satisfy every equation in the list?
   V.satisfies = (eqs, env) => [].concat(eqs).every((e) => V.truth(e)(env));
 
+  // compile an AST into a function of env; same arithmetic as MX.evalAST, several times faster in a loop
+  function compile(n) {
+    switch (n.t) {
+      case 'num': { const v = n.v; return () => v; }
+      case 'var': { const k = n.n; return (env) => (k in env ? env[k] : NaN); }
+      case 'grp': return compile(n.a);
+      case 'neg': { const a = compile(n.a); return (env) => -a(env); }
+      case 'add': { const a = compile(n.a), b = compile(n.b); return (env) => a(env) + b(env); }
+      case 'sub': { const a = compile(n.a), b = compile(n.b); return (env) => a(env) - b(env); }
+      case 'mul': { const a = compile(n.a), b = compile(n.b); return (env) => a(env) * b(env); }
+      case 'div': { const a = compile(n.a), b = compile(n.b); return (env) => a(env) / b(env); }
+      case 'pow': {
+        const a = compile(n.a), b = compile(n.b);
+        return (env) => {
+          const x = a(env), e = b(env);
+          if (x < 0 && !Number.isInteger(e)) {
+            const r = Math.round(1 / e);
+            if (Math.abs(1 / e - r) < 1e-9 && r % 2 !== 0) return -Math.pow(-x, e);
+            return NaN;
+          }
+          return Math.pow(x, e);
+        };
+      }
+      case 'sqrt': { const a = compile(n.a); return (env) => { const v = a(env); return v < -1e-12 ? NaN : Math.sqrt(Math.max(0, v)); }; }
+      case 'abs': { const a = compile(n.a); return (env) => Math.abs(a(env)); }
+      case 'e': return () => Math.E;
+      case 'log': {
+        const a = compile(n.a), b = n.b ? compile(n.b) : () => 10;
+        return (env) => { const x = a(env), bb = b(env); if (!(x > 0) || !(bb > 0) || Math.abs(bb - 1) < 1e-12) return NaN; return Math.log(x) / Math.log(bb); };
+      }
+    }
+    return (env) => MX.evalAST(n, env); // anything else: fall back to the reference evaluator
+  }
+  V.compile = compile;
+
   // ---------- numeric root finding ----------
   // Every real root of lhs = rhs (a string like "x^2-4 = 3x" or {lhs, rhs}) on [lo, hi].
   // Returns a sorted array, or 'all' when the equation holds everywhere it is defined.
   // Finds sign changes (rejecting poles), zeros where the domain ends (√, log), and touching roots (x - 3)^2.
-  // settings: the exam builder lowers the sample count (it only needs a safety net; the tests use the full count)
-  V.opts = { n: 20000 };
+  // sample grid for root finding and region checks: fine steps near 0 (where answers live), coarse steps
+  // farther out. The exam builder uses a lighter grid (it is the safety net; the tests are the audit).
+  V.opts = { fine: 0.01, coarse: 0.2, near: 30 };
+  V.grid = function (lo, hi, n) {
+    if (n) { const xs = []; for (let k = 0; k <= n; k++) xs.push(lo + ((hi - lo) * k) / n); return xs; }
+    const { fine, coarse, near } = V.opts, xs = [];
+    let x = lo;
+    while (x < hi) {
+      xs.push(x);
+      const step = x >= -near && x < near ? fine : coarse;
+      let nx = x + step;
+      if (x < -near && nx > -near) nx = -near; // land exactly on the fine band's edges
+      if (x < near && nx > near && step === coarse) nx = near;
+      x = Math.round(nx * 1e9) / 1e9;
+    }
+    xs.push(hi);
+    return xs;
+  };
   // nearest simple fraction p/q (q ≤ 1000) within tol of x, or null
   function snap(x, tol) {
     if (Number.isInteger(x)) return x;
@@ -81,17 +133,19 @@
     return null;
   }
   V.roots = function (eq, o = {}) {
-    const v = o.v || 'x', lo = o.lo != null ? o.lo : -200, hi = o.hi != null ? o.hi : 200, n = o.n || V.opts.n;
+    const v = o.v || 'x', lo = o.lo != null ? o.lo : -200, hi = o.hi != null ? o.hi : 200;
+    const grid = V.grid(lo, hi, o.n), n = grid.length - 1;
     const r = typeof eq === 'string' ? V.rel(eq)[0] : eq;
     const env = Object.assign({}, o.env);
-    const side = (x) => { env[v] = x; return [MX.evalAST(r.lhs, env), MX.evalAST(r.rhs, env)]; };
+    const cl = compile(r.lhs), cr = compile(r.rhs);
+    const side = (x) => { env[v] = x; return [cl(env), cr(env)]; };
     const f = (x) => { const [L, R] = side(x); return L - R; };
     const tolAt = (x, t) => { const [L, R] = side(x); return t * Math.max(1, Math.abs(L), Math.abs(R)); };
     const isRoot = (x, t = 1e-7) => { const d = f(x); return isFinite(d) && Math.abs(d) <= tolAt(x, t); };
     const xs = new Float64Array(n + 1), ds = new Float64Array(n + 1), fin = new Array(n + 1);
     let nf = 0, nz = 0;
     for (let k = 0; k <= n; k++) {
-      const x = lo + ((hi - lo) * k) / n, [L, R] = side(x), d = L - R;
+      const x = grid[k], [L, R] = side(x), d = L - R;
       xs[k] = x; ds[k] = d; fin[k] = isFinite(d);
       if (fin[k]) { nf++; if (Math.abs(d) <= 1e-9 * Math.max(1, Math.abs(L), Math.abs(R))) nz++; }
     }
@@ -122,11 +176,11 @@
         const e = bisect(a, b, g);
         for (const x of [e, e - 1e-12, e + 1e-12]) if (isFinite(f(x))) { add(x, 1e-9); break; }
       }
-      // touching root, like (x - 3)^2 = 0: |f| dips toward 0 between samples without changing sign.
-      // A parabola through the three samples estimates the dip; only a deep dip is refined.
+      // touching root, like (x - 3)^2 = 0 or |3x + 2| = 0: |f| dips toward 0 between samples without
+      // changing sign. Every strict local minimum of |f| is refined (flat stretches are not minima).
       if (k > 0 && fin[k - 1] && fin[k + 1] && ds[k - 1] * ds[k] > 0 && ds[k] * ds[k + 1] > 0) {
-        const g0 = Math.abs(ds[k - 1]), g1 = Math.abs(ds[k]), g2 = Math.abs(ds[k + 1]), c2 = g2 - 2 * g1 + g0;
-        if (g1 < g0 && g1 < g2 && c2 > 0 && g1 - ((g2 - g0) * (g2 - g0)) / (8 * c2) <= 0.5 * g1) {
+        const g0 = Math.abs(ds[k - 1]), g1 = Math.abs(ds[k]), g2 = Math.abs(ds[k + 1]);
+        if (g1 < g0 && g1 < g2) {
           let p = xs[k - 1], q = xs[k + 1];
           for (let i = 0; i < 120; i++) {
             const m1 = q - gr * (q - p), m2 = p + gr * (q - p);
@@ -234,12 +288,12 @@
     const v = o.v || 'x', t = V.truth(spec);
     const truth = (x) => t(Object.assign({}, o.env, { [v]: x }));
     const inside = (x) => a.some((r) => (x > r.lo || (x === r.lo && r.lc)) && (x < r.hi || (x === r.hi && r.hc)));
-    const lo = o.lo != null ? o.lo : -200, hi = o.hi != null ? o.hi : 200, n = o.n || 20000;
+    const lo = o.lo != null ? o.lo : -200, hi = o.hi != null ? o.hi : 200, grid = V.grid(lo, hi, o.n);
     const gap = (e) => 1e-5 * Math.max(1, Math.abs(e));
     const probes = [];
     let prev = null;
-    for (let k = 0; k <= n; k++) {
-      const x = lo + ((hi - lo) * k) / n, tx = truth(x);
+    for (const x of grid) {
+      const tx = truth(x);
       probes.push(x);
       if (prev && prev.t !== tx) {
         let p = prev.x, q = x;

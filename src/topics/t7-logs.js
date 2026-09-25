@@ -44,6 +44,62 @@
   const BASES = [2, 3, 4, 5, 6, 7, 10];
   const powStr = (b, k) => { const v = Math.pow(b, k); return k >= 0 ? { q: new Q(v), tex: String(v) } : { q: new Q(1, Math.pow(b, -k)), tex: '\\frac{1}{' + Math.pow(b, -k) + '}' }; };
 
+  // ---------- verifiers (built from the problem as displayed) ----------
+  const V = MX.V;
+  // a is exact correctly rounded to `places` decimals
+  const roundedOK = (a, exact, places) => {
+    if (typeof a !== 'number' || !isFinite(exact)) return 'expected a number';
+    const s = Math.pow(10, places);
+    if (Math.abs(a * s - Math.round(a * s)) > 1e-6) return 'the answer is not rounded to ' + places + ' places';
+    return Math.abs(a - exact) <= 0.5 / s + 1e-9 * Math.max(1, Math.abs(exact)) ? true : 'the exact value is ' + MX.num(exact, 6) + ', which does not round to ' + a;
+  };
+  // the only real root of eq, rounded to `places`
+  const roundedRoot = (eq, places, o = {}) => {
+    let rs = null;
+    return V.custom((a) => {
+      rs = rs || V.roots(eq, o);
+      if (!Array.isArray(rs) || rs.length !== 1) return 'expected exactly one solution of ' + eq;
+      return roundedOK(a, rs[0], places);
+    });
+  };
+  // the constant answer expression makes the stated equation true
+  const makesTrue = (eq, v = 'x') => V.custom((a) => {
+    if (MX.ast.vars(a).size) return 'the answer should be a number';
+    const x = MX.evalAST(a, {});
+    return V.truth(eq)({ [v]: x }) ? true : 'x = ' + MX.num(x, 6) + ' does not satisfy ' + eq;
+  });
+  // (base, exponent, value) read from "log_b(N) = k" or "b^k = N"
+  const ungrp = (n) => { while (n && n.t === 'grp') n = n.a; return n; };
+  const hasNode = (n, t) => !!n && typeof n === 'object' && (n.t === t || Object.keys(n).some((k) => k !== 't' && n[k] && typeof n[k] === 'object' && hasNode(n[k], t)));
+  function triple(r) {
+    const L = ungrp(r.lhs), R = ungrp(r.rhs);
+    for (const [x, o] of [[L, R], [R, L]]) if (x.t === 'log') return { shape: 'log', base: x.k === 'c' ? { t: 'num', v: 10 } : x.b, exp: o, val: x.a };
+    for (const [x, o] of [[L, R], [R, L]]) if (x.t === 'pow' && !hasNode(o, 'log')) return { shape: 'exp', base: x.a, exp: x.b, val: o };
+    return null;
+  }
+  // "rewrite in the other form" (eqform): the answer is the other form of the given relation, with the same
+  // base, exponent and value, and it is a true statement (at the given's solution when there is a variable)
+  const eqForm = (given, v) => V.custom((a) => {
+    const gr = V.rel(given)[0], g = triple(gr), t = triple(a);
+    if (!g) return 'could not read the given relation';
+    if (a.op !== '=') return 'expected an equation';
+    if (!t || t.shape === g.shape || (t.shape === 'exp' && hasNode(a.lhs, 'log')) || (t.shape === 'exp' && hasNode(a.rhs, 'log'))) return 'expected the ' + (g.shape === 'log' ? 'exponential' : 'logarithmic') + ' form';
+    const ev = MX.evalAST;
+    for (const x of v ? [1.3, -0.7, 2.9] : [0]) {
+      const env = v ? { [v]: x } : {};
+      for (const key of ['base', 'exp', 'val']) if (!V.close(ev(g[key], env), ev(t[key], env), 1e-9)) return 'the ' + key + ' does not match the given relation';
+    }
+    let env = {};
+    if (v) {
+      const rs = V.roots(gr, { v, lo: -50, hi: 50, n: 4000 });
+      if (!Array.isArray(rs) || rs.length !== 1) return 'the given relation should have one solution';
+      env = { [v]: rs[0] };
+    }
+    const tv = (r) => V.close(ev(r.lhs, env), ev(r.rhs, env), 1e-9);
+    if (!tv(gr)) return 'the given relation is false';
+    return tv(a) ? true : 'the answer is not a true statement';
+  });
+
   // ================= exponential <-> logarithmic form =================
   MX.register({
     id: 'log-form', section: SEC, title: 'Exponential & logarithmic form', kind: 'skill', sources: [],
@@ -63,7 +119,7 @@
           const N = powStr(b, k);
           return {
             prompt: T`Write \(\log_{${b}} ${N.tex} = ${k}\) in exponential form.`,
-            parts: [{ kind: 'eqform', shape: 'exp', base: String(b), exp: String(k), val: N.q.str(), answer: `${b}^(${k})=${N.q.str()}`, show: T`${b}^{${k}} = ${N.tex}`, points: 2 }],
+            parts: [{ kind: 'eqform', shape: 'exp', base: String(b), exp: String(k), val: N.q.str(), answer: `${b}^(${k})=${N.q.str()}`, show: T`${b}^{${k}} = ${N.tex}`, points: 2, verify: eqForm(`log_${b}(${N.q.str()})=${k}`) }],
             solution: [T`\(\log_{b} N = k\) means \(b^{k} = N\).`, T`Here the base is ${b}, the exponent (the log's value) is ${k}, and the result is \(${N.tex}\).`, T`\(${H.box(T`${b}^{${k}} = ${N.tex}`)}\)`],
           };
         },
@@ -76,7 +132,7 @@
             const eq = new Q(...e.split('/').map(Number));
             return {
               prompt: T`Write \(${B}^{${eq.tex()}} = ${root}\) in logarithmic form.`,
-              parts: [{ kind: 'eqform', shape: 'log', base: String(B), exp: e, val: String(root), answer: `log_${B}(${root})=${e}`, show: T`\log_{${B}} ${root} = ${eq.tex()}`, points: 2 }],
+              parts: [{ kind: 'eqform', shape: 'log', base: String(B), exp: e, val: String(root), answer: `log_${B}(${root})=${e}`, show: T`\log_{${B}} ${root} = ${eq.tex()}`, points: 2, verify: eqForm(`${B}^(${e})=${root}`) }],
               solution: [T`\(b^{k} = N\) means \(\log_{b} N = k\).`, T`The base ${B} becomes the log's base; the exponent \(${eq.tex()}\) is the log's value.`, T`\(${H.box(T`\log_{${B}} ${root} = ${eq.tex()}`)}\)`],
             };
           }
@@ -85,7 +141,7 @@
           const N = powStr(b, k);
           return {
             prompt: T`Write \(${b}^{${k}} = ${N.tex}\) in logarithmic form.`,
-            parts: [{ kind: 'eqform', shape: 'log', base: String(b), exp: String(k), val: N.q.str(), answer: `log_${b}(${N.q.str()})=${k}`, show: T`\log_{${b}} ${N.tex} = ${k}`, points: 2 }],
+            parts: [{ kind: 'eqform', shape: 'log', base: String(b), exp: String(k), val: N.q.str(), answer: `log_${b}(${N.q.str()})=${k}`, show: T`\log_{${b}} ${N.tex} = ${k}`, points: 2, verify: eqForm(`${b}^(${k})=${N.q.str()}`) }],
             solution: [T`\(b^{k} = N\) means \(\log_{b} N = k\).`, T`Base ${b}, exponent ${k}, result \(${N.tex}\).`, T`\(${H.box(T`\log_{${b}} ${N.tex} = ${k}`)}\)`],
           };
         },
@@ -97,13 +153,13 @@
           if (rng.chance(0.5)) {
             return {
               prompt: T`Write \(e^{${v}} = ${N}\) in logarithmic form.`,
-              parts: [{ kind: 'eqform', shape: 'log', base: 'e', exp: v, val: String(N), answer: `ln(${N})=${v}`, show: T`\ln ${N} = ${v}`, points: 2 }],
+              parts: [{ kind: 'eqform', shape: 'log', base: 'e', exp: v, val: String(N), answer: `ln(${N})=${v}`, show: T`\ln ${N} = ${v}`, points: 2, verify: eqForm(`e^(${v})=${N}`, v) }],
               solution: [T`Base \(e\) logs are natural logs: \(e^{k} = N\) means \(\ln N = k\).`, T`\(${H.box(T`\ln ${N} = ${v}`)}\)`],
             };
           }
           return {
             prompt: T`Write \(\ln ${N} = ${v}\) in exponential form.`,
-            parts: [{ kind: 'eqform', shape: 'exp', base: 'e', exp: v, val: String(N), answer: `e^(${v})=${N}`, show: T`e^{${v}} = ${N}`, points: 2 }],
+            parts: [{ kind: 'eqform', shape: 'exp', base: 'e', exp: v, val: String(N), answer: `e^(${v})=${N}`, show: T`e^{${v}} = ${N}`, points: 2, verify: eqForm(`ln(${N})=${v}`, v) }],
             solution: [T`\(\ln N = k\) means \(e^{k} = N\): the natural log has base \(e\).`, T`\(${H.box(T`e^{${v}} = ${N}`)}\)`],
           };
         },
@@ -117,13 +173,13 @@
           if (rng.chance(0.5)) {
             return {
               prompt: T`Write \(\log ${Nd} = ${k}\) in exponential form.`,
-              parts: [{ kind: 'eqform', shape: 'exp', base: '10', exp: String(k), val: Nd, answer: `10^(${k})=${Nd}`, show: T`10^{${k}} = ${Nd}`, points: 2 }],
+              parts: [{ kind: 'eqform', shape: 'exp', base: '10', exp: String(k), val: Nd, answer: `10^(${k})=${Nd}`, show: T`10^{${k}} = ${Nd}`, points: 2, verify: eqForm(`log(${Nd})=${k}`) }],
               solution: [T`A log with no base written is the common log, base 10.`, T`\(\log N = k\) means \(10^{k} = N\).`, T`\(${H.box(T`10^{${k}} = ${Nd}`)}\)`],
             };
           }
           return {
             prompt: T`Write \(10^{${k}} = ${Nd}\) in logarithmic form.`,
-            parts: [{ kind: 'eqform', shape: 'log', base: '10', exp: String(k), val: Nd, answer: `log(${Nd})=${k}`, show: T`\log ${Nd} = ${k}`, points: 2 }],
+            parts: [{ kind: 'eqform', shape: 'log', base: '10', exp: String(k), val: Nd, answer: `log(${Nd})=${k}`, show: T`\log ${Nd} = ${k}`, points: 2, verify: eqForm(`10^(${k})=${Nd}`) }],
             solution: [T`Base 10 gives the common log, written without a base.`, T`\(${H.box(T`\log ${Nd} = ${k}`)}\)`],
             _n: N,
           };
@@ -150,7 +206,7 @@
           const N = Math.pow(b, k), n = L(b);
           return {
             prompt: T`Evaluate \(${n.tex}\,${MX.commas(N)}\).`,
-            parts: [{ kind: 'num', nolog: true, answer: String(k), show: String(k), points: 2 }],
+            parts: [{ kind: 'num', nolog: true, answer: String(k), show: String(k), points: 2, verify: V.value(`${n.asc}(${N})`) }],
             solution: [T`Ask: ${b} to what power gives ${MX.commas(N)}?`, T`\(${b}^{${k}} = ${MX.commas(N)}\)`, T`\(${H.box(String(k))}\)`],
           };
         },
@@ -164,7 +220,7 @@
             const n = L(b), den = Math.pow(b, k);
             return {
               prompt: T`Evaluate \(${n.tex}\,\frac{1}{${den}}\).`,
-              parts: [{ kind: 'num', nolog: true, frac: true, answer: String(-k), show: String(-k), points: 2 }],
+              parts: [{ kind: 'num', nolog: true, frac: true, answer: String(-k), show: String(-k), points: 2, verify: V.value(`${n.asc}(1/${den})`) }],
               solution: [T`\(\frac{1}{${den}} = \frac{1}{${b}^{${k}}} = ${b}^{-${k}}\)`, T`So \(${n.tex}\,\frac{1}{${den}} = ${n.tex}\,${b}^{-${k}} = -${k}\)`, T`\(${H.box(String(-k))}\)`],
             };
           }
@@ -172,7 +228,7 @@
           const q = new Q(num, den);
           return {
             prompt: T`Evaluate \(\log_{${B}} ${N}\).`,
-            parts: [{ kind: 'num', nolog: true, frac: true, answer: q.str(), show: q.tex(), points: 2 }],
+            parts: [{ kind: 'num', nolog: true, frac: true, answer: q.str(), show: q.tex(), points: 2, verify: V.value(`log_${B}(${N})`) }],
             solution: [T`Write both as powers of the same number: \(${B}\) and \(${N}\).`, T`\(${B}^{${q.tex()}} = ${N}\) (check: \(\left(\sqrt[${den}]{${B}}\right)^{${num}} = ${N}\))`, T`\(${H.box(q.tex())}\)`],
           };
         },
@@ -182,21 +238,21 @@
         gen(rng) {
           const b = rng.pick([2, 3, 5, 7, 12]), k = rng.int(2, 9), N = rng.int(2, 30);
           const c = rng.pick([
-            [T`\log_{${b}} 1`, 0, T`Any base to the 0 power is 1, so \(\log_{b} 1 = 0\).`],
-            [T`\log_{${b}} ${b}`, 1, T`\(${b}^{1} = ${b}\), so \(\log_{b} b = 1\).`],
-            [T`\log_{${b}} ${b}^{${k}}`, k, T`\(\log_{b} b^{k} = k\): the log undoes the power.`],
-            [T`\ln e^{${k}}`, k, T`\(\ln\) is base \(e\), so \(\ln e^{k} = k\).`],
-            [T`\ln 1`, 0, T`\(e^{0} = 1\), so \(\ln 1 = 0\).`],
-            [T`\ln e`, 1, T`\(e^{1} = e\), so \(\ln e = 1\).`],
-            [T`e^{\ln ${N}}`, N, T`\(e^{\ln N} = N\): the power undoes the log.`],
-            [T`10^{\log ${N}}`, N, T`\(10^{\log N} = N\): base 10 undoes the common log.`],
-            [T`${b}^{\log_{${b}} ${N}}`, N, T`\(b^{\log_{b} N} = N\).`],
-            [T`\log ${MX.commas(Math.pow(10, k % 6 + 1))}`, k % 6 + 1, T`\(10^{${k % 6 + 1}} = ${MX.commas(Math.pow(10, k % 6 + 1))}\); the common log is base 10.`],
-            [T`\log 0.${'0'.repeat((k % 3))}1`, -((k % 3) + 1), T`\(0.${'0'.repeat(k % 3)}1 = 10^{-${(k % 3) + 1}}\).`],
+            [T`\log_{${b}} 1`, 0, T`Any base to the 0 power is 1, so \(\log_{b} 1 = 0\).`, `log_${b}(1)`],
+            [T`\log_{${b}} ${b}`, 1, T`\(${b}^{1} = ${b}\), so \(\log_{b} b = 1\).`, `log_${b}(${b})`],
+            [T`\log_{${b}} ${b}^{${k}}`, k, T`\(\log_{b} b^{k} = k\): the log undoes the power.`, `log_${b}(${b}^(${k}))`],
+            [T`\ln e^{${k}}`, k, T`\(\ln\) is base \(e\), so \(\ln e^{k} = k\).`, `ln(e^(${k}))`],
+            [T`\ln 1`, 0, T`\(e^{0} = 1\), so \(\ln 1 = 0\).`, `ln(1)`],
+            [T`\ln e`, 1, T`\(e^{1} = e\), so \(\ln e = 1\).`, `ln(e)`],
+            [T`e^{\ln ${N}}`, N, T`\(e^{\ln N} = N\): the power undoes the log.`, `e^(ln(${N}))`],
+            [T`10^{\log ${N}}`, N, T`\(10^{\log N} = N\): base 10 undoes the common log.`, `10^(log(${N}))`],
+            [T`${b}^{\log_{${b}} ${N}}`, N, T`\(b^{\log_{b} N} = N\).`, `${b}^(log_${b}(${N}))`],
+            [T`\log ${MX.commas(Math.pow(10, k % 6 + 1))}`, k % 6 + 1, T`\(10^{${k % 6 + 1}} = ${MX.commas(Math.pow(10, k % 6 + 1))}\); the common log is base 10.`, `log(${Math.pow(10, k % 6 + 1)})`],
+            [T`\log 0.${'0'.repeat((k % 3))}1`, -((k % 3) + 1), T`\(0.${'0'.repeat(k % 3)}1 = 10^{-${(k % 3) + 1}}\).`, `log(0.${'0'.repeat(k % 3)}1)`],
           ]);
           return {
             prompt: T`Evaluate \(${c[0]}\).`,
-            parts: [{ kind: 'num', nolog: true, answer: String(c[1]), show: String(c[1]), points: 2 }],
+            parts: [{ kind: 'num', nolog: true, answer: String(c[1]), show: String(c[1]), points: 2, verify: V.value(c[3]) }],
             solution: [c[2], T`\(${H.box(String(c[1]))}\)`],
           };
         },
@@ -226,7 +282,7 @@
           const R = sumLogs([[m, b, 'x'], [p, b, 'y'], [-q, b, 'z']]);
           return {
             prompt: T`Expand as much as possible: \(${n.tex}\left(\dfrac{${top}}{${bot}}\right)\)`,
-            parts: [{ kind: 'expr', form: 'logexpand', vars: ['x', 'y', 'z'], answer: R.asc, show: R.tex, points: 3 }],
+            parts: [{ kind: 'expr', form: 'logexpand', vars: ['x', 'y', 'z'], answer: R.asc, show: R.tex, points: 3, verify: V.equiv(`${n.asc}((x^${m}y^${p})/(z^${q}))`) }],
             solution: [
               T`Quotient rule: \(${n.tex}\left(${top}\right) - ${n.tex}\,${bot}\)`,
               T`Product rule on the top: \(${n.tex}\,${m === 1 ? 'x' : 'x^{' + m + '}'} + ${n.tex}\,${p === 1 ? 'y' : 'y^{' + p + '}'} - ${n.tex}\,${bot}\)`,
@@ -246,7 +302,7 @@
           const R = divide ? sumLogs([[m, b, 'x'], [-k]]) : sumLogs([[k], [m, b, 'x']]);
           return {
             prompt: T`Expand as much as possible: \(${n.tex}\left(${divide ? '\\dfrac{' + xm + '}{' + numTex + '}' : numTex + xm}\right)\)`,
-            parts: [{ kind: 'expr', form: 'logexpand', vars: ['x'], answer: R.asc, show: R.tex, points: 3 }],
+            parts: [{ kind: 'expr', form: 'logexpand', vars: ['x'], answer: R.asc, show: R.tex, points: 3, verify: V.equiv(`${n.asc}(${divide ? `(x^${m})/(${b === 'e' ? `e^(${k})` : Math.pow(b, k)})` : `(${b === 'e' ? `e^(${k})` : Math.pow(b, k)})(x^${m})`})`) }],
             solution: [
               divide ? T`Quotient rule: \(${n.tex}\,${xm} - ${n.tex}\,${numTex}\)` : T`Product rule: \(${n.tex}\,${numTex} + ${n.tex}\,${xm}\)`,
               b === 'e' ? T`Evaluate the number: \(\ln e^{${k}} = ${k}\).` : T`Evaluate the number: \(${n.tex}\,${numTex} = ${k}\) because \(${b}^{${k}} = ${numTex}\).`,
@@ -262,7 +318,7 @@
           const R = sumLogs([[new Q(1, 2), b, 'x'], [-p, b, 'y']]);
           return {
             prompt: T`Expand as much as possible: \(${n.tex}\left(\dfrac{\sqrt{x}}{y^{${p}}}\right)\)`,
-            parts: [{ kind: 'expr', form: 'logexpand', vars: ['x', 'y'], answer: R.asc, show: R.tex, points: 3 }],
+            parts: [{ kind: 'expr', form: 'logexpand', vars: ['x', 'y'], answer: R.asc, show: R.tex, points: 3, verify: V.equiv(`${n.asc}(√(x)/y^${p})`) }],
             solution: [T`Rewrite the root as a power: \(\sqrt{x} = x^{\frac{1}{2}}\).`, T`Quotient rule: \(${n.tex}\,x^{\frac{1}{2}} - ${n.tex}\,y^{${p}}\)`, T`Power rule: \(${H.box(R.tex)}\)`],
           };
         },
@@ -291,7 +347,7 @@
           const ansA = `${n.asc}((x^${m}y^${p})/(z^${q}))`;
           return {
             prompt: T`Write as a single logarithm: \(${S.tex}\)`,
-            parts: [{ kind: 'expr', form: 'logcondense', vars: ['x', 'y', 'z'], answer: ansA, show: ansT, points: 3 }],
+            parts: [{ kind: 'expr', form: 'logcondense', vars: ['x', 'y', 'z'], answer: ansA, show: ansT, points: 3, verify: V.equiv(S.asc) }],
             solution: [T`Power rule: \(${n.tex}\,${m === 1 ? 'x' : 'x^{' + m + '}'} + ${n.tex}\,${p === 1 ? 'y' : 'y^{' + p + '}'} - ${n.tex}\,${bot}\)`, T`Add → multiply, subtract → divide.`, T`\(${H.box(ansT)}\)`],
           };
         },
@@ -304,7 +360,7 @@
           const ansT = T`${n.tex}\left(${p === 1 ? 'y' : 'y^{' + p + '}'}\sqrt{x}\right)`;
           return {
             prompt: T`Write as a single logarithm: \(${S.tex}\)`,
-            parts: [{ kind: 'expr', form: 'logcondense', vars: ['x', 'y'], answer: `${n.asc}(y^${p}√(x))`, show: ansT, points: 3 }],
+            parts: [{ kind: 'expr', form: 'logcondense', vars: ['x', 'y'], answer: `${n.asc}(y^${p}√(x))`, show: ansT, points: 3, verify: V.equiv(S.asc) }],
             solution: [T`\(\frac{1}{2}${n.tex}\,x = ${n.tex}\,x^{\frac{1}{2}} = ${n.tex}\sqrt{x}\)`, T`Then the product rule combines the sum.`, T`\(${H.box(ansT)}\)`],
           };
         },
@@ -318,7 +374,7 @@
           const ansT = T`${n.tex}\left(${N}${m === 1 ? 'x' : 'x^{' + m + '}'}\right)`;
           return {
             prompt: T`Write as a single logarithm: \(${S.tex}\)`,
-            parts: [{ kind: 'expr', form: 'logcondense', vars: ['x'], answer: `${n.asc}(${N}x^${m})`, show: ansT, points: 3 }],
+            parts: [{ kind: 'expr', form: 'logcondense', vars: ['x'], answer: `${n.asc}(${N}x^${m})`, show: ansT, points: 3, verify: V.equiv(S.asc) }],
             solution: [T`Write the number as a log with the same base: \(${k} = ${n.tex}\,${b}^{${k}} = ${n.tex}\,${N}\)`, T`Power rule on the other term, then the product rule.`, T`\(${H.box(ansT)}\)`],
           };
         },
@@ -337,8 +393,8 @@
     return {
       prompt: T`Use the change-of-base formula to evaluate \(\log_{${b}} ${N}\).`,
       parts: [
-        { label: 'a', ask: 'Rewrite it as a quotient of natural logs (or common logs).', kind: 'expr', form: 'cob', vars: [], answer: `ln(${N})/ln(${b})`, show: T`\frac{\ln ${N}}{\ln ${b}}`, points: 2 },
-        { label: 'b', ask: 'Approximate it to the nearest hundredth.', kind: 'num', nolog: true, tol: 0.006, answer: r.toFixed(2), show: r.toFixed(2), points: 2 },
+        { label: 'a', ask: 'Rewrite it as a quotient of natural logs (or common logs).', kind: 'expr', form: 'cob', vars: [], answer: `ln(${N})/ln(${b})`, show: T`\frac{\ln ${N}}{\ln ${b}}`, points: 2, verify: V.equiv(`log_${b}(${N})`) },
+        { label: 'b', ask: 'Approximate it to the nearest hundredth.', kind: 'num', nolog: true, tol: 0.006, answer: r.toFixed(2), show: r.toFixed(2), points: 2, verify: roundedRoot(`${b}^x=${N}`, 2, { lo: -10, hi: 10 }) },
       ],
       solution: [
         T`Change of base: \(\log_{b} N = \dfrac{\ln N}{\ln b}\) (common logs work too: \(\dfrac{\log N}{\log b}\)).`,
@@ -379,7 +435,7 @@
           const In = MX.lin(a, c);
           return {
             prompt: T`Solve for \(x\): \(${n.tex}\left(${In.tex}\right) = ${k}\)`,
-            parts: [{ kind: 'num', frac: true, nolog: true, var: 'x', answer: x.str(), show: T`x = ${x.tex()}`, points: 3 }],
+            parts: [{ kind: 'num', frac: true, nolog: true, var: 'x', answer: x.str(), show: T`x = ${x.tex()}`, points: 3, verify: V.solves(`${n.asc}(${In.asc})=${k}`, { lo: -50, hi: 1100 }) }],
             solution: [T`Exponential form: \(${In.tex} = ${b}^{${k}} = ${Math.pow(b, k)}\)`, T`\(${MX.coef(a)}x = ${Math.pow(b, k) - c}\), so \(x = ${x.tex()}\)`, T`Check: the inside is \(${Math.pow(b, k)} \gt 0\) ✓. \(${H.box(T`x = ${x.tex()}`)}\)`],
           };
         },
@@ -392,7 +448,7 @@
           const A1 = MX.lin(a1, c1), A2 = MX.lin(a2, c2);
           return {
             prompt: T`Solve: \(${n.tex}\left(${A1.tex}\right) = ${n.tex}\left(${A2.tex}\right)\)`,
-            parts: [{ kind: 'num', frac: true, nolog: true, var: 'x', answer: String(x0), show: 'x = ' + x0, points: 3 }],
+            parts: [{ kind: 'num', frac: true, nolog: true, var: 'x', answer: String(x0), show: 'x = ' + x0, points: 3, verify: V.solves(`${n.asc}(${A1.asc})=${n.asc}(${A2.asc})`) }],
             solution: [T`Same base on both sides, so the insides are equal: \(${A1.tex} = ${A2.tex}\)`, T`\(${MX.coef(a1 - a2)}x = ${c2 - c1}\), so \(x = ${x0}\)`, T`Check: both insides equal ${a1 * x0 + c1} \(\gt 0\) ✓. \(${H.box('x = ' + x0)}\)`],
           };
         },
@@ -412,7 +468,7 @@
           const d = q - p, N = p * q;
           return {
             prompt: T`Solve: \(${n.tex}\,x + ${n.tex}\left(x + ${d}\right) = ${k}\)`,
-            parts: [{ kind: 'num', frac: true, nolog: true, var: 'x', answer: String(p), show: 'x = ' + p, points: 4 }],
+            parts: [{ kind: 'num', frac: true, nolog: true, var: 'x', answer: String(p), show: 'x = ' + p, points: 4, verify: V.solves(`${n.asc}(x)+${n.asc}(x+${d})=${k}`) }],
             solution: [
               T`Product rule: \(${n.tex}\left(x\left(x + ${d}\right)\right) = ${k}\)`,
               T`Exponential form: \(x^{2} + ${d}x = ${N}\), so \(x^{2} + ${d}x - ${N} = 0\) and \(\left(x - ${p}\right)\left(x + ${q}\right) = 0\)`,
@@ -430,7 +486,7 @@
           const In = MX.lin(a, c);
           return {
             prompt: T`Solve \(\ln\left(${In.tex}\right) = ${k}\). Give the exact answer or round to the nearest hundredth.`,
-            parts: [{ kind: 'num', var: 'x', tol: 0.006, answer: r.toFixed(2), show: T`x = \frac{e^{${k}} ${MX.sgnTerm(-c)}}{${a}} \approx ${r.toFixed(2)}`, points: 3 }],
+            parts: [{ kind: 'num', var: 'x', tol: 0.006, answer: r.toFixed(2), show: T`x = \frac{e^{${k}} ${MX.sgnTerm(-c)}}{${a}} \approx ${r.toFixed(2)}`, points: 3, verify: roundedRoot(`ln(${In.asc})=${k}`, 2) }],
             solution: [T`Exponential form (base \(e\)): \(${In.tex} = e^{${k}}\)`, T`\(x = \dfrac{e^{${k}} ${MX.sgnTerm(-c)}}{${a}}\)`, T`\(e^{${k}} \approx ${MX.num(Math.exp(k), 4)}\), so \(x \approx ${H.box(r.toFixed(2))}\)`],
           };
         },
@@ -444,7 +500,7 @@
           const s = 2 * x0 - c1; // x - c1 = s - x  ->  2x = s + c1
           return {
             prompt: T`Solve: \(${n.tex}\left(x - ${c1}\right) = ${n.tex}\left(${s} - x\right)\)`,
-            parts: [{ kind: 'num', var: 'x', answer: 'nosol', show: '\\text{no solution}', points: 3 }],
+            parts: [{ kind: 'num', var: 'x', answer: 'nosol', show: '\\text{no solution}', points: 3, verify: V.solves(`${n.asc}(x-${c1})=${n.asc}(${s}-x)`) }],
             solution: [T`Set the insides equal: \(x - ${c1} = ${s} - x\), so \(2x = ${s + c1}\) and \(x = ${x0}\).`, T`Check: \(x - ${c1} = ${x0 - c1}\), which is not positive, so \(${n.tex}\left(${x0 - c1}\right)\) doesn't exist.`, T`The only candidate is extraneous: \(${H.box('\\text{no solution}')}\)`],
           };
         },
@@ -457,33 +513,33 @@
     const b = rng.pick([2, 3, 4, 5, 6, 7]);
     let N;
     do { N = rng.int(3, 60); } while (Math.abs(Math.log(N) / Math.log(b) - Math.round(Math.log(N) / Math.log(b))) < 1e-9);
-    let prompt, exact, exactT, x, steps;
+    let prompt, exact, exactT, x, steps, eqA;
     if (kind === 'common') {
       x = Math.log(N) / Math.log(b);
-      prompt = T`\(${b}^{x} = ${N}\)`; exact = `ln(${N})/ln(${b})`; exactT = T`\frac{\ln ${N}}{\ln ${b}}`;
+      prompt = T`\(${b}^{x} = ${N}\)`; eqA = `${b}^x=${N}`; exact = `ln(${N})/ln(${b})`; exactT = T`\frac{\ln ${N}}{\ln ${b}}`;
       steps = [T`Take the natural log of both sides: \(\ln ${b}^{x} = \ln ${N}\)`, T`Power rule: \(x\ln ${b} = \ln ${N}\), so \(x = \dfrac{\ln ${N}}{\ln ${b}}\)`];
     } else if (kind === 'natural') {
       const k = rng.int(2, 5);
       x = Math.log(N) / k;
-      prompt = T`\(e^{${k}x} = ${N}\)`; exact = `ln(${N})/${k}`; exactT = T`\frac{\ln ${N}}{${k}}`;
+      prompt = T`\(e^{${k}x} = ${N}\)`; eqA = `e^(${k}x)=${N}`; exact = `ln(${N})/${k}`; exactT = T`\frac{\ln ${N}}{${k}}`;
       steps = [T`Take \(\ln\) of both sides: \(\ln e^{${k}x} = \ln ${N}\)`, T`\(\ln e^{${k}x} = ${k}x\), so \(x = \dfrac{\ln ${N}}{${k}}\)`];
     } else if (kind === 'isolate') {
       const a = rng.int(2, 6), c = rng.int(1, 20);
       x = Math.log(N) / Math.log(b);
-      prompt = T`\(${a}\cdot${b}^{x} + ${c} = ${a * N + c}\)`; exact = `ln(${N})/ln(${b})`; exactT = T`\frac{\ln ${N}}{\ln ${b}}`;
+      prompt = T`\(${a}\cdot${b}^{x} + ${c} = ${a * N + c}\)`; eqA = `${a}*${b}^x+${c}=${a * N + c}`; exact = `ln(${N})/ln(${b})`; exactT = T`\frac{\ln ${N}}{\ln ${b}}`;
       steps = [T`Isolate the power first: \(${a}\cdot${b}^{x} = ${a * N}\), so \(${b}^{x} = ${N}\)`, T`Take \(\ln\): \(x\ln ${b} = \ln ${N}\), so \(x = \dfrac{\ln ${N}}{\ln ${b}}\)`];
     } else {
       const h = rng.int(1, 5);
       x = h + Math.log(N) / Math.log(b);
-      prompt = T`\(${b}^{x - ${h}} = ${N}\)`; exact = `${h}+ln(${N})/ln(${b})`; exactT = T`${h} + \frac{\ln ${N}}{\ln ${b}}`;
+      prompt = T`\(${b}^{x - ${h}} = ${N}\)`; eqA = `${b}^(x-${h})=${N}`; exact = `${h}+ln(${N})/ln(${b})`; exactT = T`${h} + \frac{\ln ${N}}{\ln ${b}}`;
       steps = [T`Take \(\ln\): \(\left(x - ${h}\right)\ln ${b} = \ln ${N}\)`, T`\(x - ${h} = \dfrac{\ln ${N}}{\ln ${b}}\), so \(x = ${h} + \dfrac{\ln ${N}}{\ln ${b}}\)`];
     }
     const r = Math.round(x * 100) / 100;
     return {
       prompt: T`Solve ${prompt}. Give the exact answer, then round to the nearest hundredth.`,
       parts: [
-        { label: 'a', ask: 'Exact answer (use logs)', kind: 'expr', form: 'exactlog', vars: [], pre: 'x =', answer: exact, show: T`x = ${exactT}`, points: 2 },
-        { label: 'b', ask: 'Rounded to the nearest hundredth', kind: 'num', nolog: true, tol: 0.006, pre: 'x ≈', answer: r.toFixed(2), show: T`x \approx ${r.toFixed(2)}`, points: 2 },
+        { label: 'a', ask: 'Exact answer (use logs)', kind: 'expr', form: 'exactlog', vars: [], pre: 'x =', answer: exact, show: T`x = ${exactT}`, points: 2, verify: makesTrue(eqA) },
+        { label: 'b', ask: 'Rounded to the nearest hundredth', kind: 'num', nolog: true, tol: 0.006, pre: 'x ≈', answer: r.toFixed(2), show: T`x \approx ${r.toFixed(2)}`, points: 2, verify: roundedRoot(eqA, 2, { lo: -20, hi: 30 }) },
       ],
       solution: [...steps, T`\(x = ${exactT} \approx ${H.box(r.toFixed(2))}\)`],
     };

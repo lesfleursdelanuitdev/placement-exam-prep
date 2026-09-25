@@ -28,7 +28,7 @@
           const outA = s + v + (h > 1 ? '^' + h : '');
           return {
             prompt: T`Simplify: \(\sqrt{${c}${v}^{${e}}}\). Answer in simplified radical form.`,
-            parts: [{ kind: 'expr', form: 'radical', vars: [v], answer: outA + '√(' + inT + ')', show: outT + '\\sqrt{' + inT + '}', points: 3 }],
+            parts: [{ kind: 'expr', form: 'radical', vars: [v], answer: outA + '√(' + inT + ')', show: outT + '\\sqrt{' + inT + '}', points: 3, verify: MX.V.equiv(`√(${c}${v}^${e})`) }],
             solution: [
               T`Largest perfect square in ${c}: \(${c} = ${s * s}\cdot${f}\).`,
               odd ? T`\(${v}^{${e}} = ${v}^{${2 * h}}\cdot ${v}\), and \(${v}^{${2 * h}}\) is a perfect square.` : T`\(${v}^{${e}}\) has an even exponent, so it is a perfect square.`,
@@ -48,7 +48,7 @@
           const outA = s + 'x^' + ax + 'y' + (hy > 1 ? '^' + hy : '');
           return {
             prompt: T`Simplify the radical \(\sqrt{${c}x^{${2 * ax}}y^{${by}}}\). Write your answer in radical form.`,
-            parts: [{ kind: 'expr', form: 'radical', vars: ['x', 'y'], answer: outA + '√(' + f + 'y)', show: outT + '\\sqrt{' + f + 'y}', points: 3 }],
+            parts: [{ kind: 'expr', form: 'radical', vars: ['x', 'y'], answer: outA + '√(' + f + 'y)', show: outT + '\\sqrt{' + f + 'y}', points: 3, verify: MX.V.equiv(`√(${c}x^${2 * ax}y^${by})`) }],
             solution: [
               T`\(${c} = ${s * s}\cdot${f}\), \(x^{${2 * ax}}\) is already a perfect square, and \(y^{${by}} = y^{${by - 1}}\cdot y\).`,
               T`\(\sqrt{${s * s}x^{${2 * ax}}y^{${by - 1}}}\cdot\sqrt{${f}y} = ${outT}\sqrt{${f}y}\)`,
@@ -76,7 +76,7 @@
           const sg = rng.sign(), r = a + sg * b;
           return {
             prompt: T`${sg < 0 ? 'Subtract' : 'Add'}: \(\sqrt{${a * a * f}} ${sg < 0 ? '-' : '+'} \sqrt{${b * b * f}}\)`,
-            parts: [{ kind: 'expr', form: 'radical', vars: [], answer: rootAsc(r, f), show: rootTex(r, f), points: 3 }],
+            parts: [{ kind: 'expr', form: 'radical', vars: [], answer: rootAsc(r, f), show: rootTex(r, f), points: 3, verify: MX.V.equiv(`√(${a * a * f})${sg < 0 ? '-' : '+'}√(${b * b * f})`) }],
             solution: [
               T`\(\sqrt{${a * a * f}} = \sqrt{${a * a}\cdot${f}} = ${a}\sqrt{${f}}\)`,
               T`\(\sqrt{${b * b * f}} = \sqrt{${b * b}\cdot${f}} = ${b}\sqrt{${f}}\)`,
@@ -93,7 +93,7 @@
           do { p = rng.int(2, 5); q = rng.int(2, 5); a = rng.int(2, 4); b = rng.int(2, 5); sg = rng.sign(); r = p * a + sg * q * b; } while (a === b || r === 0);
           return {
             prompt: T`Simplify: \(${p}\sqrt{${a * a * f}} ${sg < 0 ? '-' : '+'} ${q}\sqrt{${b * b * f}}\)`,
-            parts: [{ kind: 'expr', form: 'radical', vars: [], answer: rootAsc(r, f), show: rootTex(r, f), points: 3 }],
+            parts: [{ kind: 'expr', form: 'radical', vars: [], answer: rootAsc(r, f), show: rootTex(r, f), points: 3, verify: MX.V.equiv(`${p}√(${a * a * f})${sg < 0 ? '-' : '+'}${q}√(${b * b * f})`) }],
             solution: [
               T`\(${p}\sqrt{${a * a * f}} = ${p}\cdot${a}\sqrt{${f}} = ${p * a}\sqrt{${f}}\)`,
               T`\(${q}\sqrt{${b * b * f}} = ${q}\cdot${b}\sqrt{${f}} = ${q * b}\sqrt{${f}}\)`,
@@ -117,7 +117,9 @@
     const b2 = whole ? a1 + '-' + num('', s1) : '(' + a1 + '-' + num('', s1) + ')/' + d1;
     return {
       prompt: T`Simplify: \(\dfrac{${A} \pm \sqrt{${N}}}{${D}}\)`,
-      parts: [{ kind: 'radpm', answers: [b1, b2], answer: whole ? a1 + '±' + num('', s1) : '(' + a1 + '±' + num('', s1) + ')/' + d1, show: ansT, points: 3 }],
+      parts: [{ kind: 'radpm', answers: [b1, b2], answer: whole ? a1 + '±' + num('', s1) : '(' + a1 + '±' + num('', s1) + ')/' + d1, show: ansT, points: 3,
+        // both values of the displayed (A ± √N)/D, evaluated directly
+        verify: MX.V.custom((a) => MX.V.sameSet(a, [`(${A}+√(${N}))/${D}`, `(${A}-√(${N}))/${D}`].map(MX.V.num)) && a.length === 2 || 'the two values are ' + MX.num(MX.V.num(`(${A}+√(${N}))/${D}`), 6) + ' and ' + MX.num(MX.V.num(`(${A}-√(${N}))/${D}`), 6)) }],
       solution: [
         T`Simplify the radical: \(\sqrt{${N}} = \sqrt{${s * s}\cdot${f}} = ${s}\sqrt{${f}}\)`,
         T`Now \(\dfrac{${A} \pm ${s}\sqrt{${f}}}{${D}}\). Every term is divisible by ${g}.`,
@@ -148,7 +150,7 @@
     const radT = form === 'power' ? T`\left(\sqrt[${n}]{${v}}\right)^{${m}}` : n === 2 ? T`\sqrt{${v}^{${m}}}` : T`\sqrt[${n}]{${v}^{${m}}}`;
     return {
       prompt: T`Write \(${radT}\) using an exponent, without a radical.`,
-      parts: [{ kind: 'expr', form: 'noradical', vars: [v], answer: `${v}^(${e.str()})`, show: T`${v}^{${e.tex()}}`, points: 2 }],
+      parts: [{ kind: 'expr', form: 'noradical', vars: [v], answer: `${v}^(${e.str()})`, show: T`${v}^{${e.tex()}}`, points: 2, verify: MX.V.equiv(form === 'power' ? `(${v}^(1/${n}))^${m}` : `(${v}^${m})^(1/${n})`) }],
       solution: [
         T`\(\sqrt[n]{${v}^{m}} = \left(\sqrt[n]{${v}}\right)^{m} = ${v}^{m/n}\): the power goes on top, the root goes on the bottom.`,
         T`Here \(m = ${m}\) and \(n = ${n}\): \(${v}^{\frac{${m}}{${n}}}\)${e.d !== n ? T`, which reduces to \(${v}^{${e.tex()}}\)` : ''}.`,
@@ -184,7 +186,7 @@
           const a = rng.int(2, 9), b = rng.int(1, 9), c = rng.int(1, 9), v = rng.pick(['t', 'x']);
           return {
             prompt: T`Solve for \(${v}\): \(\sqrt{${a}${v} + ${b}} = -${c}\)`,
-            parts: [{ kind: 'num', var: v, answer: 'nosol', show: '\\text{no solution}', points: 3 }],
+            parts: [{ kind: 'num', var: v, answer: 'nosol', show: '\\text{no solution}', points: 3, verify: MX.V.solves(`√(${a}${v}+${b})=-${c}`, { v }) }],
             solution: [
               T`A principal square root is never negative, so \(\sqrt{${a}${v} + ${b}}\) can't equal \(-${c}\).`,
               T`(Squaring anyway gives \(${a}${v} + ${b} = ${c * c}\), \(${v} = ${new Q(c * c - b, a).tex()}\), but checking it gives \(\sqrt{${c * c}} = ${c} \ne -${c}\).)`,
@@ -200,7 +202,7 @@
           const ans = new Q(c * c + b, a);
           return {
             prompt: T`Solve: \(\sqrt{${a}${v} - ${b}} = ${c}\)`,
-            parts: [{ kind: 'num', frac: true, var: v, answer: ans.str(), show: T`${v} = ${ans.tex()}`, points: 2 }],
+            parts: [{ kind: 'num', frac: true, var: v, answer: ans.str(), show: T`${v} = ${ans.tex()}`, points: 2, verify: MX.V.solves(`√(${a}${v}-${b})=${c}`, { v }) }],
             solution: [
               T`Square both sides: \(${a}${v} - ${b} = ${c * c}\)`,
               T`\(${a}${v} = ${c * c + b}\), so \(${v} = ${ans.tex()}\)`,
@@ -216,7 +218,7 @@
           const ans = new Q(b, a - 1);
           return {
             prompt: T`Solve for \(x\): \(\sqrt{${a}x - ${b}} = \sqrt{x}\). Write your answer as a simplified fraction.`,
-            parts: [{ kind: 'num', frac: true, var: 'x', answer: ans.str(), show: T`x = ${ans.tex()}`, points: 3 }],
+            parts: [{ kind: 'num', frac: true, var: 'x', answer: ans.str(), show: T`x = ${ans.tex()}`, points: 3, verify: MX.V.solves(`√(${a}x-${b})=√(x)`) }],
             solution: [
               T`Square both sides: \(${a}x - ${b} = x\)`,
               T`\(${a - 1}x = ${b}\), so \(x = ${ans.tex()}\)`,
@@ -232,7 +234,7 @@
           const c = b + k, ans = k * k - a;
           return {
             prompt: T`Solve: \(\sqrt{x ${MX.sgnTerm(a)}} + ${b} = ${c}\)`,
-            parts: [{ kind: 'num', var: 'x', answer: String(ans), show: T`x = ${ans}`, points: 3 }],
+            parts: [{ kind: 'num', var: 'x', answer: String(ans), show: T`x = ${ans}`, points: 3, verify: MX.V.solves(`√(x+(${a}))+${b}=${c}`) }],
             solution: [
               T`Isolate the radical: \(\sqrt{x ${MX.sgnTerm(a)}} = ${k}\)`,
               T`Square: \(x ${MX.sgnTerm(a)} = ${k * k}\), so \(x = ${ans}\)`,

@@ -11,7 +11,18 @@
     for (const k of [1, 2, 2.5, 5, 10]) if (k * p >= raw) return k * p;
     return 10 * p;
   };
-  const dec = (q) => MX.num(q.val(), 4);
+  // a rate as the story states it: a terminating decimal, or the exact fraction (4/3, not the rounded 1.3333)
+  const terminates = (q) => { let d = Math.abs(q.d); while (d % 2 === 0) d /= 2; while (d % 5 === 0) d /= 5; return d === 1; };
+  const dec = (q) => (terminates(q) ? MX.num(q.val(), 4) : q.str());
+  const V = MX.V;
+  // ---- independent checks ----
+  // direction of change each story states in words ("colder", "falls", "earns", "adds", …)
+  const STORY_SIGN = { lake: -1, altitude: -1, river: -1, tank: -1, candle: -1, savings: 1, taxi: 1, phone: 1, plant: 1, car: -1, pool: 1 };
+  // the numbers a story states, in order (the starting amount comes first, then the rate)
+  const storyNums = (text) => (String(text).replace(/<[^>]*>/g, '').match(/\d[\d,]*(?:\.\d+)?(?:\/\d+)?/g) || []).map((t) => V.num(t.replace(/,/g, '')));
+  // the right-hand side of a displayed equation "T=(-11/20)d+17.5" as a function of its input variable
+  const rhsFn = (asc, v) => V.fn(asc.split('=')[1], v);
+  const slopeOf = (f) => f(1) - f(0);
 
   // ---- contexts: m is a Q (slope), b a number (intercept) ----
   const CTX = [
@@ -163,9 +174,13 @@
       `For each additional ${c.dep.u1}, the ${c.ind.noun} changes by ${mag} ${c.ind.unit}.`,
       `The ${c.dep.noun} is ${MX.commas(b)} ${c.dep.unit} when the ${c.ind.noun} is 0.`,
     ];
-    const ch2 = H.choices(rng, correct, wrongs);
-    return { kind: 'choice', options: ch2.options, answer: ch2.answer, correctText: correct };
+    // what each sentence claims: a change in the output per 1 unit of input (the slope), or something else
+    const said = (word) => (word === c.up ? 1 : -1) * V.num(mag);
+    const ch2 = H.choices(rng, correct, wrongs, [{ per: 'input', change: said(ch) }, { per: 'input', change: said(other) }, { per: 'output' }, { per: 'start' }]);
+    return { kind: 'choice', options: ch2.options, answer: ch2.answer, data: ch2.data, correctText: correct };
   }
+  // the slope sentence is right when it gives the change in the output per 1 unit of input, with the right sign
+  const meansSlope = (slope) => V.choiceData((d) => d.per === 'input' && V.close(d.change, slope));
   const pickCtx = (rng, filter) => rng.pick(filter ? CTX.filter(filter) : CTX);
 
   const variants = {};
@@ -180,16 +195,17 @@
       const g = ctxGraph(c, [[m.val(), b]], win);
       const vis = S.svg(330, g.H, c.icon(8, 40) + S.g(g.body, 'translate(104 0)'), 'Illustration and graph of the linear model');
       const mean = meaning(rng, c, m, b);
+      const slope = slopeOf(rhsFn(e.asc, c.ind.s));
       return {
         ctx: c.key,
         prompt: c.formula(e.tex),
         visual: vis,
         parts: [
-          { label: 'a', ask: 'What is the slope? (Include units.)', kind: 'num', answer: m.str(), units: unitsFor(c), show: T`${m.tex()}\ \text{${c.dep.unit} per ${c.ind.per}}`, points: 2 },
-          { label: 'b', ask: 'Which sentence explains the meaning of the slope?', kind: 'choice', options: mean.options, answer: mean.answer, points: 2 },
+          { label: 'a', ask: 'What is the slope? (Include units.)', kind: 'num', answer: m.str(), units: unitsFor(c), show: T`${m.tex()}\ \text{${c.dep.unit} per ${c.ind.per}}`, points: 2, verify: V.value(slope) },
+          { label: 'b', ask: 'Which sentence explains the meaning of the slope?', kind: 'choice', options: mean.options, answer: mean.answer, data: mean.data, points: 2, verify: meansSlope(slope) },
         ],
         solution: [
-          T`In \(y = mx + b\) form, the slope is the number multiplying \(${c.ind.s}\): \(m = ${m.tex()}\)${m.d > 1 ? T` \(= ${dec(m)}\)` : ''}.`,
+          T`In \(y = mx + b\) form, the slope is the number multiplying \(${c.ind.s}\): \(m = ${m.tex()}\)${m.d > 1 && terminates(m) ? T` \(= ${dec(m)}\)` : ''}.`,
           T`Units of slope = (units of \(${c.dep.s}\)) per (unit of \(${c.ind.s}\)): ${c.dep.unit} per ${c.ind.per}.`,
           T`Meaning: ${mean.correctText}`,
         ],
@@ -206,7 +222,11 @@
       const tg = pickTarget(rng, m, b), win = windowFor(m, b, tg.x);
       const mv = m.val();
       const opt = (lines) => ctxGraph(c, lines, win, { w: 190, h: 150 }).svg;
-      const gc = H.choices(rng, opt([[mv, b]]), [opt([[-mv, b]]), opt([[mv, b * 0.55]]), opt([[mv * 2, b]])]);
+      const drawn = [[[mv, b]], [[-mv, b]], [[mv, b * 0.55]], [[mv * 2, b]]];
+      const gc = H.choices(rng, opt(drawn[0]), drawn.slice(1).map(opt), drawn);
+      const F = rhsFn(e.asc, c.ind.s), slope = slopeOf(F);
+      // a drawn line matches the equation when it has the equation's height at several inputs
+      const showsEq = (lines) => lines.length === 1 && [0, 1, tg.x, win.xmax].every((x) => V.close(lines[0][0] * x + lines[0][1], F(x)));
       const empty = ctxGraph(c, [], win);
       const vis = S.svg(330, empty.H, c.icon(8, 40) + S.g(empty.body, 'translate(104 0)'), 'Illustration and blank axes for graphing');
       const mean = meaning(rng, c, m, b);
@@ -216,9 +236,9 @@
         prompt: c.formula(e.tex),
         visual: vis,
         parts: [
-          { label: 'a', ask: 'Which graph shows the equation?', kind: 'choice', graph: true, options: gc.options, answer: gc.answer, points: 2 },
-          { label: 'b', ask: c.when(tg.y), kind: 'num', answer: String(tg.x), units: un, show: tg.x + '\\text{ ' + c.ind.unit + '}', points: 3 },
-          { label: 'c', ask: 'What does the slope represent in this problem?', kind: 'choice', options: mean.options, answer: mean.answer, points: 3 },
+          { label: 'a', ask: 'Which graph shows the equation?', kind: 'choice', graph: true, options: gc.options, answer: gc.answer, data: gc.data, points: 2, verify: V.choiceData(showsEq) },
+          { label: 'b', ask: c.when(tg.y), kind: 'num', answer: String(tg.x), units: un, show: tg.x + '\\text{ ' + c.ind.unit + '}', points: 3, verify: V.solves(`${tg.y}=${e.asc.split('=')[1]}`, { v: c.ind.s }) },
+          { label: 'c', ask: 'What does the slope represent in this problem?', kind: 'choice', options: mean.options, answer: mean.answer, data: mean.data, points: 3, verify: meansSlope(slope) },
         ],
         solution: [
           T`Graph: start at the ${c.dep.s}-intercept \(\left(0, ${MX.num(b)}\right)\) and use the slope \(${m.tex()}\) (rise over run) to find more points.`,
@@ -241,15 +261,18 @@
       let v = c.icon(10, 26);
       v += S.rect(110, 26, 210, 30, 'ln soft', 6) + S.text(215, 46, 'start: ' + MX.commas(b) + ' ' + c.dep.unit, { cls: 'tx small', w: 700 });
       v += S.rect(110, 66, 210, 30, 'ln soft2', 6) + S.text(215, 86, (m.n < 0 ? '−' : '+') + dec(m.abs()) + ' ' + c.dep.unit + ' per ' + c.ind.per, { cls: 'tx small', w: 700 });
+      // the model the story states: start at its first number, change by its second number per unit, in the direction its words give
+      const [start, rate] = storyNums(c.story(m, b)), sgn = STORY_SIGN[c.key];
+      const model = `${start}+(${sgn * rate})x`;
       return {
         ctx: c.key,
         prompt: T`${c.story(m, b)} Let \(y\) be the ${c.dep.noun} (in ${c.dep.unit}) after \(x\) ${c.ind.unit}.`,
         visual: S.svg(330, 120, v, 'The starting amount and the rate of change'),
         parts: [
-          { label: 'a', ask: T`Write an equation for \(y\) after \(x\) ${c.ind.unit}.`, kind: 'eq', form: 'slope', dep: 'y', vars: ['x', 'y'], answer: e.asc, show: e.tex, points: 2 },
-          { label: 'b', ask: 'What is the slope? (Include units.)', kind: 'num', answer: m.str(), units: unitsFor(c), show: T`${m.tex()}\ \text{${c.dep.unit} per ${c.ind.per}}`, points: 3 },
-          { label: 'c', ask: 'Which sentence interprets the slope?', kind: 'choice', options: mean.options, answer: mean.answer, points: 3 },
-          { label: 'd', ask: c.when(tg.y), kind: 'num', answer: String(tg.x), show: tg.x + '\\text{ ' + c.ind.unit + '}', post: c.ind.unit, points: 2 },
+          { label: 'a', ask: T`Write an equation for \(y\) after \(x\) ${c.ind.unit}.`, kind: 'eq', form: 'slope', dep: 'y', vars: ['x', 'y'], answer: e.asc, show: e.tex, points: 2, verify: V.explicit(`y=${model}`) },
+          { label: 'b', ask: 'What is the slope? (Include units.)', kind: 'num', answer: m.str(), units: unitsFor(c), show: T`${m.tex()}\ \text{${c.dep.unit} per ${c.ind.per}}`, points: 3, verify: V.value(sgn * rate) },
+          { label: 'c', ask: 'Which sentence interprets the slope?', kind: 'choice', options: mean.options, answer: mean.answer, data: mean.data, points: 3, verify: meansSlope(sgn * rate) },
+          { label: 'd', ask: c.when(tg.y), kind: 'num', answer: String(tg.x), show: tg.x + '\\text{ ' + c.ind.unit + '}', post: c.ind.unit, points: 2, verify: V.solves(`${tg.y}=${model}`) },
         ],
         solution: [
           T`The starting amount is the y-intercept \(b = ${MX.num(b)}\); the amount it changes per ${c.ind.per} is the slope \(m = ${m.tex()}\).`,
