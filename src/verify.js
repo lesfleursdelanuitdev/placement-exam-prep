@@ -235,6 +235,7 @@
     const truth = (x) => t(Object.assign({}, o.env, { [v]: x }));
     const inside = (x) => a.some((r) => (x > r.lo || (x === r.lo && r.lc)) && (x < r.hi || (x === r.hi && r.hc)));
     const lo = o.lo != null ? o.lo : -200, hi = o.hi != null ? o.hi : 200, n = o.n || 20000;
+    const gap = (e) => 1e-5 * Math.max(1, Math.abs(e));
     const probes = [];
     let prev = null;
     for (let k = 0; k <= n; k++) {
@@ -243,13 +244,18 @@
       if (prev && prev.t !== tx) {
         let p = prev.x, q = x;
         for (let i = 0; i < 80; i++) { const m = (p + q) / 2; if (truth(m) === prev.t) p = m; else q = m; }
-        probes.push(p - 1e-7, q + 1e-7);
+        probes.push(p - gap(p), q + gap(q));
       }
       prev = { x, t: tx };
     }
-    a.forEach((r) => [r.lo, r.hi].forEach((e) => { if (isFinite(e)) probes.push(e, e - 1e-7, e + 1e-7); }));
+    const ends = [];
+    a.forEach((r) => [r.lo, r.hi].forEach((e) => { if (isFinite(e)) { ends.push(e); probes.push(e - gap(e), e + gap(e)); } }));
     probes.push(-1e6, 1e6, lo - 50, hi + 50);
-    for (const x of probes) {
+    // an endpoint itself is judged exactly (is it included?); points a hair away from it are skipped, because
+    // there floating point can't tell "at the endpoint" from "next to it" and the two checks would disagree
+    const nearEnd = (x) => ends.some((e) => x !== e && Math.abs(x - e) < 1e-6 * Math.max(1, Math.abs(e)));
+    for (const x of [...ends, ...probes]) {
+      if (nearEnd(x)) continue;
       if (inside(x) !== truth(x)) return 'at ' + v + ' = ' + MX.num(x, 6) + ' the answer says ' + (inside(x) ? 'yes' : 'no') + ' but the problem says ' + (truth(x) ? 'yes' : 'no');
     }
     return true;

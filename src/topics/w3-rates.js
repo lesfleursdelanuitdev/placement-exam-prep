@@ -12,6 +12,39 @@
     T`\(x = \dfrac{${a[0]}\cdot${c}}{${a[1]}} = ${b}\)`,
     T`\(${H.box(x + (unitX ? '\\text{ ' + unitX + '}' : ''))}\)`,
   ];
+  // ---------- independent checks (see src/verify.js) ----------
+  const V = MX.V;
+  // cents shown in a money string like "12.35" (the number the prompt displays)
+  const centsOf = (s) => Math.round(parseFloat(String(s).replace(/[$,]/g, '')) * 100);
+  // num/den rounded half up, exact integer arithmetic (num, den positive integers)
+  const roundHalfUp = (num, den) => Math.floor((2 * num + den) / (2 * den));
+  // the key (dollars) is num/den cents rounded to the nearest cent
+  const centsIs = (num, den) => V.custom((a) => {
+    const want = roundHalfUp(num, den);
+    return V.close(a * 100, want, 1e-9) || 'the amount is $' + MX.money(want / 100) + ', not $' + MX.money(a);
+  });
+  // a proportion stated in the story, solved for x by root finding on [0, hi]
+  // (linear, so 2,000 samples are plenty and keep it fast)
+  const prop2 = (eq, hi) => V.solves(eq, { lo: 0, hi, n: 2000 });
+  // plain number written out in the prompt ("45,000", "0.000034")
+  const numOf = (s) => Number(String(s).replace(/,/g, ''));
+  // value of a TeX "m \times 10^{e}" shown in the prompt
+  const texSci = (t) => { const m = /^(-?[\d.]+) \\times 10\^\{(-?\d+)\}$/.exec(t); if (!m) throw new Error('not sci: ' + t); return parseFloat(m[1]) * Math.pow(10, +m[2]); };
+  // the key is in scientific notation (1 <= |m| < 10) and equals the value computed from the prompt
+  const sciIs = (f) => V.custom((a, part) => {
+    const m = /^(-?[\d.]+) x 10\^(-?\d+)$/.exec(String(part.answer));
+    if (!m || !(Math.abs(parseFloat(m[1])) >= 1 && Math.abs(parseFloat(m[1])) < 10)) return 'the key is not in scientific notation';
+    const want = f();
+    return V.close(a, want, 1e-9) || 'the value is ' + want + ', not ' + a;
+  });
+  // the relation a limit phrase states, read from its words: [op, n]
+  const phraseRel = (s) => {
+    const table = [[/no more than/i, '<='], [/at most/i, '<='], [/at least/i, '>='], [/minimum of/i, '>='], [/fewer than|less than/i, '<'], [/more than|taller than|greater than/i, '>']];
+    const hit = table.find(([re]) => re.test(s));
+    const n = /(\d+)/.exec(s);
+    if (!hit || !n) throw new Error('cannot read the phrase: ' + s);
+    return [hit[1], +n[1]];
+  };
   const shirt = (x, y, cls) => S.path(`M${x - 22} ${y - 44} l12 -8 h20 l12 8 l10 14 l-10 6 l-4 -4 v34 h-36 v-34 l-4 4 l-10 -6 z`, 'ln ' + cls);
 
   // ================= PROPORTIONS =================
@@ -29,7 +62,7 @@
         return {
           prompt: T`If the sales tax on a ${money2(P1)} ${item} is ${money2(T1)}, find the sales tax on a ${money2(P2)} ${item}.`,
           visual: S.svg(W, Hh, v, 'Two items with price tags; the tax on the first is known'),
-          parts: [{ kind: 'num', pre: '$', answer: MX.money(T2), tol: 0.006, show: '\\$' + MX.money(T2), points: 3 }],
+          parts: [{ kind: 'num', pre: '$', answer: MX.money(T2), tol: 0.006, show: '\\$' + MX.money(T2), points: 3, verify: centsIs(centsOf(MX.money(T1)) * P2, P1) }],
           solution: [
             T`Tax is proportional to price: \(\dfrac{\text{tax}}{\text{price}}\) is the same for both.`,
             T`\(\dfrac{${MX.money(T1)}}{${P1}} = \dfrac{x}{${P2}}\)`,
@@ -55,7 +88,7 @@
         return {
           prompt: T`To make ${n1} ${item}, I need ${q1} ${unit} of ${ing}. How many ${unit} of ${ing} will I need to make ${n2} ${item}?`,
           visual: S.svg(W, Hh, v.replace(q1 + ' g', q1 + (unit === 'grams' ? ' g' : ' mL')), 'A batch of baked goods and the ingredient amount'),
-          parts: [{ kind: 'num', answer: String(q2), show: q2 + '\\text{ ' + unit + '}', post: unit, points: 3 }],
+          parts: [{ kind: 'num', answer: String(q2), show: q2 + '\\text{ ' + unit + '}', post: unit, points: 3, verify: prop2(`${q1}/${n1} = x/${n2}`, q1 * n2 + 10) }],
           solution: propSteps([q1, n1], q2, n2, q2, unit),
         };
       },
@@ -73,7 +106,7 @@
         return {
           prompt: T`${k1} ${item} cost ${money2(c1)}. At the same price per item, how much do ${k2} ${item} cost?`,
           visual: S.svg(W, Hh, v, 'A group of items and their total price'),
-          parts: [{ kind: 'num', pre: '$', answer: MX.money(c2), tol: 0.006, show: '\\$' + MX.money(c2), points: 3 }],
+          parts: [{ kind: 'num', pre: '$', answer: MX.money(c2), tol: 0.006, show: '\\$' + MX.money(c2), points: 3, verify: centsIs(centsOf(MX.money(c1)) * k2, k1) }],
           solution: propSteps([MX.money(c1), k1], MX.money(c2), k2, '\\$' + MX.money(c2)),
         };
       },
@@ -90,7 +123,7 @@
         return {
           prompt: T`On a map, ${a} inch${a > 1 ? 'es' : ''} represent${a > 1 ? '' : 's'} ${b} miles. Two cities are ${m} inches apart on the map. How far apart are they in real life?`,
           visual: S.svg(W, Hh, v, 'A map with a scale bar and two cities'),
-          parts: [{ kind: 'num', answer: String(d), show: d + '\\text{ miles}', post: 'miles', points: 3 }],
+          parts: [{ kind: 'num', answer: String(d), show: d + '\\text{ miles}', post: 'miles', points: 3, verify: prop2(`x/${m} = ${b}/${a}`, b * m + 10) }],
           solution: propSteps([b, a], d, m, d, 'miles'),
         };
       },
@@ -107,7 +140,7 @@
         return {
           prompt: T`A car used ${g1} gallons of gas to travel ${d1} miles. At that rate, how many gallons will it need to travel ${d2} miles?`,
           visual: S.svg(W, Hh, v, 'A gas pump and a car on a road'),
-          parts: [{ kind: 'num', answer: String(g2), show: g2 + '\\text{ gallons}', post: 'gallons', points: 3 }],
+          parts: [{ kind: 'num', answer: String(g2), show: g2 + '\\text{ gallons}', post: 'gallons', points: 3, verify: prop2(`x/${d2} = ${g1}/${d1}`, d2 + g1 + 10) }],
           solution: propSteps([g1, d1], g2, d2, g2, 'gallons'),
         };
       },
@@ -124,7 +157,7 @@
         return {
           prompt: T`Luis earned ${money2(e1)} for working ${h1} hours. At the same hourly rate, how much will he earn for ${h2} hours?`,
           visual: S.svg(W, Hh, v, 'Hours worked and money earned'),
-          parts: [{ kind: 'num', pre: '$', answer: MX.money(e2), tol: 0.006, show: '\\$' + MX.money(e2), points: 3 }],
+          parts: [{ kind: 'num', pre: '$', answer: MX.money(e2), tol: 0.006, show: '\\$' + MX.money(e2), points: 3, verify: centsIs(centsOf(MX.money(e1)) * h2, h1) }],
           solution: propSteps([MX.money(e1), h1], MX.money(e2), h2, '\\$' + MX.money(e2)),
         };
       },
@@ -141,7 +174,7 @@
         return {
           prompt: T`${g1} gallon${g1 > 1 ? 's' : ''} of paint cover${g1 > 1 ? '' : 's'} ${MX.commas(A1)} square feet. How many gallons are needed to cover ${MX.commas(A2)} square feet?`,
           visual: S.svg(W, Hh, v, 'Paint cans and the wall area they cover'),
-          parts: [{ kind: 'num', answer: String(g2), show: g2 + '\\text{ gallons}', post: 'gallons', points: 3 }],
+          parts: [{ kind: 'num', answer: String(g2), show: g2 + '\\text{ gallons}', post: 'gallons', points: 3, verify: prop2(`x/${A2} = ${g1}/${A1}`, A2 + 10) }],
           solution: propSteps([g1, A1], g2, A2, g2, 'gallons'),
         };
       },
@@ -179,7 +212,7 @@
         return {
           prompt: T`${who} took a test and got ${c} answers correct and ${w} incorrect. What was the percentage of correct answers?`,
           visual: S.svg(W, Hh, v, 'A grid of correct and incorrect answers'),
-          parts: [{ kind: 'num', answer: String(p), show: p + '\\%', post: '%', points: 2 }],
+          parts: [{ kind: 'num', answer: String(p), show: p + '\\%', post: '%', points: 2, verify: prop2(`${c} = (x/100)(${c}+${w})`, 101) }],
           solution: [T`Total questions: \(${c} + ${w} = ${tot}\). (Don't divide by the ${w} wrong answers.)`, T`\(\dfrac{${c}}{${tot}} = ${MX.num(c / tot)}\)`, T`\(${MX.num(c / tot)}\times100 = ${H.box(p + '\\%')}\)`],
         };
       },
@@ -188,7 +221,8 @@
       name: 'Tip',
       gen(rng) {
         const B = rng.int(1200, 9800) / 100, p = rng.pick([15, 18, 20, 22, 25]);
-        const tip = Math.round(B * p) / 100, total = Math.round((B + tip) * 100) / 100;
+        // work in whole cents: B * p in floating point can land just under a half cent (12.3 * 15 = 184.4999…) and round the wrong way
+        const tip = Math.round((Math.round(B * 100) * p) / 100) / 100, total = Math.round((B + tip) * 100) / 100;
         const W = 360, Hh = 150;
         let v = S.rect(110, 10, 140, 130, 'ln paperf', 3) + S.text(180, 32, 'RECEIPT', { cls: 'tx small', w: 700 }) + S.line(124, 42, 236, 42, 'ln thin dash');
         v += S.text(124, 64, 'meal', { cls: 'tx small', a: 'start' }) + S.text(236, 64, money2(B), { cls: 'tx small', a: 'end' });
@@ -198,8 +232,8 @@
           prompt: T`A meal costs ${money2(B)}. You want to leave a ${p}% tip. How much is the tip, and what is the total?`,
           visual: S.svg(W, Hh, v, 'A restaurant receipt with the tip and total missing'),
           parts: [
-            { label: 'a', ask: 'Tip', kind: 'num', pre: '$', answer: MX.money(tip), tol: 0.006, show: '\\$' + MX.money(tip), points: 2 },
-            { label: 'b', ask: 'Total', kind: 'num', pre: '$', answer: MX.money(total), tol: 0.011, show: '\\$' + MX.money(total), points: 1 },
+            { label: 'a', ask: 'Tip', kind: 'num', pre: '$', answer: MX.money(tip), tol: 0.006, show: '\\$' + MX.money(tip), points: 2, verify: centsIs(centsOf(MX.money(B)) * p, 100) },
+            { label: 'b', ask: 'Total', kind: 'num', pre: '$', answer: MX.money(total), tol: 0.011, show: '\\$' + MX.money(total), points: 1, verify: centsIs(centsOf(MX.money(B)) * 100 + roundHalfUp(centsOf(MX.money(B)) * p, 100) * 100, 100) },
           ],
           solution: [T`${p}% as a decimal is ${p / 100}.`, T`Tip: \(${p / 100}\times${MX.money(B)} = ${MX.num((B * p) / 100, 4)} \approx ${MX.money(tip)}\)`, T`Total: \(${MX.money(B)} + ${MX.money(tip)} = ${MX.money(total)}\)`, T`\(${H.box(T`\$${MX.money(tip)},\ \$${MX.money(total)}`)}\)`],
         };
@@ -218,7 +252,7 @@
         return {
           prompt: T`${ctx[0]} changed from ${ctx[1]}${MX.commas(a)} to ${ctx[1]}${MX.commas(b2)}. Find the percent ${up ? 'increase' : 'decrease'}.`,
           visual: S.svg(W, Hh, v, 'Two bars showing a value before and after a change'),
-          parts: [{ kind: 'num', answer: String(Math.abs(pc)), tol: 0.051, show: Math.abs(pc) + '\\%', post: '%', points: 2 }],
+          parts: [{ kind: 'num', answer: String(Math.abs(pc)), tol: 0.051, show: Math.abs(pc) + '\\%', post: '%', points: 2, verify: prop2(`${b2} = ${a}(1 ${up ? '+' : '-'} x/100)`, 101) }],
           solution: [T`Percent change = \(\dfrac{\text{change}}{\text{original}}\times 100\). Divide by the <em>original</em> value.`, T`Change: \(${b2} - ${a} = ${b2 - a}\)`, T`\(\dfrac{${Math.abs(b2 - a)}}{${a}}\times100 = ${MX.num(Math.abs(pc))}\)`, T`\(${H.box(MX.num(Math.abs(pc)) + '\\%\\text{ ' + (up ? 'increase' : 'decrease') + '}')}\)`],
         };
       },
@@ -235,7 +269,11 @@
         return {
           prompt: T`${item[0].toUpperCase() + item.slice(1)} regularly costs ${money2(P)}. It is on sale for ${p}% off. What is the sale price?`,
           visual: S.svg(W, Hh, v, 'A price tag with a percent-off discount'),
-          parts: [{ kind: 'num', pre: '$', answer: MX.money(sale), tol: 0.011, show: '\\$' + MX.money(sale), points: 2 }],
+          parts: [{ kind: 'num', pre: '$', answer: MX.money(sale), tol: 0.011, show: '\\$' + MX.money(sale), points: 2, verify: V.custom((x) => {
+            // the price you pay is (100 - p)% of the shown price; the key must be that amount to the nearest cent
+            const exact = (centsOf(MX.money(P)) * (100 - p)) / 100;
+            return Math.abs(x * 100 - exact) <= 0.5 + 1e-7 || 'the sale price is about $' + MX.num(exact / 100, 4) + ', not $' + MX.money(x);
+          }) }],
           solution: [T`Discount: \(${p / 100}\times${MX.money(P)} \approx ${MX.money(off)}\)`, T`Sale price: \(${MX.money(P)} - ${MX.money(off)} = ${MX.money(sale)}\)`, T`(Shortcut: you pay ${100 - p}%, so \(${(100 - p) / 100}\times${MX.money(P)}\).) \(${H.box('\\$' + MX.money(sale))}\)`],
         };
       },
@@ -256,7 +294,7 @@
         return {
           prompt: T`${ctx[0]} That is ${p}% ${ctx[1]}. ${ctx[2]}`,
           visual: S.svg(W, Hh, v, 'A bar with part of it shaded to show a percent'),
-          parts: [{ kind: 'num', answer: String(whole), show: String(whole), points: 2 }],
+          parts: [{ kind: 'num', answer: String(whole), show: String(whole), points: 2, verify: prop2(`${part} = (${p}/100)x`, 1000) }],
           solution: [T`"${part} is ${p}% of what number?" translates to \(${part} = ${p / 100}x\)`, T`\(x = \dfrac{${part}}{${p / 100}} = ${whole}\)`, T`\(${H.box(String(whole))}\)`],
         };
       },
@@ -293,13 +331,16 @@
         const nl = ineqNL(rng, P.op, n, st);
         const W = 320, Hh = 120;
         let v = S.rect(90, 14, 140, 92, 'ln soft2', 10) + S.rect(98, 22, 124, 76, 'ln paperf', 6) + S.text(160, 46, P.sign, { cls: 'tx', w: 700, size: 15 }) + S.text(160, 80, n + ' ' + P.unit, { cls: 'tx', w: 700, size: 20 });
+        // the relation the sentence states, read from its own words and number
+        const [sop, sn] = phraseRel(P.t(n, w)), near = { lo: sn - 500, hi: sn + 500, n: 2000 };
+        const said = (e) => ({ '<': e.x < sn, '<=': e.x <= sn, '>': e.x > sn, '>=': e.x >= sn })[sop];
         const words = { '>=': 'at least / minimum', '<=': 'at most / no more than', '>': 'more than / taller than', '<': 'less than / fewer than' }[P.op];
         return {
           prompt: T`${P.t(n, w)} Let \(x\) represent ${P.what(w)}.`,
           visual: S.svg(W, Hh, v, 'A sign showing the limit'),
           parts: [
-            { label: 'a', ask: 'Write the phrase as an inequality.', kind: 'ineq', var: 'x', answer: 'x' + P.op + n, show: T`x ${H.rel(P.op)} ${n}`, points: 1 },
-            { label: 'b', ask: 'Which graph shows the inequality?', kind: 'choice', graph: true, options: nl.options, answer: nl.answer, points: 1 },
+            { label: 'a', ask: 'Write the phrase as an inequality.', kind: 'ineq', var: 'x', answer: 'x' + P.op + n, show: T`x ${H.rel(P.op)} ${n}`, points: 1, verify: V.region(said, near) },
+            { label: 'b', ask: 'Which graph shows the inequality?', kind: 'choice', graph: true, options: nl.options, answer: nl.answer, data: nl.data, points: 1, verify: V.choiceRegion(said, near) },
           ],
           solution: [T`"${words}" means \(${H.rel(P.op)}\).`, T`\(${H.box(T`x ${H.rel(P.op)} ${n}`)}\)`, T`Graph: ${P.op.includes('=') ? 'closed dot' : 'open dot'} at ${n}, shaded to the ${P.op[0] === '>' ? 'right' : 'left'}.`],
         };
@@ -317,8 +358,12 @@
           prompt: T`It costs ${fixedWhat} of $${f} plus $${r} for each of the ${thing}. Rosa can spend at most $${B}. Let \(x\) be the number of ${thing}. Write and solve an inequality, then find the greatest number of ${thing} she can afford.`,
           visual: S.svg(W, Hh, v, 'A price list and a budget'),
           parts: [
-            { label: 'a', ask: T`Solve \(${f} + ${r}x \le ${B}\) for \(x\).`, kind: 'ineq', var: 'x', answer: 'x<=' + n, show: T`x \le ${n}`, points: 2 },
-            { label: 'b', ask: `Greatest number of ${thing}`, kind: 'num', answer: String(n), show: String(n), points: 1 },
+            { label: 'a', ask: T`Solve \(${f} + ${r}x \le ${B}\) for \(x\).`, kind: 'ineq', var: 'x', answer: 'x<=' + n, show: T`x \le ${n}`, points: 2, verify: V.region((e) => f + r * e.x <= B, { n: 2000 }) },
+            { label: 'b', ask: `Greatest number of ${thing}`, kind: 'num', answer: String(n), show: String(n), points: 1, verify: V.custom((x) => {
+              const cost = (k) => f + r * k;
+              if (!Number.isInteger(x) || x < 0) return 'expected a whole number of ' + thing;
+              return (cost(x) <= B && cost(x + 1) > B) || 'the greatest affordable number is not ' + x;
+            }) },
           ],
           solution: [T`Total cost: \(${f} + ${r}x\); "at most" means \(\le\).`, T`\(${f} + ${r}x \le ${B}\), so \(${r}x \le ${B - f}\) and \(x \le ${n}\)`, T`\(${H.box(T`x \le ${n}`)}\): she can afford at most ${n}.`],
         };
@@ -337,8 +382,12 @@
           prompt: T`Jamal scored ${s[0]}, ${s[1]} and ${s[2]} on his first three tests. He wants an average of at least ${A} after the fourth test. Let \(x\) be his fourth score. What scores will do it?`,
           visual: S.svg(W, 150, v, 'Bar chart of three test scores with the fourth unknown'),
           parts: [
-            { label: 'a', ask: T`Solve \(\dfrac{${s[0]} + ${s[1]} + ${s[2]} + x}{4} \ge ${A}\) for \(x\).`, kind: 'ineq', var: 'x', answer: 'x>=' + need, show: T`x \ge ${need}`, points: 2 },
-            { label: 'b', ask: 'Lowest score that works', kind: 'num', answer: String(need), show: String(need), points: 1 },
+            { label: 'a', ask: T`Solve \(\dfrac{${s[0]} + ${s[1]} + ${s[2]} + x}{4} \ge ${A}\) for \(x\).`, kind: 'ineq', var: 'x', answer: 'x>=' + need, show: T`x \ge ${need}`, points: 2, verify: V.region((e) => (s[0] + s[1] + s[2] + e.x) / 4 >= A, { n: 2000 }) },
+            { label: 'b', ask: 'Lowest score that works', kind: 'num', answer: String(need), show: String(need), points: 1, verify: V.custom((x) => {
+              const avg = (k) => (s[0] + s[1] + s[2] + k) / 4;
+              if (!Number.isInteger(x) || x < 0 || x > 100) return 'expected a whole-number test score';
+              return (avg(x) >= A && avg(x - 1) < A) || 'the lowest score that works is not ' + x;
+            }) },
           ],
           solution: [T`Multiply both sides by 4: \(${s[0] + s[1] + s[2]} + x \ge ${4 * A}\)`, T`Subtract: \(x \ge ${need}\)`, T`\(${H.box(T`x \ge ${need}`)}\)`],
         };
@@ -389,9 +438,9 @@
           prompt: T`${C.t(as, bs)} Put both numbers in scientific notation first, and leave your answer in scientific notation.`,
           visual: S.svg(W, Hh, v, 'A count multiplied by an amount each'),
           parts: [
-            { label: 'a', ask: T`${as} in scientific notation`, kind: 'sci', value: A.value, answer: A.asc, show: A.tex, points: 1 },
-            { label: 'b', ask: T`${bs} in scientific notation`, kind: 'sci', value: B.value, answer: B.asc, show: B.tex, points: 1 },
-            { label: 'c', ask: 'The product, in scientific notation', kind: 'sci', value: P.value, answer: P.asc, show: P.tex, post: C.u, points: 2 },
+            { label: 'a', ask: T`${as} in scientific notation`, kind: 'sci', value: A.value, answer: A.asc, show: A.tex, points: 1, verify: sciIs(() => numOf(as)) },
+            { label: 'b', ask: T`${bs} in scientific notation`, kind: 'sci', value: B.value, answer: B.asc, show: B.tex, points: 1, verify: sciIs(() => numOf(bs)) },
+            { label: 'c', ask: 'The product, in scientific notation', kind: 'sci', value: P.value, answer: P.asc, show: P.tex, post: C.u, points: 2, verify: sciIs(() => numOf(as) * numOf(bs)) },
           ],
           solution: [T`\(${as} = ${A.tex}\) and \(${bs} = ${B.tex}\)`, T`Multiply the front numbers: \(${A.mant}\times${B.mant} = ${MX.num(parseFloat(A.mant) * parseFloat(B.mant))}\); add the exponents: \(10^{${A.exp} + ${B.exp}} = 10^{${A.exp + B.exp}}\)`, T`Adjust so the front number is between 1 and 10: \(${H.box(P.tex)}\) ${C.u}`],
         };
@@ -428,7 +477,7 @@
         return {
           prompt: T`${text[0]} Give your answer in scientific notation.`,
           visual: S.svg(W, Hh, v, 'A total divided by a rate'),
-          parts: [{ kind: 'sci', value: R.value, answer: R.asc, show: R.tex, post: text[1], points: 3 }],
+          parts: [{ kind: 'sci', value: R.value, answer: R.asc, show: R.tex, post: text[1], points: 3, verify: sciIs(() => texSci(D.tex) / texSci(Sp.tex)) }],
           solution: [T`Divide: \(\dfrac{${D.tex}}{${Sp.tex}}\)`, T`Front numbers: \(${D.mant}\div${Sp.mant} = ${MX.num(parseFloat(D.mant) / parseFloat(Sp.mant), 6)}\); exponents: \(10^{${D.exp} - ${Sp.exp}} = 10^{${D.exp - Sp.exp}}\)`, T`Adjust if needed: \(${H.box(R.tex)}\) ${text[1]}`],
         };
       },
@@ -453,8 +502,8 @@
           prompt: T`${C.t('\\(' + M.tex + '\\)', H.decStr(cnt, ck))} Write the count in scientific notation, then give the answer in scientific notation.`,
           visual: S.svg(W, Hh, v, 'One tiny object and many of them'),
           parts: [
-            { label: 'a', ask: T`${H.decStr(cnt, ck)} in scientific notation`, kind: 'sci', value: N.value, answer: N.asc, show: N.tex, points: 1 },
-            { label: 'b', ask: 'The total, in scientific notation', kind: 'sci', value: P.value, answer: P.asc, show: P.tex, post: C.u, points: 2 },
+            { label: 'a', ask: T`${H.decStr(cnt, ck)} in scientific notation`, kind: 'sci', value: N.value, answer: N.asc, show: N.tex, points: 1, verify: sciIs(() => numOf(H.decStr(cnt, ck))) },
+            { label: 'b', ask: 'The total, in scientific notation', kind: 'sci', value: P.value, answer: P.asc, show: P.tex, post: C.u, points: 2, verify: sciIs(() => texSci(M.tex) * numOf(H.decStr(cnt, ck))) },
           ],
           solution: [T`\(${H.decStr(cnt, ck)} = ${N.tex}\)`, T`\(\left(${M.tex}\right)\left(${N.tex}\right)\): front numbers \(${M.mant}\times${cnt} = ${MX.num(parseFloat(M.mant) * cnt)}\); exponents \(10^{${M.exp} + ${ck}} = 10^{${M.exp + ck}}\)`, T`\(${H.box(P.tex)}\) ${C.u}`],
         };
