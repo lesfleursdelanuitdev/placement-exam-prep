@@ -38,12 +38,26 @@
   MX.register({
     id: 'line-standard', section: SEC, title: 'Intercepts & slope-intercept form', kind: 'skill',
     sources: ['Exam 1 #20', 'Exam 3 #11'],
-    lesson: T`<p>For a line like \(4x - 3y = -1\):</p>
-<ul><li><strong>x-intercept</strong>: set \(y = 0\) and solve for \(x\). The point is \((x, 0)\).</li>
-<li><strong>y-intercept</strong>: set \(x = 0\) and solve for \(y\). The point is \((0, y)\).</li>
-<li><strong>Slope-intercept form</strong> \(y = mx + b\): solve the equation for \(y\). \(m\) is the slope, \(b\) the y-intercept.</li></ul>
-<p>To graph, plot both intercepts and draw the line through them.</p>
-<p>Type points as <code>(-1/4, 0)</code>.</p>`,
+    lesson: T`<p>An equation like \(3x - 2y = 12\) describes a straight line. It is written in <strong>standard form</strong>, \(Ax + By = C\). That form hides the slope, but it makes the two points where the line crosses the axes easy to find. Those two points are enough to draw the line.</p>
+<div class="box def"><h4>Definition <b>Intercepts</b></h4><p>The <strong>x-intercept</strong> is the point where the line crosses the x-axis. Every point on the x-axis has \(y = 0\), so it looks like \((a, 0)\).</p><p>The <strong>y-intercept</strong> is the point where the line crosses the y-axis. Every point on the y-axis has \(x = 0\), so it looks like \((0, b)\).</p></div>
+<h3>Finding the intercepts</h3>
+<div class="box how"><h4>How to <b>find the intercepts of a line</b></h4><ol>
+<li>For the x-intercept, replace \(y\) with 0 and solve for \(x\). Write the point as \((x, 0)\).</li>
+<li>For the y-intercept, replace \(x\) with 0 and solve for \(y\). Write the point as \((0, y)\).</li></ol></div>
+<h3>Slope-intercept form</h3>
+<div class="box rule"><h4>Formula <b>Slope-intercept form</b></h4><p>\(y = mx + b\). The number \(m\) in front of \(x\) is the <strong>slope</strong>. The number \(b\) is the y-value of the y-intercept \((0, b)\).</p></div>
+<p>To get this form from standard form, solve the equation for \(y\): move the \(x\)-term to the right side, then divide every term by the number in front of \(y\).</p>
+<div class="ex"><h4>Example</h4><p>For \(3x - 2y = 12\), find the intercepts and write the equation in slope-intercept form.</p><table class="st">
+<tr><td>x-intercept: set \(y = 0\).</td><td>\(3x = 12\), so \(x = 4\). Point \((4, 0)\).</td></tr>
+<tr><td>y-intercept: set \(x = 0\).</td><td>\(-2y = 12\), so \(y = -6\). Point \((0, -6)\).</td></tr>
+<tr><td>Move the \(x\)-term to the right side.</td><td>\(-2y = -3x + 12\)</td></tr>
+<tr><td>Divide every term by \(-2\).</td><td>\(y = \frac{3}{2}x - 6\)</td></tr>
+<tr><td>Check: \(b\) matches the y-intercept.</td><td>\(b = -6\) ✓</td></tr></table></div>
+<h3>Graphing the line</h3>
+<p>Plot the two intercepts and draw a straight line through them. Here the line goes through \((4, 0)\) and \((0, -6)\). It rises from left to right, which matches the positive slope \(\frac{3}{2}\).</p>
+<div class="vis">${H.graphSvg((x) => 1.5 * x - 6, { dots: [[4, 0], [0, -6]], label: 'the line 3x - 2y = 12 through (4, 0) and (0, -6)' })}</div>
+<p>Intercepts are often fractions. For \(4x - 3y = -1\), setting \(y = 0\) gives \(4x = -1\), so the x-intercept is \(\left(-\frac{1}{4}, 0\right)\). Type it as <code>(-1/4, 0)</code>.</p>
+<div class="box warn"><h4>Watch out</h4><p>When you divide by the number in front of \(y\), divide <em>every</em> term, and carry its sign. Dividing \(-2y = -3x + 12\) by \(-2\) changes both signs on the right: \(y = \frac{3}{2}x - 6\), not \(y = -\frac{3}{2}x + 12\).</p></div>`,
     variants: {
       intercepts: {
         name: 'Find intercepts and y = mx + b',
@@ -107,10 +121,26 @@
   MX.register({
     id: 'line-two-points', section: SEC, title: 'Line through two points', kind: 'skill',
     sources: ['Exam 1 #24', 'Exam 2 #27'],
-    lesson: T`<ol><li>Slope: \(m = \dfrac{y_{2} - y_{1}}{x_{2} - x_{1}}\) (rise over run). Keep the same order on top and bottom.</li>
-<li>Find \(b\): substitute \(m\) and one point into \(y = mx + b\) and solve for \(b\).</li>
-<li>Write \(y = mx + b\).</li></ol>
-<p><strong>Parallel</strong> lines have the same slope. <strong>Perpendicular</strong> slopes are negative reciprocals: flip the fraction and change the sign (\(-\frac{5}{3} \to \frac{3}{5}\)).</p>`,
+    lesson: T`<p>Two points are enough to fix a line. From them you can find how steep the line is (its slope) and then its equation \(y = mx + b\).</p>
+<div class="box def"><h4>Definition <b>Slope</b></h4><p>The <strong>slope</strong> \(m\) measures steepness: how much \(y\) goes up (the <em>rise</em>) for each step \(x\) moves right (the <em>run</em>). A positive slope goes up from left to right; a negative slope goes down.</p></div>
+<div class="box rule"><h4>Formula <b>Slope through two points</b></h4><p>For the points \((x_{1}, y_{1})\) and \((x_{2}, y_{2})\): \[m = \dfrac{y_{2} - y_{1}}{x_{2} - x_{1}} = \dfrac{\text{rise}}{\text{run}}\]</p></div>
+<h3>Finding the equation</h3>
+<div class="box how"><h4>How to <b>find the line through two points</b></h4><ol>
+<li>Find the slope \(m\) with the formula. Reduce the fraction.</li>
+<li>Put \(m\) and either point into \(y = mx + b\). Solve for \(b\).</li>
+<li>Write \(y = mx + b\) with your \(m\) and \(b\).</li>
+<li>Check that the other point also fits.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Find the line through \((-3, 1)\) and \((3, 5)\).</p><table class="st">
+<tr><td>Subtract the y-values and the x-values, in the same order.</td><td>\(m = \dfrac{5 - 1}{3 - (-3)} = \dfrac{4}{6} = \dfrac{2}{3}\)</td></tr>
+<tr><td>Substitute \(m\) and the point \((-3, 1)\).</td><td>\(1 = \frac{2}{3}\left(-3\right) + b\)</td></tr>
+<tr><td>Simplify and solve for \(b\).</td><td>\(1 = -2 + b\), so \(b = 3\)</td></tr>
+<tr><td>Write the equation.</td><td>\(y = \frac{2}{3}x + 3\)</td></tr>
+<tr><td>Check the other point \((3, 5)\).</td><td>\(\frac{2}{3}\left(3\right) + 3 = 5\) ✓</td></tr></table></div>
+<div class="vis">${H.graphSvg((x) => (2 / 3) * x + 3, { dots: [[-3, 1], [3, 5]], label: 'the line y = 2/3 x + 3 through (-3, 1) and (3, 5)' })}</div>
+<div class="box warn"><h4>Watch out</h4><p>Subtract in the same order on top and bottom: if you start the top with \(y_{2}\), start the bottom with \(x_{2}\). When a coordinate is negative, use parentheses: \(3 - (-3) = 6\), not 0.</p></div>
+<h3>Parallel and perpendicular lines</h3>
+<div class="box rule"><h4>Rule <b>Slopes of parallel and perpendicular lines</b></h4><p><strong>Parallel</strong> lines never meet, so they have the <strong>same slope</strong>. <strong>Perpendicular</strong> lines meet at a right angle. Their slopes are <strong>negative reciprocals</strong>: flip the fraction and change its sign.</p></div>
+<p>For the line above, \(m = \frac{2}{3}\). A parallel line has slope \(\frac{2}{3}\). A perpendicular line has slope \(-\frac{3}{2}\). For a whole number, write it over 1 first: the perpendicular slope to \(4\) is \(-\frac{1}{4}\).</p>`,
     variants: {
       frac: {
         name: 'Fraction slope',
@@ -195,12 +225,24 @@
   MX.register({
     id: 'parabola', section: 'Quadratic equations & functions', title: 'Parabolas: intercepts, vertex, graph', kind: 'skill',
     sources: ['Exam 1 #19', 'Exam 2 #22', 'Exam 3 #27'],
-    lesson: T`<p>For \(y = ax^{2} + bx + c\):</p>
-<ul><li><strong>x-intercepts</strong>: set \(y = 0\) and solve (factor, or use the quadratic formula).</li>
-<li><strong>y-intercept</strong>: set \(x = 0\); it is always \((0, c)\).</li>
-<li><strong>Vertex</strong>: \(x = -\frac{b}{2a}\); plug that \(x\) back in to get \(y\).</li>
-<li>If \(a \gt 0\) it opens up (vertex is the lowest point); if \(a \lt 0\) it opens down.</li></ul>
-<p>The vertex sits exactly halfway between the two x-intercepts.</p>`,
+    lesson: T`<p>The graph of \(y = ax^{2} + bx + c\) is a U-shaped curve called a <strong>parabola</strong>. You do not need a table of many points to draw it. A few key points (where it crosses the axes and where it turns) give you the whole shape.</p>
+<div class="box def"><h4>Definition <b>Vertex and axis of symmetry</b></h4><p>The <strong>vertex</strong> is the turning point of the parabola. It is the lowest point if the parabola opens up, and the highest point if it opens down. The vertical line through the vertex is the <strong>axis of symmetry</strong>: the two halves of the parabola are mirror images across it.</p></div>
+<div class="box rule"><h4>Rule <b>Which way it opens</b></h4><p>If \(a \gt 0\), the parabola opens <strong>up</strong> (like a cup). If \(a \lt 0\), it opens <strong>down</strong> (like a cap).</p></div>
+<div class="box how"><h4>How to <b>find the key points of \(y = ax^{2} + bx + c\)</b></h4><ol>
+<li><strong>x-intercepts:</strong> set \(y = 0\) and solve \(ax^{2} + bx + c = 0\), by factoring or the quadratic formula. Each solution \(x\) gives a point \((x, 0)\).</li>
+<li><strong>y-intercept:</strong> set \(x = 0\). Every term with \(x\) becomes 0, so the point is always \((0, c)\).</li>
+<li><strong>Vertex:</strong> its x-value is \(x = -\frac{b}{2a}\). Substitute that x-value into the equation to get the y-value.</li>
+<li><strong>Graph:</strong> plot the points and draw a smooth U through them, opening the way \(a\) says.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Find the key points of \(y = x^{2} - 2x - 3\) and graph it.</p><table class="st">
+<tr><td>Set \(y = 0\) and factor.</td><td>\(\left(x - 3\right)\left(x + 1\right) = 0\)</td></tr>
+<tr><td>Solve each factor for the x-intercepts.</td><td>\((-1, 0)\) and \((3, 0)\)</td></tr>
+<tr><td>The y-intercept is \((0, c)\).</td><td>\((0, -3)\)</td></tr>
+<tr><td>Here \(a = 1\) and \(b = -2\). Find the vertex x-value.</td><td>\(x = -\frac{-2}{2(1)} = 1\)</td></tr>
+<tr><td>Substitute \(x = 1\) to get the y-value.</td><td>\(y = 1 - 2 - 3 = -4\), vertex \((1, -4)\)</td></tr>
+<tr><td>\(a = 1 \gt 0\), so it opens up.</td><td>The vertex is the lowest point.</td></tr></table></div>
+<div class="vis">${H.graphSvg((x) => x * x - 2 * x - 3, { xmin: -5, xmax: 5, ymin: -5, ymax: 5, labelEvery: 2, w: 210, h: 210, dots: [[-1, 0], [3, 0], [0, -3], [1, -4]], label: 'the parabola y = x^2 - 2x - 3 with its intercepts and vertex' })}</div>
+<p>Notice that the vertex x-value, 1, is exactly halfway between the x-intercepts \(-1\) and 3. That is always true, so it is a quick check of your work.</p>
+<div class="box warn"><h4>Watch out</h4><p>When you substitute a negative x-value, put it in parentheses before squaring. In \(y = -x^{2} + 4\) at \(x = -2\), the square is done first: \(-\left(-2\right)^{2} + 4 = -4 + 4 = 0\). The answer is not \(4 + 4\).</p></div>`,
     variants: {
       up: { name: 'Opens up', gen: (rng) => parabola(rng, 1) },
       down: { name: 'Opens down', gen: (rng) => parabola(rng, -1) },
@@ -230,10 +272,27 @@
   MX.register({
     id: 'systems', section: SEC, title: 'Solving systems of equations', kind: 'skill',
     sources: ['Exam 1 #25', 'Exam 2 #24', 'Exam 3 #16'],
-    lesson: T`<p><strong>Elimination</strong> works well when both equations are in the form \(ax + by = c\):</p>
-<ol><li>Multiply one or both equations so the \(x\)-terms (or \(y\)-terms) are opposites.</li><li>Add the equations; one variable disappears.</li>
-<li>Solve for the remaining variable.</li><li>Substitute back into either original equation to get the other variable.</li></ol>
-<p>With decimals, multiply the equation by 10 (or 100) first to clear them. Always write the answer as an ordered pair \((x, y)\) and check it in both equations.</p>`,
+    lesson: T`<p>Each linear equation in \(x\) and \(y\) is a line. Two lines usually cross at one point, and that point is the one pair of numbers that makes both equations true. Solving a system means finding that point with algebra.</p>
+<div class="box def"><h4>Definition <b>System and solution</b></h4><p>A <strong>system of equations</strong> is two or more equations you must satisfy at the same time. A <strong>solution</strong> is an ordered pair \((x, y)\) that makes every equation true.</p></div>
+<h3>The elimination method</h3>
+<p>When both equations look like \(ax + by = c\), <strong>elimination</strong> is usually fastest. The idea: if one equation has \(+6y\) and the other has \(-6y\), adding the equations cancels \(y\) and leaves one equation in \(x\).</p>
+<div class="box how"><h4>How to <b>solve a system by elimination</b></h4><ol>
+<li>Pick a variable to eliminate. Multiply one or both equations so that variable's coefficients are opposites, like \(6y\) and \(-6y\).</li>
+<li>Add the two equations. That variable drops out.</li>
+<li>Solve for the variable that is left.</li>
+<li>Substitute that value into either original equation and solve for the other variable.</li>
+<li>Write the answer as \((x, y)\) and check it in both equations.</li></ol></div>
+<p>Sometimes one equation already has the right coefficient, so you multiply only the other one. Sometimes you must multiply both, each by a different number.</p>
+<div class="ex"><h4>Example</h4><p>Solve \(3x + 2y = 7\) and \(5x - 3y = -1\).</p><table class="st">
+<tr><td>To make the \(y\)-terms \(6y\) and \(-6y\), multiply the first equation by 3 and the second by 2.</td><td>\(9x + 6y = 21\)<br>\(10x - 6y = -2\)</td></tr>
+<tr><td>Add the equations.</td><td>\(19x = 19\)</td></tr>
+<tr><td>Solve for \(x\).</td><td>\(x = 1\)</td></tr>
+<tr><td>Substitute into the first original equation.</td><td>\(3(1) + 2y = 7\), so \(2y = 4\) and \(y = 2\)</td></tr>
+<tr><td>Check in the second equation.</td><td>\(5(1) - 3(2) = -1\) ✓</td></tr>
+<tr><td>Write the ordered pair.</td><td>\((1, 2)\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Multiply <em>every</em> term of the equation, including the number on the right side. Multiplying \(3x + 2y = 7\) by 3 gives \(9x + 6y = 21\), not \(9x + 6y = 7\).</p></div>
+<h3>Equations with decimals</h3>
+<p>Clear decimals first. Multiply the whole equation by 10 (one decimal place) or 100 (two places). For example, \(0.3x - 0.4y = 1.1\) becomes \(3x - 4y = 11\). Then use elimination as usual.</p>`,
     variants: {
       elim: {
         name: 'Multiply both equations',
@@ -296,10 +355,27 @@
   MX.register({
     id: 'variation', section: SEC, title: 'Direct & inverse variation', kind: 'skill',
     sources: ['Exam 1 #22', 'Exam 2 #17'],
-    lesson: T`<ul><li><strong>Direct</strong>: "\(y\) varies directly as \(x\)" means \(y = kx\). As one grows, so does the other.</li>
-<li><strong>Inverse</strong>: "\(x\) varies inversely as \(p\)" means \(x = \frac{k}{p}\). As one grows, the other shrinks.</li>
-<li>"...as the square of \(x\)" means use \(x^{2}\) in place of \(x\).</li></ul>
-<ol><li>Write the model.</li><li>Plug in the given pair to find \(k\).</li><li>Use the model with that \(k\) to answer the question.</li></ol>`,
+    lesson: T`<p>Variation is a way of describing how one quantity depends on another in words. Your pay "varies directly" with the hours you work: work twice as long, earn twice as much. Your travel time "varies inversely" with your speed: drive twice as fast, arrive in half the time. Each phrase turns into a short equation with one unknown number \(k\).</p>
+<div class="box def"><h4>Definition <b>Constant of variation</b></h4><p>The <strong>constant of variation</strong> \(k\) is the fixed number that links the two quantities. It stays the same for every pair of values in the problem.</p></div>
+<div class="box rule"><h4>Rule <b>Variation models</b></h4><p>"\(y\) varies <strong>directly</strong> as \(x\)" means \(y = kx\). When \(x\) grows, \(y\) grows too.</p>
+<p>"\(y\) varies <strong>inversely</strong> as \(x\)" means \(y = \dfrac{k}{x}\). When \(x\) grows, \(y\) shrinks.</p>
+<p>"\(y\) varies directly as <strong>the square</strong> of \(x\)" means \(y = kx^{2}\). Use \(x^{2}\) where you would use \(x\).</p></div>
+<p>The letters change from problem to problem. Whatever quantity comes first in the sentence goes on the left: "\(d\) varies directly as \(t\)" means \(d = kt\).</p>
+<div class="box how"><h4>How to <b>solve a variation problem</b></h4><ol>
+<li>Write the model from the words.</li>
+<li>Substitute the pair of values you are given, and solve for \(k\).</li>
+<li>Write the model again with the number \(k\) in it.</li>
+<li>Substitute the new value and solve for the unknown.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>\(y\) varies directly as \(x\), and \(y = 12\) when \(x = 4\). Find \(x\) when \(y = 21\).</p><table class="st">
+<tr><td>Write the model.</td><td>\(y = kx\)</td></tr>
+<tr><td>Substitute the given pair and solve for \(k\).</td><td>\(12 = k \cdot 4\), so \(k = 3\)</td></tr>
+<tr><td>Use the model with \(k = 3\) and \(y = 21\).</td><td>\(21 = 3x\), so \(x = 7\)</td></tr></table></div>
+<div class="ex"><h4>Example</h4><p>\(w\) varies inversely as \(n\), and \(w = 6\) when \(n = 8\). Find \(w\) when \(n = 12\).</p><table class="st">
+<tr><td>Write the model.</td><td>\(w = \dfrac{k}{n}\)</td></tr>
+<tr><td>Substitute and multiply both sides by 8.</td><td>\(6 = \dfrac{k}{8}\), so \(k = 48\)</td></tr>
+<tr><td>Use the model with \(n = 12\).</td><td>\(w = \dfrac{48}{12} = 4\)</td></tr></table></div>
+<p>For "the square", square first. If \(A\) varies directly as the square of \(r\) and \(A = 45\) when \(r = 3\), then \(45 = k \cdot 9\), so \(k = 5\). When \(r = 4\), \(A = 5 \cdot 16 = 80\).</p>
+<div class="box warn"><h4>Watch out</h4><p>For inverse variation, \(k\) is the <em>product</em> of the pair: \(k = 6 \cdot 8 = 48\), not \(\frac{6}{8}\) or \(\frac{8}{6}\).</p></div>`,
     variants: {
       direct: {
         name: 'Direct variation',

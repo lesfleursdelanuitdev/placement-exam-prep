@@ -26,7 +26,7 @@ for (const f of [...ENGINE_FILES.map((f) => 'src/' + f), ...topicFiles.map((f) =
 }
 const MX = ctx.MX;
 const N = +(process.argv[2] || 60);
-const only = process.argv[3];
+const only = process.argv[3] && process.argv[3].replace(/^.*\//, ''); // a topic id, or a topic file name (a path works too)
 let fails = 0, total = 0;
 const bad = (s) => /undefined|NaN|\[object|Infinity/.test(s);
 const fail = (msg) => { fails++; if (fails < 60) console.log('FAIL', msg); };

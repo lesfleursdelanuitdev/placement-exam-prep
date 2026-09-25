@@ -110,14 +110,26 @@
       { label: 'Classify equations', source: ADD, pool: ['identity', 'contra', 'conditional'] },
       { label: 'Fraction or decimal coefficients', source: ADD, pool: ['fractions', 'decimals'] },
     ],
-    lesson: T`<p><strong>General strategy</strong> for a linear equation:</p>
-<ol><li>Simplify each side: clear fractions or decimals, distribute, combine like terms.</li>
-<li>Collect the variable terms on one side and the constants on the other.</li><li>Divide by the coefficient of the variable.</li><li>Check in the original equation.</li></ol>
-<p><strong>Three kinds of equations.</strong> If the variable terms cancel:</p>
-<ul><li>a true statement like \(6 = 6\) means an <strong>identity</strong>: every real number is a solution;</li>
-<li>a false statement like \(6 = 2\) means a <strong>contradiction</strong>: no solution.</li></ul>
-<p>Otherwise it is a <strong>conditional</strong> equation with exactly one solution.</p>
-<p><strong>Fractions or decimals:</strong> multiply <em>every</em> term by the LCD (for fractions) or by 10, 100, … (for decimals) first.</p>`,
+    lesson: T`<p>A <strong>linear equation</strong> has a variable raised only to the first power, like \(4x - 5 = 2x + 7\). Solving one means finding the value of the variable that makes both sides equal. Every linear equation, however messy it looks, can be solved with the same short list of steps.</p>
+<h3>A strategy that always works</h3>
+<div class="box how"><h4>How to <b>solve a linear equation</b></h4><ol>
+<li>Simplify each side on its own. Clear fractions or decimals, remove parentheses by distributing, and combine like terms.</li>
+<li>Move all the variable terms to one side and all the numbers to the other side.</li>
+<li>Divide both sides by the coefficient of the variable (the number in front of it).</li>
+<li>Check: put your answer into the original equation and see that both sides match.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Solve \(4\left(x - 2\right) + 3 = 2x + 7\).</p><table class="st">
+<tr><td>Distribute the 4.</td><td>\(4x - 8 + 3 = 2x + 7\)</td></tr>
+<tr><td>Combine like terms on the left.</td><td>\(4x - 5 = 2x + 7\)</td></tr>
+<tr><td>Subtract \(2x\) and add 5 on both sides.</td><td>\(2x = 12\)</td></tr>
+<tr><td>Divide by 2.</td><td>\(x = 6\)</td></tr>
+<tr><td>Check in the original.</td><td>\(4\left(4\right) + 3 = 19\) and \(2\left(6\right) + 7 = 19\) ✓</td></tr></table></div>
+<p>When there are brackets inside brackets, start with the innermost pair and work outward.</p>
+<div class="box warn"><h4>Watch out</h4><p>A minus sign in front of parentheses changes the sign of <em>every</em> term inside: \(-\left(3x - 1\right) = -3x + 1\), not \(-3x - 1\).</p></div>
+<h3>Fractions and decimals</h3>
+<p>Get rid of them first. For fractions, multiply every term on both sides by the <strong>LCD</strong> (least common denominator). For \(\frac{1}{3}x + 2 = \frac{1}{4}x + 3\), multiply by 12 to get \(4x + 24 = 3x + 36\), so \(x = 12\). For decimals, multiply every term by 10, 100 or 1000, enough to make every number whole: \(0.2x + 1.5 = 0.05x + 3\) times 100 is \(20x + 150 = 5x + 300\), so \(x = 10\).</p>
+<h3>Three kinds of equations</h3>
+<p>Sometimes the variable terms cancel out and only numbers are left. What is left tells you the answer.</p>
+<div class="box def"><h4>Definition <b>Conditional, identity, contradiction</b></h4><p>A <strong>conditional</strong> equation is true for exactly one value, like \(2x = 12\).<br>An <strong>identity</strong> is true for every real number. The variables cancel and leave a true statement: \(2\left(x + 3\right) = 2x + 6\) becomes \(6 = 6\).<br>A <strong>contradiction</strong> is never true, so it has no solution. The variables cancel and leave a false statement: \(3x + 1 = 3\left(x + 2\right)\) becomes \(1 = 6\).</p></div>`,
     variants: {
       distribute: {
         name: 'Distribute first',
@@ -208,10 +220,29 @@
       { label: 'Percent applications', source: ADD, pool: ['commission', 'markup', 'discountRate', 'original'] },
       { label: 'Simple interest', source: ADD, pool: ['findI', 'findR', 'findP', 'findT'] },
     ],
-    lesson: T`<p><strong>A problem-solving plan:</strong> read the problem, name what you're looking for with a variable, translate the words into an equation, solve it, check the answer in the <em>words</em>, and answer with a sentence and units.</p>
-<ul><li><strong>Numbers</strong>: "7 more than twice a number" is \(2n + 7\). Consecutive integers are \(n, n + 1, n + 2\); consecutive odd or even integers are \(n, n + 2, n + 4\).</li>
-<li><strong>Percent</strong>: amount = rate × base. Commission = rate × sales; markup = rate × cost; discount = rate × original price. Always divide by the <em>original</em> amount for a percent change.</li>
-<li><strong>Simple interest</strong>: \(I = Prt\), with the rate \(r\) as a decimal and the time \(t\) in years.</li></ul>`,
+    lesson: T`<p>Word problems are equations written in sentences. The math is usually easy; the work is turning the words into an equation. A steady plan keeps you from getting lost.</p>
+<div class="box how"><h4>How to <b>solve a word problem</b></h4><ol>
+<li>Read the problem until you know what it asks for.</li>
+<li>Choose a variable for the unknown and write down what it stands for.</li>
+<li>Translate the words into an equation.</li>
+<li>Solve the equation.</li>
+<li>Check the answer against the words of the problem, not just your equation.</li>
+<li>Answer with a sentence and units.</li></ol></div>
+<h3>Number problems</h3>
+<p>Translate phrase by phrase. "Five more than twice a number" is \(2n + 5\). "Three times the difference of a number and 4" is \(3\left(n - 4\right)\). If one number is described using another, let the variable be the one it is described <em>from</em>.</p>
+<p><strong>Consecutive integers</strong> are whole numbers in a row: \(n,\ n + 1,\ n + 2\). Consecutive <em>even</em> or <em>odd</em> integers skip by 2: \(n,\ n + 2,\ n + 4\).</p>
+<div class="ex"><h4>Example</h4><p>The sum of three consecutive even integers is 42. Find them.</p><table class="st">
+<tr><td>Name the integers.</td><td>\(n,\ n + 2,\ n + 4\)</td></tr>
+<tr><td>Their sum is 42.</td><td>\(3n + 6 = 42\)</td></tr>
+<tr><td>Solve.</td><td>\(3n = 36,\ n = 12\)</td></tr>
+<tr><td>Answer and check.</td><td>\(12 + 14 + 16 = 42\) ✓</td></tr></table></div>
+<h3>Percent problems</h3>
+<div class="box rule"><h4>Rule <b>Percent equation</b></h4><p>\(\text{amount} = \text{rate} \cdot \text{base}\), with the rate written as a decimal (8% is 0.08). Commission = rate × total sales. Markup = rate × cost. Discount = rate × original price.</p></div>
+<p>A price after a markup is the cost plus the markup, so it is \(\left(1 + r\right)\) times the cost. A sale price is \(\left(1 - r\right)\) times the original price. To find a rate, divide the change by the <em>original</em> amount.</p>
+<div class="box warn"><h4>Watch out</h4><p>After a 20% discount, a jacket costs $64. The original price is <em>not</em> \(64 + 0.20\left(64\right)\). The 20% was taken from the original price \(p\), so \(0.80p = 64\) and \(p = 80\). Check: 20% of $80 is $16, and $80 − $16 = $64.</p></div>
+<h3>Simple interest</h3>
+<div class="box rule"><h4>Formula <b>Simple interest</b></h4><p>\(I = Prt\), where \(I\) is the interest, \(P\) the principal (the amount deposited or borrowed), \(r\) the yearly rate as a decimal, and \(t\) the time in years.</p></div>
+<p>To find any one of the four letters, put in the other three and solve. For example, $2,000 at 4% for 3 years earns \(I = 2000\left(0.04\right)\left(3\right) = 240\) dollars. If you know the interest and need the rate, solve \(I = Prt\) for \(r\), then change the decimal back to a percent.</p>`,
     variants: {
       sumDiff: {
         name: 'Two numbers',
@@ -375,10 +406,26 @@
       { label: 'Solve a formula for a variable', source: ADD, pool: ['twoVar', 'formula'] },
       { label: 'Geometry applications', source: ADD, pool: ['angles', 'suppComp', 'sail', 'trapezoid'] },
     ],
-    lesson: T`<p><strong>Solving a formula for one variable</strong> uses the same steps as solving an equation: treat every other letter as a number, then undo additions/subtractions and multiplications/divisions until the variable is alone.</p>
-\[3x + 4y = 12 \;\Rightarrow\; 4y = 12 - 3x \;\Rightarrow\; y = \frac{12 - 3x}{4}\]
-<p><strong>Geometry facts:</strong> the angles of a triangle add to \(180^{\circ}\); complementary angles add to \(90^{\circ}\), supplementary to \(180^{\circ}\); triangle area \(A = \frac{1}{2}bh\); trapezoid area \(A = \frac{1}{2}h\left(b_{1} + b_{2}\right)\).</p>
-<p>Draw and label a picture, write the formula, substitute what you know, and solve.</p>`,
+    lesson: T`<p>A formula is an equation with several letters, like \(A = \frac{1}{2}bh\). You can solve it for any one letter with the same moves you use on an ordinary equation. Formulas are also the tool for geometry word problems.</p>
+<h3>Solving a formula for one letter</h3>
+<div class="box how"><h4>How to <b>solve a formula for a variable</b></h4><ol>
+<li>Circle the letter you want. Treat every other letter as if it were a number.</li>
+<li>Clear fractions and parentheses if that helps.</li>
+<li>Undo addition and subtraction to get the term with your letter alone on one side.</li>
+<li>Undo multiplication and division to get the letter itself alone.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Solve \(2x + 5y = 10\) for \(y\).</p><table class="st">
+<tr><td>Subtract \(2x\) from both sides.</td><td>\(5y = 10 - 2x\)</td></tr>
+<tr><td>Divide both sides by 5.</td><td>\(y = \dfrac{10 - 2x}{5}\)</td></tr></table></div>
+<p>The same idea works on a geometry formula. To solve \(A = \frac{1}{2}bh\) for \(h\), multiply both sides by 2 to get \(2A = bh\), then divide by \(b\): \(h = \dfrac{2A}{b}\).</p>
+<div class="box warn"><h4>Watch out</h4><p>When you divide, divide the <em>whole</em> side. From \(5y = 10 - 2x\), the answer is not \(2 - 2x\), because the 5 must divide the \(2x\) too. The answer is \(y = \dfrac{10 - 2x}{5}\).</p></div>
+<h3>Geometry facts you need</h3>
+<div class="box rule"><h4>Formula <b>Angles and areas</b></h4><p>The three angles of a triangle add to \(180^{\circ}\).<br>Two angles are <strong>complementary</strong> if they add to \(90^{\circ}\), and <strong>supplementary</strong> if they add to \(180^{\circ}\).<br>Area of a triangle: \(A = \frac{1}{2}bh\) (base times height, halved).<br>Area of a trapezoid: \(A = \frac{1}{2}h\left(b_{1} + b_{2}\right)\), where \(b_{1}\) and \(b_{2}\) are the two parallel sides.</p></div>
+<p>For a geometry word problem, draw and label a picture, write the formula, put in what you know, and solve for what is left.</p>
+<div class="ex"><h4>Example</h4><p>In a triangle, the second angle is twice the first, and the third angle is \(20^{\circ}\) more than the first. Find all three angles.</p><table class="st">
+<tr><td>Let the first angle be \(x\). Write the others using \(x\).</td><td>\(x,\ 2x,\ x + 20\)</td></tr>
+<tr><td>The angles add to 180.</td><td>\(x + 2x + x + 20 = 180\)</td></tr>
+<tr><td>Combine like terms and solve.</td><td>\(4x = 160,\ x = 40\)</td></tr>
+<tr><td>Find each angle and check.</td><td>\(40^{\circ} + 80^{\circ} + 60^{\circ} = 180^{\circ}\) ✓</td></tr></table></div>`,
     variants: {
       twoVar: {
         name: 'Solve for y',
@@ -486,11 +533,25 @@
       { label: 'Mixture problems', source: ADD, pool: ['blend', 'solution'] },
       { label: 'Uniform motion', source: ADD, pool: ['meet', 'walkRun', 'late'] },
     ],
-    lesson: T`<p>These problems all use one idea: <strong>number × value = total value</strong>, organized in a table.</p>
-<table class="xy"><tr><th>Type</th><th>Number</th><th>Value</th><th>Total</th></tr><tr><td>dimes</td><td>\(x\)</td><td>0.10</td><td>\(0.10x\)</td></tr><tr><td>quarters</td><td>\(x - 4\)</td><td>0.25</td><td>\(0.25\left(x - 4\right)\)</td></tr></table>
-<ul><li><strong>Coins, tickets, stamps</strong>: write every count in terms of one variable, then add the totals.</li>
-<li><strong>Mixtures</strong>: amount × price (or percent) for each part adds up to the mixture's amount × price.</li>
-<li><strong>Uniform motion</strong>: rate × time = distance. Moving toward each other, the distances add to the gap; one person doing two legs, the times add to the total time.</li></ul>`,
+    lesson: T`<p>Coin, ticket, mixture and motion problems look different, but they share one idea: <strong>how many × how much each = the total</strong>. A small table keeps the pieces straight.</p>
+<h3>Coins, tickets and stamps</h3>
+<div class="box rule"><h4>Rule <b>Total value</b></h4><p>\(\text{number} \cdot \text{value of one} = \text{total value}\). Find the total value of each kind, then add them to get the total in the problem.</p></div>
+<p>Use one variable. Let it be the count of one kind, and write the other count using it ("3 more dimes than nickels" means \(n + 3\) dimes).</p>
+<div class="ex"><h4>Example</h4><p>Some nickels and dimes are worth $2.25. There are 3 more dimes than nickels. How many of each?</p>
+<table class="xy"><tr><th>Coin</th><th>Number × value</th><th>Total</th></tr><tr><td>nickels</td><td>\(n \cdot 0.05\)</td><td>\(0.05n\)</td></tr><tr><td>dimes</td><td>\(\left(n + 3\right) \cdot 0.10\)</td><td>\(0.10\left(n + 3\right)\)</td></tr></table>
+<table class="st">
+<tr><td>Add the totals.</td><td>\(0.05n + 0.10\left(n + 3\right) = 2.25\)</td></tr>
+<tr><td>Multiply by 100 to clear decimals.</td><td>\(5n + 10n + 30 = 225\)</td></tr>
+<tr><td>Solve.</td><td>\(15n = 195,\ n = 13\)</td></tr>
+<tr><td>Answer and check.</td><td>13 nickels, 16 dimes: \(0.65 + 1.60 = 2.25\) ✓</td></tr></table></div>
+<h3>Mixtures</h3>
+<p>The same rule works for mixing: amount × price per unit (or amount × percent strength) for each ingredient adds up to the amount × price (or percent) of the whole mixture. The mixture's amount is the sum of the ingredient amounts. For example, adding \(x\) liters of a 20% solution to 10 liters of a 50% solution to get a 30% solution gives \(0.20x + 0.50\left(10\right) = 0.30\left(x + 10\right)\), so \(x = 20\) liters.</p>
+<h3>Uniform motion</h3>
+<div class="box rule"><h4>Formula <b>Distance, rate, time</b></h4><p>\(d = rt\): distance equals rate (speed) times time.</p></div>
+<ul><li><strong>Moving toward each other:</strong> the two distances add up to the starting gap.</li>
+<li><strong>One trip at two speeds:</strong> the two times add up to the total time, and the two distances add up to the total distance.</li>
+<li><strong>Catching up:</strong> both travel the same distance, and the one who left later has been moving for less time.</li></ul>
+<div class="box warn"><h4>Watch out</h4><p>Keep units matched. With speeds in miles per hour, time must be in hours: 30 minutes is \(\frac{1}{2}\) hour, not 30. Change back to minutes at the end if the question asks for minutes.</p></div>`,
     variants: {
       coins: {
         name: 'Coins',
@@ -656,14 +717,26 @@
       { label: 'Translate and solve', source: ADD, pool: ['translate'] },
       { label: 'Inequality applications', source: ADD, pool: ['profit', 'rental', 'fundraiser'] },
     ],
-    lesson: T`<p><strong>Interval notation</strong> lists the smallest and largest values of a solution set:</p>
+    lesson: T`<p>An <strong>inequality</strong> compares two sides with \(\lt\), \(\le\), \(\gt\) or \(\ge\). Where an equation usually has one answer, an inequality like \(x \gt 3\) has a whole range of answers, called its <strong>solution set</strong>.</p>
+<h3>Showing a solution set</h3>
+<p>On a number line, an open circle means the endpoint is left out, and a filled circle means it is included. Interval notation says the same thing with symbols.</p>
+<div class="box def"><h4>Definition <b>Interval notation</b></h4><p>Write the left end, a comma, then the right end. A <strong>parenthesis</strong> ( ) means the endpoint is not included. A <strong>bracket</strong> [ ] means it is included. \(\infty\) (infinity) and \(-\infty\) are not numbers, so they always get a parenthesis.</p></div>
 <table class="xy"><tr><th>Inequality</th><th>Interval</th><th>Graph</th></tr>
-<tr><td>\(x \gt 3\)</td><td>\((3, \infty)\)</td><td>open dot at 3, shade right</td></tr>
-<tr><td>\(x \le -1\)</td><td>\((-\infty, -1]\)</td><td>closed dot at \(-1\), shade left</td></tr>
-<tr><td>\(-2 \lt x \le 5\)</td><td>\((-2, 5]\)</td><td>open at \(-2\), closed at 5</td></tr></table>
-<p>A parenthesis means the endpoint is <em>not</em> included; a bracket means it is. \(\infty\) always takes a parenthesis.</p>
-<p><strong>Solving</strong> works like an equation, except: <strong>multiplying or dividing by a negative number reverses the inequality sign.</strong></p>
-<p>Word clues: at least \(\ge\), at most \(\le\), more than \(\gt\), less than \(\lt\), no more than \(\le\), minimum \(\ge\), maximum \(\le\).</p>`,
+<tr><td>\(x \gt 3\)</td><td>\(\left(3, \infty\right)\)</td><td>open circle at 3, shade right</td></tr>
+<tr><td>\(x \le -1\)</td><td>\(\left(-\infty, -1\right]\)</td><td>filled circle at \(-1\), shade left</td></tr>
+<tr><td>\(-2 \lt x \le 5\)</td><td>\(\left(-2, 5\right]\)</td><td>open at \(-2\), filled at 5</td></tr></table>
+<h3>Solving an inequality</h3>
+<p>Solve it just like an equation: simplify, collect the variable on one side, and divide. With fractions, multiply every term by the LCD first. There is one new rule.</p>
+<div class="box rule"><h4>Rule <b>Multiplying or dividing by a negative</b></h4><p>When you multiply or divide both sides by a <strong>negative</strong> number, reverse the inequality sign. \(-2 \lt 4\), but after multiplying by \(-1\), \(2 \gt -4\). Adding or subtracting never changes the sign.</p></div>
+<div class="ex"><h4>Example</h4><p>Solve \(-2x + 5 \le 11\).</p><table class="st">
+<tr><td>Subtract 5 from both sides.</td><td>\(-2x \le 6\)</td></tr>
+<tr><td>Divide by \(-2\) and reverse the sign.</td><td>\(x \ge -3\)</td></tr>
+<tr><td>Write the interval. \(-3\) is included.</td><td>\(\left[-3, \infty\right)\)</td></tr>
+<tr><td>Check one number inside, like 0.</td><td>\(-2\left(0\right) + 5 = 5 \le 11\) ✓</td></tr></table></div>
+<h3>Words and applications</h3>
+<p>Word clues: "at least" and "no less than" mean \(\ge\); "at most" and "no more than" mean \(\le\); "more than" means \(\gt\); "less than" means \(\lt\).</p>
+<p>For a profit problem, profit means revenue is greater than cost. If a business pays $200 a month plus $3 per item and sells each item for $8, then \(8n \gt 200 + 3n\), so \(5n \gt 200\) and \(n \gt 40\). It must sell at least 41 items.</p>
+<div class="box warn"><h4>Watch out</h4><p>When the answer must be a whole number, round in the direction the inequality allows. For "at least" or "more than", round <em>up</em> (the fewest tickets that reach the goal). For "at most", round <em>down</em> (the most miles you can afford).</p></div>`,
     variants: {
       toInterval: {
         name: 'Inequality to interval notation',
@@ -817,10 +890,25 @@
       { label: '“Or” inequalities', source: ADD, pool: ['or'] },
       { label: 'Compound inequality applications', source: ADD, pool: ['temperature', 'plan'] },
     ],
-    lesson: T`<p>A <strong>compound inequality</strong> joins two inequalities with <em>and</em> or <em>or</em>.</p>
-<ul><li><strong>And</strong>: the solution is where <em>both</em> are true, the <strong>overlap</strong> (intersection). A double inequality like \(-3 \lt 2x + 1 \le 7\) is an “and”: do the same thing to all three parts, and reverse <em>both</em> signs if you divide by a negative.</li>
-<li><strong>Or</strong>: the solution is everything that makes <em>either</em> true, both pieces together (the <strong>union</strong>, written with \(\cup\)).</li></ul>
-<p>Solve each part, graph both on one number line, then read off the overlap (and) or the combination (or). An “and” can have no solution; an “or” can cover all real numbers.</p>`,
+    lesson: T`<p>A <strong>compound inequality</strong> is two inequalities joined by the word <em>and</em> or the word <em>or</em>. You solve each part the way you already know. The only new step is deciding how to put the two answers together.</p>
+<h3>"And": the overlap</h3>
+<div class="box def"><h4>Definition <b>And (intersection)</b></h4><p>The solution of an "and" inequality is every number that makes <em>both</em> parts true. On a number line, it is where the two graphs overlap. This overlap is called the <strong>intersection</strong>.</p></div>
+<p>A <strong>double inequality</strong> such as \(-3 \le 2x + 1 \lt 9\) is an "and" written in short form. Solve it by doing the same thing to all three parts at once, so the variable ends up alone in the middle.</p>
+<div class="ex"><h4>Example</h4><p>Solve \(-3 \le 2x + 1 \lt 9\).</p><table class="st">
+<tr><td>Subtract 1 from all three parts.</td><td>\(-4 \le 2x \lt 8\)</td></tr>
+<tr><td>Divide all three parts by 2.</td><td>\(-2 \le x \lt 4\)</td></tr>
+<tr><td>Write the interval.</td><td>\(\left[-2, 4\right)\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>If you divide by a negative, reverse <em>both</em> signs, then rewrite with the smaller number on the left. From \(-2 \lt -x \le 2\), multiplying by \(-1\) gives \(2 \gt x \ge -2\), which is \(-2 \le x \lt 2\).</p></div>
+<p>If the two parts of an "and" do not overlap at all, as in \(x \lt 1\) and \(x \gt 5\), there is <strong>no solution</strong>.</p>
+<h3>"Or": everything together</h3>
+<div class="box def"><h4>Definition <b>Or (union)</b></h4><p>The solution of an "or" inequality is every number that makes <em>at least one</em> part true. On a number line, keep all the shading from both graphs. This combined set is called the <strong>union</strong>, written with \(\cup\).</p></div>
+<div class="ex"><h4>Example</h4><p>Solve \(x - 1 \lt -3\) or \(2x \ge 6\).</p><table class="st">
+<tr><td>Solve the first part.</td><td>\(x \lt -2\)</td></tr>
+<tr><td>Solve the second part.</td><td>\(x \ge 3\)</td></tr>
+<tr><td>Join the two pieces.</td><td>\(\left(-\infty, -2\right) \cup \left[3, \infty\right)\)</td></tr></table></div>
+<p>If the two pieces of an "or" cover the whole number line, the answer is all real numbers, \(\left(-\infty, \infty\right)\).</p>
+<h3>Applications</h3>
+<p>"Between 50 and 86, inclusive" means \(50 \le F \le 86\). If a formula connects \(F\) to what you want, put the formula in the middle and solve. With \(F = \frac{9}{5}C + 32\): \(50 \le \frac{9}{5}C + 32 \le 86\) gives \(18 \le \frac{9}{5}C \le 54\), so \(10 \le C \le 30\).</p>`,
     variants: {
       double: {
         name: 'Double inequality',
@@ -911,12 +999,26 @@
       { label: 'Absolute value “greater than”', source: ADD, pool: ['gt', 'gtIsolate'] },
       { label: 'Absolute value applications', source: ADD, pool: ['part', 'weight'] },
     ],
-    lesson: T`<p>\(|X|\) is the distance of \(X\) from 0. Isolate the absolute value first, then:</p>
-<ul><li><strong>Less than</strong>: \(|X| \lt a\) means \(-a \lt X \lt a\) (within \(a\) of 0: one piece, an “and”).</li>
-<li><strong>Greater than</strong>: \(|X| \gt a\) means \(X \lt -a\) or \(X \gt a\) (farther than \(a\) from 0: two pieces, an “or”).</li></ul>
-<p>The same holds with \(\le\) and \(\ge\) (brackets instead of parentheses).</p>
-<p><strong>Special cases</strong> when the right side is negative: \(|X| \lt -3\) has <strong>no solution</strong> (a distance is never negative), and \(|X| \gt -3\) is true for <strong>all real numbers</strong>.</p>
-<p><strong>Tolerance</strong>: “within \(t\) of \(L\)” is \(|x - L| \le t\), so \(L - t \le x \le L + t\).</p>`,
+    lesson: T`<p>The <strong>absolute value</strong> \(\left|X\right|\) is the distance of \(X\) from 0 on the number line, so it is never negative. An absolute value inequality asks which numbers are close to 0 (less than) or far from 0 (greater than). Each one turns into a compound inequality you already know how to solve.</p>
+<h3>Less than: stay close</h3>
+<div class="box rule"><h4>Rule <b>Absolute value less than</b></h4><p>For \(a \gt 0\): \(\left|X\right| \lt a\) means \(-a \lt X \lt a\). The answer is one piece, between two endpoints (an "and"). The same holds for \(\le\), with the endpoints included.</p></div>
+<div class="ex"><h4>Example</h4><p>Solve \(\left|2x - 1\right| \le 5\).</p><table class="st">
+<tr><td>Rewrite as a double inequality.</td><td>\(-5 \le 2x - 1 \le 5\)</td></tr>
+<tr><td>Add 1 to all three parts.</td><td>\(-4 \le 2x \le 6\)</td></tr>
+<tr><td>Divide all three parts by 2.</td><td>\(-2 \le x \le 3\)</td></tr>
+<tr><td>Write the interval.</td><td>\(\left[-2, 3\right]\)</td></tr></table></div>
+<h3>Greater than: go far</h3>
+<div class="box rule"><h4>Rule <b>Absolute value greater than</b></h4><p>For \(a \gt 0\): \(\left|X\right| \gt a\) means \(X \lt -a\) or \(X \gt a\). The answer is two pieces pointing away from each other (an "or"). The same holds for \(\ge\).</p></div>
+<h3>Isolate the absolute value first</h3>
+<p>The rules only work once the absolute value is alone on one side. Undo any adding and multiplying outside the bars first.</p>
+<div class="ex"><h4>Example</h4><p>Solve \(2\left|x + 1\right| - 3 \gt 5\).</p><table class="st">
+<tr><td>Add 3, then divide by 2.</td><td>\(\left|x + 1\right| \gt 4\)</td></tr>
+<tr><td>Split into two inequalities.</td><td>\(x + 1 \lt -4\) or \(x + 1 \gt 4\)</td></tr>
+<tr><td>Solve each one.</td><td>\(x \lt -5\) or \(x \gt 3\)</td></tr>
+<tr><td>Write the union.</td><td>\(\left(-\infty, -5\right) \cup \left(3, \infty\right)\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Look at the number on the right side after you isolate. If it is negative, do not split. A distance can never be less than a negative number, so \(\left|X\right| \lt -2\) has <strong>no solution</strong>. A distance is always greater than a negative number, so \(\left|X\right| \ge -2\) is true for <strong>all real numbers</strong>.</p></div>
+<h3>Tolerance problems</h3>
+<p>"Within \(t\) of \(L\)" means the distance from \(L\) is at most \(t\): \(\left|x - L\right| \le t\), so \(L - t \le x \le L + t\). A part meant to be 8 cm, allowed to be off by 0.05 cm, must satisfy \(\left|x - 8\right| \le 0.05\), so \(7.95 \le x \le 8.05\). "Differs by more than \(t\)" uses \(\gt\) and gives two pieces.</p>`,
     variants: {
       lt: {
         name: 'Less than',

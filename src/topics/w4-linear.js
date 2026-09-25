@@ -292,12 +292,26 @@
       { label: 'Build the equation', source: 'Exam 3 #28', pool: ['build'] },
     ],
     distinctContexts: true,
-    lesson: T`<p>A quantity that changes by the same amount every step is a line: \(y = mx + b\).</p>
-<ul><li>\(b\), the <strong>y-intercept</strong>, is the starting value (when \(x = 0\)).</li>
-<li>\(m\), the <strong>slope</strong>, is the rate of change: how much \(y\) changes for each 1 unit of \(x\). Its units are "(y units) per (x unit)", like dollars per week or °C per foot.</li>
-<li>A negative slope means the quantity goes down.</li></ul>
-<p><strong>Interpreting the slope</strong>: "For each additional week, the savings increase by 15 dollars." Mention the number, both units, and the direction.</p>
-<p><strong>Solving</strong>: to find when \(y\) reaches a value, substitute it for \(y\) and solve for \(x\).</p>`,
+    lesson: T`<p>Many real quantities start at some amount and then change by the same amount every hour, week or mile: a taxi fare, a draining tank, a growing plant. Any quantity like that is modeled by a line, \(y = mx + b\), and the two numbers \(m\) and \(b\) each tell part of the story.</p>
+<div class="box def"><h4>Definition <b>Starting value and rate of change</b></h4><p>In \(y = mx + b\), the <strong>y-intercept</strong> \(b\) is the <strong>starting value</strong>: the amount when \(x = 0\).</p><p>The <strong>slope</strong> \(m\) is the <strong>rate of change</strong>: how much \(y\) changes each time \(x\) goes up by 1. A positive slope means the quantity grows. A negative slope means it shrinks.</p></div>
+<div class="box rule"><h4>Rule <b>Units of the slope</b></h4><p>The slope's units are (units of \(y\)) <strong>per</strong> (one unit of \(x\)), such as dollars per week, °C per foot or gallons per minute.</p></div>
+<h3>Building the equation from a story</h3>
+<p>Look for two numbers. The amount at the start is \(b\). The amount added or lost each unit is \(m\). If the words say the quantity drops, falls, drains, burns or loses, make \(m\) negative.</p>
+<div class="ex"><h4>Example</h4><p>A seedling is 5 cm tall and grows 1.5 cm each week. Write an equation for its height \(y\) after \(x\) weeks, and find when it is 20 cm tall.</p><table class="st">
+<tr><td>The starting height is \(b\).</td><td>\(b = 5\)</td></tr>
+<tr><td>The change per week is \(m\). It grows, so \(m\) is positive.</td><td>\(m = 1.5\) cm per week</td></tr>
+<tr><td>Write the model.</td><td>\(y = 1.5x + 5\)</td></tr>
+<tr><td>Substitute 20 for \(y\).</td><td>\(20 = 1.5x + 5\)</td></tr>
+<tr><td>Subtract 5, then divide by 1.5.</td><td>\(15 = 1.5x\), so \(x = 10\) weeks</td></tr></table></div>
+<p>On a graph, the line starts at \(b\) on the vertical axis and rises (or falls, if \(m\) is negative) as \(x\) grows. The point \((10, 20)\) on the line is the answer above.</p>
+<div class="vis">${H.graphSvg((x) => 1.5 * x + 5, { xmin: 0, xmax: 12, ymin: 0, ymax: 24, w: 230, h: 200, pad: 24, step: 1, labelEvery: 2, ystep: 2, ylabelEvery: 4, xlabel: 'weeks', ylabel: 'cm', dots: [[0, 5], [10, 20]], label: 'the line y = 1.5x + 5, starting at 5 cm and passing through (10, 20)' })}</div>
+<h3>Explaining what the slope means</h3>
+<div class="box how"><h4>How to <b>interpret the slope in words</b></h4><ol>
+<li>Start with "For each additional (one unit of \(x\))".</li>
+<li>Name the quantity \(y\) and say whether it increases or decreases.</li>
+<li>Give the size of the change, without the minus sign, and the units of \(y\).</li></ol></div>
+<p>For \(T = -0.25d + 18\), where \(T\) is water temperature in °C and \(d\) is depth in feet: the slope is \(-0.25\) °C per foot, which means "For each additional foot of depth, the water temperature decreases by 0.25 °C." The 18 is the temperature at the surface, where \(d = 0\).</p>
+<div class="box warn"><h4>Watch out</h4><p>Keep the units in the right order: °C per foot, not feet per °C. And do not mix up the two numbers: the slope is the change per unit, not the starting amount.</p></div>`,
     variants,
   });
   MX.linearContexts = CTX;

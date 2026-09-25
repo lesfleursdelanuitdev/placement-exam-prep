@@ -9,11 +9,29 @@
   MX.register({
     id: 'lin-equation', section: SEC, title: 'Linear equations', kind: 'skill',
     sources: ['Exam 2 #9, #15', 'Exam 3 #2'],
-    lesson: T`<p>Goal: get \(x\) alone. Undo things in this order:</p>
-<ol><li><strong>Clear fractions</strong>: multiply every term on both sides by the LCD.</li><li><strong>Distribute</strong> to remove parentheses.</li>
-<li><strong>Collect</strong> the \(x\) terms on one side and the numbers on the other.</li><li><strong>Divide</strong> by the coefficient of \(x\).</li></ol>
-<p>Check by substituting your answer into the original equation.</p>
-<p class="warn">When you multiply by the LCD, multiply <em>every</em> term, including whole numbers like the 5 in \(\frac{x}{3} - 5\).</p>`,
+    lesson: T`<p>An equation is a balance: both sides have the same value. To solve it, you do the same thing to both sides, one step at a time, until \(x\) is alone on one side. The number on the other side is the solution.</p>
+<div class="box def"><h4>Definition <b>Linear equation</b></h4><p>A <strong>linear equation</strong> has a variable only to the first power, such as \(3\left(x - 4\right) = 2x + 1\). There is no \(x^{2}\) and no \(x\) in a denominator. It usually has exactly one solution.</p></div>
+<h3>A plan that always works</h3>
+<p>Each step undoes something that makes the equation messy. Do them in this order and skip any step you don't need.</p>
+<div class="box how"><h4>How to <b>solve a linear equation</b></h4><ol>
+<li><strong>Clear fractions.</strong> Find the LCD (least common denominator) of all the fractions. Multiply every term on both sides by it.</li>
+<li><strong>Distribute</strong> to remove parentheses.</li>
+<li><strong>Collect</strong> the \(x\) terms on one side and the plain numbers on the other. Add or subtract the same thing on both sides.</li>
+<li><strong>Divide</strong> both sides by the number in front of \(x\).</li>
+<li><strong>Check</strong>: put your answer into the original equation. Both sides should come out equal.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Solve \(3\left(x - 4\right) = 2x + 1\).</p><table class="st">
+<tr><td>Distribute the 3.</td><td>\(3x - 12 = 2x + 1\)</td></tr>
+<tr><td>Subtract \(2x\) from both sides.</td><td>\(x - 12 = 1\)</td></tr>
+<tr><td>Add 12 to both sides.</td><td>\(x = 13\)</td></tr>
+<tr><td>Check: both sides equal 27.</td><td>\(3\left(9\right) = 27,\quad 2\left(13\right) + 1 = 27\) ✓</td></tr></table></div>
+<h3>Equations with fractions</h3>
+<p>Fractions are easy to clear. Multiplying by the LCD turns every fraction into a whole number, and the rest is the plan above.</p>
+<div class="ex"><h4>Example</h4><p>Solve \(\dfrac{1}{2}\left(x + 4\right) = \dfrac{1}{3}\left(x + 9\right)\).</p><table class="st">
+<tr><td>The LCD of 2 and 3 is 6. Multiply both sides by 6.</td><td>\(3\left(x + 4\right) = 2\left(x + 9\right)\)</td></tr>
+<tr><td>Distribute.</td><td>\(3x + 12 = 2x + 18\)</td></tr>
+<tr><td>Subtract \(2x\), then subtract 12.</td><td>\(x = 6\)</td></tr>
+<tr><td>Check: both sides equal 5.</td><td>\(\frac{1}{2}\left(10\right) = 5,\quad \frac{1}{3}\left(15\right) = 5\) ✓</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Multiply <em>every</em> term by the LCD, including whole numbers. In \(\frac{x}{3} - 5 = \frac{x}{2}\), multiplying by 6 gives \(2x - 30 = 3x\), not \(2x - 5 = 3x\).</p></div>`,
     variants: {
       dist: {
         name: 'Distribute first',
@@ -117,11 +135,21 @@
   MX.register({
     id: 'literal', section: SEC, title: 'Solving a formula for a variable', kind: 'skill',
     sources: ['Exam 1 #16', 'Exam 2 #28', 'Exam 3 #3'],
-    lesson: T`<p>Treat every other letter as if it were a number and solve exactly as you would for \(x\): undo addition/subtraction, then multiplication/division.</p>
-<ul><li>If the variable is in a denominator or the formula has a fraction, multiply both sides by that denominator first.</li>
-<li>If the variable is multiplied by a group like \(B + d\), divide by the whole group; keep it in parentheses.</li></ul>
-\[n = \frac{2A}{B + d}\;\Rightarrow\; n\left(B + d\right) = 2A \;\Rightarrow\; A = \frac{n\left(B + d\right)}{2}\]
-<p>Type multiplication with parentheses when it matters: <code>n(B+d)/2</code>.</p>`,
+    lesson: T`<p>A formula such as \(I = Prt\) is an equation with several letters. "Solve for \(t\)" means rewrite the formula so \(t\) is alone on one side. You use the same moves as for any linear equation. The answer is a new formula, not a number.</p>
+<div class="box rule"><h4>Rule <b>Treat the other letters as numbers</b></h4><p>Every letter except the one you are solving for acts like a fixed number. Add, subtract, multiply or divide by it on both sides, just as you would with 3 or 7.</p></div>
+<h3>Undo the formula in reverse order</h3>
+<div class="box how"><h4>How to <b>solve a formula for one variable</b></h4><ol>
+<li>If there is a fraction, multiply both sides by its denominator. If the denominator is a group like \(a + b\), multiply by the whole group.</li>
+<li>Add or subtract to move terms without your variable to the other side.</li>
+<li>Divide both sides by whatever is multiplying your variable. If that is a group, divide by the whole group and keep it in parentheses.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Solve \(C = 2a + 5b\) for \(b\).</p><table class="st">
+<tr><td>Subtract \(2a\) from both sides.</td><td>\(C - 2a = 5b\)</td></tr>
+<tr><td>Divide both sides by 5.</td><td>\(b = \dfrac{C - 2a}{5}\)</td></tr></table></div>
+<div class="ex"><h4>Example</h4><p>Solve \(R = \dfrac{3V}{a + b}\) for \(V\).</p><table class="st">
+<tr><td>Multiply both sides by the denominator \(\left(a + b\right)\).</td><td>\(R\left(a + b\right) = 3V\)</td></tr>
+<tr><td>Divide both sides by 3.</td><td>\(V = \dfrac{R\left(a + b\right)}{3}\)</td></tr></table></div>
+<p>If a fraction multiplies a group, as in \(y = \frac{2}{3}\left(x - 6\right)\), multiply both sides by the flipped fraction \(\frac{3}{2}\). That gives \(\frac{3}{2}y = x - 6\), so \(x = \frac{3}{2}y + 6\).</p>
+<div class="box warn"><h4>Watch out</h4><p>When you divide, divide the <em>whole</em> side. \(\frac{C - 2a}{5}\) is right; \(C - \frac{2a}{5}\) is wrong. When you type an answer, use parentheses: <code>(C-2a)/5</code>, <code>R(a+b)/3</code>.</p></div>`,
     variants: {
       frac: { name: 'Formula with a fraction', gen: (rng) => literal(rng, 'frac') },
       linear: { name: 'Formula with a sum', gen: (rng) => literal(rng, 'linear') },
@@ -152,10 +180,21 @@
   MX.register({
     id: 'lin-inequality', section: SEC, title: 'Linear inequalities', kind: 'skill',
     sources: ['Exam 1 #18', 'Exam 2 #18'],
-    lesson: T`<p>Solve an inequality exactly like an equation, with one extra rule:</p>
-<p class="key">When you multiply or divide both sides by a <strong>negative</strong> number, flip the inequality sign.</p>
-<p>Graph on a number line: a <strong>closed</strong> dot for \(\le\) or \(\ge\) (the endpoint is included), an <strong>open</strong> dot for \(\lt\) or \(\gt\); shade toward the numbers that work (\(x \gt\) goes right, \(x \lt\) goes left).</p>
-<p>Type \(\le\) as <code>&lt;=</code> and \(\ge\) as <code>&gt;=</code>.</p>`,
+    lesson: T`<p>An inequality compares two sides with \(\lt\), \(\le\), \(\gt\) or \(\ge\) instead of \(=\). An equation like \(x = 3\) has one answer, but an inequality like \(x \gt 3\) has infinitely many. You solve it almost exactly like an equation.</p>
+<div class="box def"><h4>Definition <b>Solution set</b></h4><p>The <strong>solution set</strong> of an inequality is every number that makes it true. For \(x \le 2\), that is 2 and every number below 2.</p></div>
+<h3>Solve it like an equation, with one extra rule</h3>
+<p>You may add or subtract any number on both sides. You may multiply or divide both sides by a positive number. Only a negative number needs care: \(2 \lt 5\), but \(-2 \gt -5\). Multiplying by a negative reverses the order.</p>
+<div class="box rule"><h4>Rule <b>Flip the sign for a negative</b></h4><p>When you multiply or divide both sides by a <strong>negative</strong> number, reverse the inequality sign: \(\lt\) becomes \(\gt\), and \(\le\) becomes \(\ge\).</p></div>
+<div class="ex"><h4>Example</h4><p>Solve \(-\left(2 + 3x\right) \le 10\).</p><table class="st">
+<tr><td>Distribute the negative sign.</td><td>\(-2 - 3x \le 10\)</td></tr>
+<tr><td>Add 2 to both sides.</td><td>\(-3x \le 12\)</td></tr>
+<tr><td>Divide by \(-3\) and flip the sign.</td><td>\(x \ge -4\)</td></tr>
+<tr><td>Check with \(x = 0\), which should work.</td><td>\(-\left(2 + 0\right) = -2 \le 10\) ✓</td></tr></table></div>
+<p>A fraction in front of \(x\) works the same way: multiply by its flip. From \(-\frac{2}{3}x \gt 4\), multiply by \(-\frac{3}{2}\) and flip: \(x \lt -6\). When \(x\) is on both sides, collect the \(x\) terms on one side first, then divide.</p>
+<h3>Graph the answer on a number line</h3>
+<div class="box rule"><h4>Rule <b>Graphing an inequality</b></h4><p>Put a dot at the endpoint. Use a <strong>closed</strong> (filled) dot for \(\le\) or \(\ge\), because the endpoint is included. Use an <strong>open</strong> dot for \(\lt\) or \(\gt\), because it is not. Shade right for \(x \gt\) or \(x \ge\); shade left for \(x \lt\) or \(x \le\).</p></div>
+<p>So \(x \ge -4\) is a filled dot at \(-4\), shaded to the right.</p>
+<div class="box warn"><h4>Watch out</h4><p>Flip the sign only when you multiply or divide by a negative. A negative number somewhere else is no reason to flip: \(x + 5 \lt -1\) becomes \(x \lt -6\) after you subtract 5. Type \(\le\) as <code>&lt;=</code> and \(\ge\) as <code>&gt;=</code>.</p></div>`,
     variants: {
       frac: {
         name: 'Fraction coefficient',
@@ -209,11 +248,27 @@
   MX.register({
     id: 'exp-equation', section: SEC, title: 'Exponential equations (same base)', kind: 'skill',
     sources: ['Exam 1 #12', 'Exam 2 #16', 'Exam 3 #10'],
-    lesson: T`<p>If \(b^{M} = b^{N}\) then \(M = N\). So:</p>
-<ol><li>Write both sides as powers of the same base: \(25 = 5^{2}\), \(64 = 2^{6}\), \(81 = 3^{4}\), \(\frac{1}{27} = 3^{-3}\).</li>
-<li>Set the exponents equal.</li><li>Solve the linear equation.</li></ol>
-\[5^{7 - 2x} = 25 = 5^{2}\;\Rightarrow\; 7 - 2x = 2 \;\Rightarrow\; x = \frac{5}{2}\]
-<p>Useful powers: \(2^{5} = 32,\ 2^{6} = 64,\ 3^{4} = 81,\ 3^{5} = 243,\ 5^{3} = 125\).</p>`,
+    lesson: T`<p>In an exponential equation the variable is in the exponent, as in \(2^{x + 1} = 32\). If you can write both sides as powers of the same number, the problem turns into a linear equation you already know how to solve.</p>
+<div class="box rule"><h4>Property <b>Equal powers, equal exponents</b></h4><p>If \(b^{M} = b^{N}\), then \(M = N\). This works for any base \(b \gt 0\) with \(b \ne 1\). Once the bases match, you can drop them and set the exponents equal.</p></div>
+<h3>Know your powers</h3>
+<p>You need to spot that a number is a power of 2, 3 or 5. These come up most often:</p>
+<p>\(2^{3} = 8,\ 2^{4} = 16,\ 2^{5} = 32,\ 2^{6} = 64\)<br>\(3^{2} = 9,\ 3^{3} = 27,\ 3^{4} = 81,\ 3^{5} = 243\)<br>\(5^{2} = 25,\ 5^{3} = 125,\ 5^{4} = 625\)</p>
+<div class="box rule"><h4>Rule <b>Negative exponents and powers of powers</b></h4><p>A fraction with 1 on top is a negative power: \(\frac{1}{b^{n}} = b^{-n}\), so \(\frac{1}{9} = 3^{-2}\). A power raised to a power multiplies the exponents: \(\left(b^{m}\right)^{n} = b^{mn}\), so \(4^{x} = \left(2^{2}\right)^{x} = 2^{2x}\).</p></div>
+<div class="box how"><h4>How to <b>solve an equation with the variable in the exponent</b></h4><ol>
+<li>Write both sides as powers of the same base.</li>
+<li>Set the exponents equal to each other.</li>
+<li>Solve the linear equation. Leave a fraction answer as a simplified fraction.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Solve \(3^{2x - 1} = \dfrac{1}{9}\).</p><table class="st">
+<tr><td>Write \(\frac{1}{9}\) as a power of 3.</td><td>\(\frac{1}{9} = \frac{1}{3^{2}} = 3^{-2}\)</td></tr>
+<tr><td>Now the bases match.</td><td>\(3^{2x - 1} = 3^{-2}\)</td></tr>
+<tr><td>Set the exponents equal.</td><td>\(2x - 1 = -2\)</td></tr>
+<tr><td>Solve.</td><td>\(2x = -1,\quad x = -\frac{1}{2}\)</td></tr></table></div>
+<div class="ex"><h4>Example</h4><p>Solve \(4^{x + 1} = 8^{x}\).</p><table class="st">
+<tr><td>Both 4 and 8 are powers of 2.</td><td>\(\left(2^{2}\right)^{x + 1} = \left(2^{3}\right)^{x}\)</td></tr>
+<tr><td>Multiply the exponents.</td><td>\(2^{2x + 2} = 2^{3x}\)</td></tr>
+<tr><td>Set the exponents equal and solve.</td><td>\(2x + 2 = 3x,\quad x = 2\)</td></tr>
+<tr><td>Check: both sides equal 64.</td><td>\(4^{3} = 64,\quad 8^{2} = 64\) ✓</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>When you replace 4 by \(2^{2}\), the 2 multiplies the <em>whole</em> exponent. \(4^{x + 1} = 2^{2\left(x + 1\right)} = 2^{2x + 2}\), not \(2^{2x + 1}\).</p></div>`,
     variants: {
       common: {
         name: 'Rewrite the right side',
@@ -279,11 +334,28 @@
   MX.register({
     id: 'quad-factor', section: 'Quadratic equations & functions', title: 'Solving quadratics by factoring', kind: 'skill',
     sources: ['Exam 1 #14', 'Exam 2 #14', 'Exam 3 #14'],
-    lesson: T`<p>The zero-product property: if \(AB = 0\), then \(A = 0\) or \(B = 0\).</p>
-<ol><li>Get 0 on one side.</li><li>Factor completely (GCF first; don't divide the variable away, factor it out).</li>
-<li>Set each factor equal to 0 and solve.</li></ol>
-\[4x^{2} - 16x = 0 \;\Rightarrow\; 4x\left(x - 4\right) = 0 \;\Rightarrow\; x = 0 \text{ or } x = 4\]
-<p class="warn">Dividing both sides by \(x\) loses the solution \(x = 0\).</p>`,
+    lesson: T`<p>A quadratic equation has an \(x^{2}\) term, so the tricks for linear equations can't get \(x\) alone. Instead you factor. Factoring works because of one simple fact about zero.</p>
+<div class="box def"><h4>Definition <b>Quadratic equation</b></h4><p>A <strong>quadratic equation</strong> can be written in <strong>standard form</strong> \(ax^{2} + bx + c = 0\), where \(a \ne 0\). It can have two solutions, one, or none.</p></div>
+<div class="box rule"><h4>Property <b>Zero-product property</b></h4><p>If \(A \cdot B = 0\), then \(A = 0\) or \(B = 0\). The only way a product can be zero is if one of its factors is zero.</p></div>
+<p>The property needs a 0 on one side. It says nothing about \(A \cdot B = 6\), so always move every term to one side first.</p>
+<div class="box how"><h4>How to <b>solve a quadratic by factoring</b></h4><ol>
+<li>Move every term to one side so the other side is 0.</li>
+<li>Factor completely. Take out the GCF (greatest common factor) first, then factor what is left.</li>
+<li>Set each factor equal to 0.</li>
+<li>Solve each small equation. Each one gives a solution.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Solve \(x^{2} + 2x = 15\).</p><table class="st">
+<tr><td>Subtract 15 to get 0 on the right.</td><td>\(x^{2} + 2x - 15 = 0\)</td></tr>
+<tr><td>Find two numbers that multiply to \(-15\) and add to 2: 5 and \(-3\).</td><td>\(\left(x + 5\right)\left(x - 3\right) = 0\)</td></tr>
+<tr><td>Set each factor equal to 0.</td><td>\(x + 5 = 0 \text{ or } x - 3 = 0\)</td></tr>
+<tr><td>Solve each one.</td><td>\(x = -5 \text{ or } x = 3\)</td></tr></table></div>
+<p>If the leading coefficient is not 1, a factor may look like \(3x - 2\). Setting it to 0 gives a fraction: \(3x = 2\), so \(x = \frac{2}{3}\).</p>
+<h3>When every term has an \(x\)</h3>
+<p>Factor out the \(x\) along with the number. The \(x\) becomes its own factor and gives the solution \(x = 0\). A cubic (an \(x^{3}\) equation) can then have three solutions.</p>
+<div class="ex"><h4>Example</h4><p>Solve \(2x^{3} - 10x^{2} + 12x = 0\).</p><table class="st">
+<tr><td>Factor out the GCF \(2x\).</td><td>\(2x\left(x^{2} - 5x + 6\right) = 0\)</td></tr>
+<tr><td>Factor the trinomial.</td><td>\(2x\left(x - 2\right)\left(x - 3\right) = 0\)</td></tr>
+<tr><td>Set each factor equal to 0.</td><td>\(x = 0 \text{ or } x = 2 \text{ or } x = 3\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Never divide both sides by \(x\). In \(4x^{2} = 16x\), dividing by \(x\) gives only \(x = 4\) and loses \(x = 0\). Factor instead: \(4x\left(x - 4\right) = 0\), so \(x = 0\) or \(x = 4\).</p></div>`,
     variants: {
       trinomial: {
         name: 'Trinomial',
@@ -363,11 +435,24 @@
   MX.register({
     id: 'quad-sqrt', section: 'Quadratic equations & functions', title: 'Square root property', kind: 'skill',
     sources: ['Exam 1 #15', 'Exam 2 #8', 'Exam 3 #5'],
-    lesson: T`<p>If \(u^{2} = k\) then \(u = \sqrt{k}\) or \(u = -\sqrt{k}\), written \(u = \pm\sqrt{k}\).</p>
-<ol><li>Isolate the squared part.</li><li>Take the square root of both sides and remember the \(\pm\).</li>
-<li>Simplify the radical, then finish solving for the variable.</li></ol>
-\[\left(3k + 2\right)^{2} = 49 \;\Rightarrow\; 3k + 2 = \pm 7 \;\Rightarrow\; k = \frac{5}{3} \text{ or } k = -3\]
-<p>Type exact answers like <code>3√5</code> and <code>-3√5</code> (or one box with <code>+-3√5</code>).</p>`,
+    lesson: T`<p>Some quadratics have no \(x\) term, like \(x^{2} = 36\). You don't need to factor these. You undo the square by taking a square root, but you must remember that two numbers have the same square: \(6^{2} = 36\) and \(\left(-6\right)^{2} = 36\).</p>
+<div class="box rule"><h4>Property <b>Square root property</b></h4><p>If \(u^{2} = k\) and \(k \ge 0\), then \(u = \sqrt{k}\) or \(u = -\sqrt{k}\). You can write both at once as \(u = \pm\sqrt{k}\) (read "plus or minus").</p></div>
+<p>Here \(u\) can be a single letter or a whole group such as \(2y - 1\).</p>
+<div class="box how"><h4>How to <b>solve with the square root property</b></h4><ol>
+<li>Get the squared part alone on one side. If it has a number in front, divide by that number.</li>
+<li>Take the square root of both sides. Write \(\pm\) on the number side.</li>
+<li>Simplify the square root. Take out any perfect-square factor: \(\sqrt{20} = \sqrt{4 \cdot 5} = 2\sqrt{5}\).</li>
+<li>If the squared part was a group, solve the \(+\) and \(-\) cases separately.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Solve \(3x^{2} - 60 = 0\).</p><table class="st">
+<tr><td>Add 60 to both sides.</td><td>\(3x^{2} = 60\)</td></tr>
+<tr><td>Divide by 3.</td><td>\(x^{2} = 20\)</td></tr>
+<tr><td>Take the square root, with \(\pm\).</td><td>\(x = \pm\sqrt{20}\)</td></tr>
+<tr><td>Simplify: 4 is a perfect square factor of 20.</td><td>\(x = \pm 2\sqrt{5}\)</td></tr></table></div>
+<div class="ex"><h4>Example</h4><p>Solve \(\left(2y - 1\right)^{2} = 25\).</p><table class="st">
+<tr><td>The squared part is already alone. Take the square root.</td><td>\(2y - 1 = \pm 5\)</td></tr>
+<tr><td>Solve the \(+\) case.</td><td>\(2y - 1 = 5,\quad y = 3\)</td></tr>
+<tr><td>Solve the \(-\) case.</td><td>\(2y - 1 = -5,\quad y = -2\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Don't forget the \(\pm\). Writing only \(x = 2\sqrt{5}\) misses half the answer. Type exact answers like <code>2√5</code> and <code>-2√5</code>, or one box with <code>+-2√5</code>.</p></div>`,
     variants: {
       binomial: {
         name: 'Squared binomial',
@@ -437,11 +522,27 @@
   MX.register({
     id: 'quad-formula', section: 'Quadratic equations & functions', title: 'Quadratic formula', kind: 'skill',
     sources: ['Exam 1 #17', 'Exam 2 #26', 'Exam 3 #24'],
-    lesson: T`<p>For \(ax^{2} + bx + c = 0\):</p>
-\[x = \frac{-b \pm \sqrt{b^{2} - 4ac}}{2a}\]
-<ol><li>Write the equation as \(ax^{2} + bx + c = 0\) first (move everything to one side).</li><li>Read off \(a\), \(b\), \(c\) with their signs.</li>
-<li>Compute the discriminant \(b^{2} - 4ac\) carefully; \(\left(-b\right)^{2}\) is positive.</li><li>Evaluate the \(+\) and \(-\) versions separately.</li></ol>
-<p>When asked to round, round only at the very end.</p>`,
+    lesson: T`<p>Factoring only works when the numbers cooperate. The quadratic formula solves <em>every</em> quadratic equation, including ones whose answers are messy decimals. You plug in three numbers and simplify.</p>
+<div class="box rule"><h4>Formula <b>Quadratic formula</b></h4><p>The solutions of \(ax^{2} + bx + c = 0\), with \(a \ne 0\), are</p><p>\(x = \dfrac{-b \pm \sqrt{b^{2} - 4ac}}{2a}\)</p><p>The fraction bar runs under the <em>whole</em> top, not just the square root.</p></div>
+<div class="box def"><h4>Definition <b>Discriminant</b></h4><p>The number under the square root, \(b^{2} - 4ac\), is the <strong>discriminant</strong>. If it is positive, there are two real solutions. If it is 0, there is one. If it is negative, there are no real solutions. If it is a perfect square (like 49) and \(a\), \(b\), \(c\) are integers, the answers are whole numbers or fractions.</p></div>
+<div class="box how"><h4>How to <b>use the quadratic formula</b></h4><ol>
+<li>Move every term to one side so the equation reads \(ax^{2} + bx + c = 0\).</li>
+<li>Write down \(a\), \(b\) and \(c\), each with its sign.</li>
+<li>Work out the discriminant \(b^{2} - 4ac\) first.</li>
+<li>Put everything into the formula. Work out the \(+\) answer and the \(-\) answer separately.</li>
+<li>If asked to round, round only at the very end.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Solve \(2x^{2} + x - 6 = 0\).</p><table class="st">
+<tr><td>Read off the coefficients.</td><td>\(a = 2,\quad b = 1,\quad c = -6\)</td></tr>
+<tr><td>Find the discriminant.</td><td>\(1^{2} - 4\left(2\right)\left(-6\right) = 1 + 48 = 49\)</td></tr>
+<tr><td>Use the formula. \(\sqrt{49} = 7\).</td><td>\(x = \dfrac{-1 \pm 7}{4}\)</td></tr>
+<tr><td>Work out both answers.</td><td>\(x = \frac{6}{4} = \frac{3}{2} \text{ or } x = \frac{-8}{4} = -2\)</td></tr></table></div>
+<div class="ex"><h4>Example</h4><p>Solve \(x^{2} = 4x - 1\). Round to the nearest hundredth.</p><table class="st">
+<tr><td>Move every term to the left.</td><td>\(x^{2} - 4x + 1 = 0\)</td></tr>
+<tr><td>Read off the coefficients.</td><td>\(a = 1,\quad b = -4,\quad c = 1\)</td></tr>
+<tr><td>Find the discriminant.</td><td>\(\left(-4\right)^{2} - 4\left(1\right)\left(1\right) = 12\)</td></tr>
+<tr><td>Use the formula. \(-b = 4\).</td><td>\(x = \dfrac{4 \pm \sqrt{12}}{2}\)</td></tr>
+<tr><td>\(\sqrt{12} \approx 3.4641\). Round only now.</td><td>\(x \approx 3.73 \text{ or } x \approx 0.27\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Signs cause most mistakes. If \(b = -4\), then \(-b = 4\) and \(b^{2} = \left(-4\right)^{2} = 16\), which is positive. Always put a negative \(b\) in parentheses before you square it.</p></div>`,
     variants: {
       exact: {
         name: 'Rational answers',
