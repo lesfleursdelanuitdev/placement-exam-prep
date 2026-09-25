@@ -210,7 +210,7 @@
       const b = ev.target.closest('[data-gr]');
       if (!b) { if (!ev.target.closest('#gr-pop')) closePop(); return; }
       const a = b.dataset.gr, i = +b.dataset.i;
-      if (a === 'mode') { S.mode = b.dataset.mode; S.hover = null; d.getElementById('gr-tip').hidden = true; save(); refresh(); }
+      if (a === 'mode') { S.mode = b.dataset.mode; S.hover = null; d.getElementById('gr-tip').hidden = true; save(); refresh(); if (MX.onGrapherMode) MX.onGrapherMode(); }
       else if (a === 'add') { S.fns.push({ src: '', color: nextColor(), show: true }); parseAll(); refresh(); const inp = d.getElementById('gr-in-' + (S.fns.length - 1)); if (inp) inp.focus(); save(); }
       else if (a === 'del') { S.fns.splice(i, 1); parseAll(); refresh(); save(); }
       else if (a === 'show') { S.fns[i].show = !S.fns[i].show; refresh(); save(); }
@@ -254,7 +254,7 @@
       if (ev.key === 'Escape') closePop();
       if (ev.key === 'Enter' && ev.target.id === 'gr-target') check();
       const tab = ev.target.closest && ev.target.closest('[role="tab"]');
-      if (tab && (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft')) { S.mode = S.mode === 'graph' ? 'draw' : 'graph'; refresh(); d.getElementById('gr-tab-' + S.mode).focus(); save(); }
+      if (tab && (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft')) { S.mode = S.mode === 'graph' ? 'draw' : 'graph'; refresh(); d.getElementById('gr-tab-' + S.mode).focus(); save(); if (MX.onGrapherMode) MX.onGrapherMode(); }
     });
     const svg = d.getElementById('gr-svg');
     svg.addEventListener('pointermove', (ev) => {
@@ -426,8 +426,9 @@
   });
 
   MX.Grapher = {
-    render(root) {
+    render(root, o) {
       if (!S.built || S.root !== root) { load(); build(root); renderWin(); }
+      if (o && (o.mode === 'graph' || o.mode === 'draw')) S.mode = o.mode;
       parseAll();
       refresh();
     },

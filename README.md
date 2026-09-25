@@ -7,6 +7,11 @@ A study app for an algebra placement exam. It started from three sample final ex
 ## What it does
 
 - **Home.** Three choices: the practice exam (start or continue), tutorials, and flashcards. A progress snapshot shows the last exam score, tutorials practiced, and flashcards learned. The top bar has Home · Exam · Tutorials · Flashcards · Grapher · Progress.
+- **Pages with their own addresses.** Each part of the app is its own page with an address after `#`, so the browser's Back and Forward buttons, reloading, and bookmarks all work, and each page has its own tab title and remembers where you were scrolled:
+  - `#/` home · `#/exam` the exam's overview (score, Start/Continue, each part's progress) · `#/exam/part-1`, `part-2`, `part-3` one page per part · `#/exam/results` after you finish
+  - `#/tutorials` · `#/tutorials/<topic>` the lesson, then `/examples` and `/practice` (tabs at the top, and a Next button at the bottom)
+  - `#/flashcards` · `#/flashcards/<topic>`, `/section/<name>`, `/all`, `/review` (all cards still learning)
+  - `#/grapher` and `#/grapher/draw` · `#/progress`
 - **Phones and tablets.** Up to 900px wide, the tabs become a hamburger button that slides out a menu from the left. The menu has the six sections, the current exam's score with a Start/Continue button, and jumps to Parts I–III. It closes with ×, a tap on the dimmed page, Escape, or a swipe to the left. While it's open, keyboard focus stays inside it and the page behind it doesn't scroll. On phones the pages run edge to edge, long math wraps after = or + signs, and wide tables scroll inside their own box. Every exam question, tutorial and flashcard is checked at 320px for sideways overflow.
 - **Full-length generated exams.** Every exam covers all 72 topics in three parts, 102 questions and about 330–340 points, graded part by part like a paper exam:
   - **Part I · Skills:** 58 questions across 10 sections.

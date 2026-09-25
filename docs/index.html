@@ -885,6 +885,43 @@ input.bad { border-color: var(--bad) !important; }
 @media (prefers-reduced-motion: reduce) { .sw-panel { transition: none; } .sw[data-state='running'] .sw-dot { animation: none; } }
 @media print { .sw { display: none; } }
 
+/* ================= pages ================= */
+h1[tabindex='-1']:focus { outline: none; }
+/* exam overview */
+.exam-home .exam-h { border-bottom: 0; padding-bottom: 0; margin-bottom: 0; }
+.eh-score { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 18px 0 6px; }
+.eh-score .sum-b { background: var(--desk); border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; }
+.eh-acts { margin: 14px 0 4px; }
+.pcards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+.pcard { border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 6px; background: var(--paper); }
+.pc-h { display: flex; flex-direction: column; gap: 0; }
+.pc-n { font: 700 12px var(--f-cond); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.pcard h2 { font: 700 19px var(--f-cond); margin: 0; }
+.pc-m, .pc-s { margin: 0; font-size: 13.5px; color: var(--muted); }
+.pcard .btn { margin-top: auto; align-self: flex-start; }
+/* previous / next part at the bottom of a part page */
+.part-nav { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 28px 0 8px; padding-top: 18px; border-top: 1px solid var(--rule); }
+/* results */
+.res-parts { margin: 14px 0 6px; border-collapse: collapse; font-size: 15px; }
+.res-parts td { padding: 6px 16px 6px 0; border-bottom: 1px solid var(--rule); }
+/* tutorial pages: Lesson | Worked examples | Practice */
+.tut-tabs { display: flex; gap: 4px; margin: 16px 0 6px; border-bottom: 1px solid var(--rule); overflow-x: auto; }
+.tut-tabs button { display: flex; align-items: center; gap: 7px; font: 600 14.5px var(--f-ui); color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 14px 9px; cursor: pointer; white-space: nowrap; }
+.tut-tabs button:hover { color: var(--ink); }
+.tut-tabs button[aria-current='page'] { color: var(--accent-2); border-bottom-color: var(--accent); }
+.tt-n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; background: var(--desk); color: var(--muted); }
+.tut-tabs button[aria-current='page'] .tt-n { background: var(--accent); color: var(--paper); }
+.tt-c { font-weight: 500; font-size: 12.5px; color: var(--faint); }
+.tut-next { display: flex; justify-content: flex-end; margin: 22px 0 6px; }
+@media (max-width: 760px) {
+  .pcards, .eh-score { grid-template-columns: minmax(0, 1fr); }
+  .eh-score { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .eh-score .sum-b { padding: 8px 10px; }
+  .tut-tabs button { padding: 9px 8px 8px; font-size: 14px; gap: 5px; }
+}
+@media (max-width: 420px) { .tut-tabs .tt-c { display: none; } .tut-tabs button { padding-left: 6px; padding-right: 6px; } }
+@media (max-width: 380px) { .tut-tabs .tt-n { display: none; } .tut-tabs button { flex: 1 1 0; justify-content: center; } }
+
 </style>
 </head>
 <body>
@@ -921,7 +958,9 @@ input.bad { border-color: var(--bad) !important; }
 </aside>
 <main>
   <section id="v-home"><div id="home-page" class="page home"></div></section>
-  <section id="v-exam" class="v-exam" hidden>
+  <section id="v-exam" hidden><div id="exam-home" class="page exam-home"></div></section>
+  <section id="v-results" hidden><div id="results-page" class="page"></div></section>
+  <section id="v-part" class="v-exam" hidden>
     <aside class="sheet" aria-label="Answer sheet">
       <div class="sheet-h">Answer sheet</div>
       <div id="nav-bubbles" class="bubbles"></div>
@@ -930,7 +969,7 @@ input.bad { border-color: var(--bad) !important; }
     <div class="paper">
       <header class="exam-h">
         <div class="exam-course">Algebra placement exam</div>
-        <h1 id="exam-title">Practice Exam</h1>
+        <h1 id="exam-title" tabindex="-1">Practice Exam</h1>
         <div id="exam-meta" class="exam-meta">Building your exam…</div>
         <div class="summary">
           <div class="sum-b"><span class="sum-l">Score</span><span class="sum-n"><span id="sum-earned">0</span><small> / <span id="sum-total">0</span></small></span></div>
@@ -958,8 +997,8 @@ input.bad { border-color: var(--bad) !important; }
           <div id="exam-finish" hidden><span id="end-row"><button type="button" class="btn" data-act="save-later">Save and finish later</button><button type="button" class="btn ghost" data-act="end-ask">End exam now…</button><span id="end-confirm" hidden>Unanswered parts will score 0. <button type="button" class="btn danger-btn" data-act="end-do">End exam</button> <button type="button" class="btn ghost" data-act="end-cancel">Keep working</button></span></span></div>
         </div>
       </header>
-      <section id="results" class="results" hidden aria-live="polite"></section>
       <div id="exam-list"></div>
+      <nav id="part-nav" class="part-nav" aria-label="Exam parts"></nav>
     </div>
   </section>
   <section id="v-tutorials" hidden><div id="tut-index" class="page"></div></section>
@@ -15099,7 +15138,7 @@ ${(() => {
       const b = ev.target.closest('[data-gr]');
       if (!b) { if (!ev.target.closest('#gr-pop')) closePop(); return; }
       const a = b.dataset.gr, i = +b.dataset.i;
-      if (a === 'mode') { S.mode = b.dataset.mode; S.hover = null; d.getElementById('gr-tip').hidden = true; save(); refresh(); }
+      if (a === 'mode') { S.mode = b.dataset.mode; S.hover = null; d.getElementById('gr-tip').hidden = true; save(); refresh(); if (MX.onGrapherMode) MX.onGrapherMode(); }
       else if (a === 'add') { S.fns.push({ src: '', color: nextColor(), show: true }); parseAll(); refresh(); const inp = d.getElementById('gr-in-' + (S.fns.length - 1)); if (inp) inp.focus(); save(); }
       else if (a === 'del') { S.fns.splice(i, 1); parseAll(); refresh(); save(); }
       else if (a === 'show') { S.fns[i].show = !S.fns[i].show; refresh(); save(); }
@@ -15143,7 +15182,7 @@ ${(() => {
       if (ev.key === 'Escape') closePop();
       if (ev.key === 'Enter' && ev.target.id === 'gr-target') check();
       const tab = ev.target.closest && ev.target.closest('[role="tab"]');
-      if (tab && (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft')) { S.mode = S.mode === 'graph' ? 'draw' : 'graph'; refresh(); d.getElementById('gr-tab-' + S.mode).focus(); save(); }
+      if (tab && (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft')) { S.mode = S.mode === 'graph' ? 'draw' : 'graph'; refresh(); d.getElementById('gr-tab-' + S.mode).focus(); save(); if (MX.onGrapherMode) MX.onGrapherMode(); }
     });
     const svg = d.getElementById('gr-svg');
     svg.addEventListener('pointermove', (ev) => {
@@ -15315,8 +15354,9 @@ ${(() => {
   });
 
   MX.Grapher = {
-    render(root) {
+    render(root, o) {
       if (!S.built || S.root !== root) { load(); build(root); renderWin(); }
+      if (o && (o.mode === 'graph' || o.mode === 'draw')) S.mode = o.mode;
       parseAll();
       refresh();
     },
@@ -15557,7 +15597,7 @@ ${(() => {
     try { const a = new Uint32Array(1); G.crypto.getRandomValues(a); return 'e' + a[0].toString(36); } catch (e) { return 'e' + Math.floor(Math.random() * 1e9).toString(36); }
   };
 
-  const App = { items: [], view: 'home', tutId: null, returnItem: -1, returnView: 'tutorials', deck: null, deckReturn: 'flashcards', examScroll: null };
+  const App = { items: [], view: 'home', part: 1, tutId: null, tutTab: 'lesson', returnItem: -1, returnView: 'tutorials', deck: null, deckReturn: 'flashcards', hash: '' };
   G.MX.App = App;
 
   function examState() { return Store.state.exam; }
@@ -15569,7 +15609,6 @@ ${(() => {
     Object.keys(dr).forEach((k) => { if (k[0] === 'x') delete dr[k]; });
     Store.state.exam = { no: prev ? prev.no + 1 : (Store.state.history || []).reduce((m, h) => Math.max(m, h.no), 0) + 1, seed: newSeed(), gv: GEN_VERSION, started: Date.now(), finished: null, res: {} };
     App.items = buildExam(Store.state.exam.seed);
-    App.examScroll = null;
     Store.save();
   }
   function ensureExam() {
@@ -15759,6 +15798,7 @@ ${(() => {
     [...REG.keys()].forEach((k) => { if (k[0] === 'x') REG.delete(k); });
     App.items.forEach((it, i) => {
       const part = examPartOf(it.topic);
+      if (part !== App.part) return; // one part per page
       if (part !== lastPart) {
         lastPart = part;
         lastSec = null;
@@ -15777,8 +15817,62 @@ ${(() => {
       html += cardHTML(it.q, { cardId, mode: 'exam', num: it.n + '.', res: res[it.key], head: examItemHead(it, i), forceLock: finished, ctx });
     });
     byId('exam-list').innerHTML = html;
+    const parts = [1, 2, 3].filter((p) => App.items.some((it) => examPartOf(it.topic) === p));
+    const k = parts.indexOf(App.part), prev = parts[k - 1], next = parts[k + 1];
+    byId('part-nav').innerHTML = (prev ? `<button type="button" class="btn" data-act="goto-part" data-part="${prev}">← Part ${PART_NUM[prev]}: ${esc(PART_NAME[prev])}</button>` : '<span></span>') +
+      (next ? `<button type="button" class="btn primary" data-act="goto-part" data-part="${next}">Part ${PART_NUM[next]}: ${esc(PART_NAME[next])} →</button>`
+        : finished ? '<button type="button" class="btn primary" data-act="view" data-view="results">See your results →</button>' : '<button type="button" class="btn primary" data-act="view" data-view="exam">Exam overview →</button>');
     renderExamHeader();
     renderNav();
+  }
+  // the exam's first page: where you start, continue, and see each part's progress
+  function partItems(p) { return App.items.map((it, i) => ({ it, i })).filter((x) => examPartOf(x.it.topic) === p); }
+  function renderExamHome() {
+    const ex = examState(), sc = scoreOf(App.items, ex.res);
+    const started = new Date(ex.started);
+    const fresh = !sc.done && !Object.keys(drafts()).some((k) => k[0] === 'x');
+    const nxt = App.items[firstOpenItem()];
+    const main = ex.finished
+      ? `<button type="button" class="btn primary" data-act="view" data-view="results">See your results</button><button type="button" class="btn" data-act="new-exam">Start Practice Exam No. ${ex.no + 1}</button>`
+      : `<button type="button" class="btn primary" data-act="resume">${fresh ? 'Start the exam' : 'Continue at question ' + (nxt ? nxt.n : 1)}</button>`;
+    const cards = [1, 2, 3].map((p) => {
+      const list = partItems(p);
+      if (!list.length) return '';
+      let pts = 0, earned = 0, parts = 0, done = 0;
+      list.forEach(({ it }) => it.q.parts.forEach((q, pi) => { const r = (ex.res[it.key] || {})[pi]; parts++; pts += q.points; if (r && r.ok !== undefined) { done++; if (r.ok) earned += q.points; } }));
+      return `<article class="pcard"><div class="pc-h"><span class="pc-n">Part ${PART_NUM[p]}</span><h2>${esc(PART_NAME[p])}</h2></div>
+        <p class="pc-m">Questions ${list[0].it.n}–${list[list.length - 1].it.n} · ${list.length} questions · ${pts} points</p>
+        ${meter(parts ? done / parts : 0, 'wide')}
+        <p class="pc-s">${done ? `${done} of ${parts} answer parts checked · <b>${earned}</b> of ${pts} points` : 'Not started'}</p>
+        <button type="button" class="btn${done && done < parts && !ex.finished ? ' primary' : ''}" data-act="goto-part" data-part="${p}">${ex.finished ? 'Review' : done ? 'Open' : 'Start'} Part ${PART_NUM[p]}</button></article>`;
+    }).join('');
+    byId('exam-home').innerHTML = `<header class="exam-h"><div class="exam-course">Algebra placement exam</div><h1 tabindex="-1">Practice Exam No. ${esc(ex.no)}</h1>
+        <div class="exam-meta">Generated ${esc(started.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }))} · ${App.items.length} questions · ${sc.total} points${ex.finished ? ' · finished' : ''}</div></header>
+      <div class="eh-score"><div class="sum-b"><span class="sum-l">Score</span><span class="sum-n">${sc.earned}<small> / ${sc.total}</small></span></div>
+        <div class="sum-b"><span class="sum-l">Parts answered</span><span class="sum-n">${sc.done} / ${sc.parts}</span></div>
+        <div class="sum-b"><span class="sum-l">Accuracy so far</span><span class="sum-n">${sc.done ? Math.round((100 * sc.earned) / Math.max(1, answeredPoints())) + '%' : '–'}</span></div></div>
+      <div class="res-acts eh-acts">${main}</div>
+      <p class="instr">The exam has three parts, each on its own page. <strong>Show all work</strong> on scratch paper, type each answer and press <b>Check</b>. Each part of a question is graded once. Everything saves as you type, so you can stop and finish later.</p>
+      <div class="pcards">${cards}</div>`;
+  }
+  function renderResults() {
+    const ex = examState();
+    if (!ex.finished) { byId('results-page').innerHTML = '<p>This exam isn’t finished yet.</p><button type="button" class="btn primary" data-act="view" data-view="exam">Exam overview</button>'; return; }
+    const sc = scoreOf(App.items, ex.res);
+    const weak = Object.entries(sc.byTopic).filter(([, v]) => v[0] < v[1]).map(([k, v]) => [k, v[0] / v[1]]).sort((a, b) => a[1] - b[1]).slice(0, 5);
+    const byPart = [1, 2, 3].map((p) => {
+      const list = partItems(p);
+      if (!list.length) return '';
+      let pts = 0, earned = 0;
+      list.forEach(({ it }) => it.q.parts.forEach((q, pi) => { pts += q.points; const r = (ex.res[it.key] || {})[pi]; if (r && r.ok) earned += q.points; }));
+      return `<tr><td>Part ${PART_NUM[p]}: ${esc(PART_NAME[p])}</td><td><b>${earned}</b> / ${pts}</td><td><button type="button" class="btn ghost" data-act="goto-part" data-part="${p}">Review</button></td></tr>`;
+    }).join('');
+    byId('results-page').innerHTML = `<section class="results" aria-live="polite"><div class="res-score"><span class="big">${sc.earned}</span><span class="of">/ ${sc.total}</span><span class="pc">${sc.pct}%</span></div>
+        <div class="res-body"><div class="exam-course">Practice Exam No. ${esc(ex.no)}</div><h1 tabindex="-1">Exam complete</h1>
+        <p>${sc.pct >= 90 ? 'Excellent work.' : sc.pct >= 75 ? 'Solid. A little review will push this higher.' : sc.pct >= 60 ? 'You passed the bar for many courses; review the topics below.' : 'Keep going: work through the tutorials below, then try a fresh exam.'} Your score is saved in Progress.</p>
+        ${weak.length ? `<p class="weak-h">Review first:</p><div class="weak">${weak.map(([k]) => `<button type="button" class="btn tut" data-act="tutorial" data-topic="${k}">${esc(MX.byId[k].title)} →</button>`).join('')}</div>` : ''}
+        <table class="tbl res-parts">${byPart}</table>
+        <div class="res-acts"><button type="button" class="btn primary" data-act="new-exam">Generate a new exam</button><button type="button" class="btn ghost" data-act="view" data-view="home">Home</button></div></div></section>`;
   }
   function renderChip() {
     const ex = examState();
@@ -15789,8 +15883,8 @@ ${(() => {
     const ex = examState();
     const sc = scoreOf(App.items, ex.res);
     const started = new Date(ex.started);
-    byId('exam-title').textContent = 'Practice Exam No. ' + ex.no;
-    byId('exam-meta').textContent = `Generated ${started.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} · ${App.items.length} questions · ${sc.total} points`;
+    byId('exam-title').textContent = 'Part ' + PART_NUM[App.part] + ': ' + PART_NAME[App.part];
+    byId('exam-meta').textContent = `Practice Exam No. ${ex.no} · generated ${started.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} · ${App.items.length} questions · ${sc.total} points`;
     byId('sum-earned').textContent = sc.earned;
     byId('sum-total').textContent = sc.total;
     byId('sum-done').textContent = sc.done + ' / ' + sc.parts;
@@ -15801,16 +15895,6 @@ ${(() => {
     const done = !!ex.finished;
     byId('exam-finish').hidden = false;
     byId('end-row').hidden = done;
-    const rb = byId('results');
-    if (done) {
-      const weak = Object.entries(sc.byTopic).filter(([, v]) => v[0] < v[1]).map(([k, v]) => [k, v[0] / v[1]]).sort((a, b) => a[1] - b[1]).slice(0, 5);
-      rb.hidden = false;
-      rb.innerHTML = `<div class="res-score"><span class="big">${sc.earned}</span><span class="of">/ ${sc.total}</span><span class="pc">${sc.pct}%</span></div>
-        <div class="res-body"><h2>Exam complete</h2>
-        <p>${sc.pct >= 90 ? 'Excellent work.' : sc.pct >= 75 ? 'Solid. A little review will push this higher.' : sc.pct >= 60 ? 'You passed the bar for many courses; review the topics below.' : 'Keep going: work through the tutorials below, then try a fresh exam.'} Your score is saved in Progress.</p>
-        ${weak.length ? `<p class="weak-h">Review first:</p><div class="weak">${weak.map(([k]) => `<button type="button" class="btn tut" data-act="tutorial" data-topic="${k}">${esc(MX.byId[k].title)} →</button>`).join('')}</div>` : ''}
-        <div class="res-acts"><button type="button" class="btn primary" data-act="new-exam">Generate a new exam</button><button type="button" class="btn ghost" data-act="view" data-view="home">Home</button></div></div>`;
-    } else rb.hidden = true;
   }
   function answeredPoints() {
     const ex = examState();
@@ -15924,7 +16008,7 @@ ${(() => {
     if (Store.state.history.length > 60) Store.state.history = Store.state.history.slice(-60);
     Store.save();
     renderExam();
-    byId('results').scrollIntoView({ behavior: prefersReduced() ? 'auto' : 'smooth', block: 'start' });
+    setView('results');
   }
   const prefersReduced = () => G.matchMedia && G.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -16010,6 +16094,7 @@ ${(() => {
     });
     return { solved, attempted };
   }
+  const TUT_TABS = [['lesson', 'Lesson'], ['examples', 'Examples'], ['practice', 'Practice']];
   const BACK_TEXT = { tutorials: '← All tutorials', progress: '← Back to progress', home: '← Home', flashcards: '← All flashcards', deck: '← Back to the flashcards' };
   function renderTutorial() {
     const t = MX.byId[App.tutId];
@@ -16017,23 +16102,33 @@ ${(() => {
     const st = tutState(t.id);
     const { wq, ex } = tutProblems(t);
     const rv = App.returnView || 'tutorials';
-    const backText = rv === 'exam' ? (App.returnItem >= 0 && App.items[App.returnItem] ? `← Back to the exam (question ${App.items[App.returnItem].n})` : '← Back to the exam') : BACK_TEXT[rv] || '← All tutorials';
+    const backText = rv === 'part' || rv === 'exam' ? (App.returnItem >= 0 && App.items[App.returnItem] ? `← Back to the exam (question ${App.items[App.returnItem].n})` : '← Back to the exam') : BACK_TEXT[rv] || '← All tutorials';
     const back = `<button type="button" class="btn back" data-act="back">${backText}</button>`;
     const vnames = allVariants(t).map((k) => `<span class="vchip">${esc(t.variants[k].name)}</span>`).join('');
     const nCards = (MX.FLASH[t.id] || []).length;
     const ctx = { logs: isLogTopic(t) };
     let html = `<div class="tut-top">${back}${rv !== 'tutorials' ? `<button type="button" class="btn ghost" data-act="view" data-view="tutorials">All tutorials</button>` : ''}
         ${nCards ? `<button type="button" class="btn tut deck-link" data-act="deck" data-topic="${t.id}" data-from="tutorial">Flashcards for this topic (${nCards}) →</button>` : ''}</div>
-      <header class="tut-head"><div class="eyebrow">${esc(sectionOf(t))}</div><h1>${esc(t.title)}</h1>
+      <header class="tut-head"><div class="eyebrow">${esc(sectionOf(t))}</div><h1 tabindex="-1">${esc(t.title)}</h1>
       <p class="tut-src">${/^Added/.test(sourceText(t)) ? esc(sourceText(t)) : 'On the sample exams: ' + esc(sourceText(t))}</p>
       <div class="vchips" aria-label="Problem types covered">${vnames}</div></header>
-      <section class="lesson">${R(t.lesson)}</section>
-      <h2 class="sub-h">Worked examples <span class="tut-stats">${wq.length} examples</span><button type="button" class="btn ghost skip" data-act="to-practice">Skip to practice ↓</button></h2>
-      <div class="worked-list">${wq.map((w, k) => workedHTML(w.q, k, allVariants(t).length > 1 ? t.variants[w.vk].name : '')).join('')}</div>
-      <h2 class="sub-h" id="tut-practice">Practice <span id="tut-stats" class="tut-stats"></span></h2>
+      <nav class="tut-tabs" aria-label="Tutorial pages">${TUT_TABS.map(([k, name], n) => `<button type="button" data-act="tut-tab" data-tab="${k}"${App.tutTab === k ? ' aria-current="page"' : ''}><span class="tt-n">${n + 1}</span>${name}${k === 'examples' ? ` <span class="tt-c">${wq.length}</span>` : ''}</button>`).join('')}</nav>`;
+    [...REG.keys()].forEach((k) => { if (k[0] === 't') REG.delete(k); });
+    const nextTab = (k, label) => `<div class="tut-next"><button type="button" class="btn primary" data-act="tut-tab" data-tab="${k}">${label} →</button></div>`;
+    if (App.tutTab === 'lesson') {
+      html += `<section class="lesson">${R(t.lesson)}</section>` + nextTab('examples', 'Next: worked examples');
+      byId('tut-page').innerHTML = html;
+      return;
+    }
+    if (App.tutTab === 'examples') {
+      html += `<h2 class="sub-h">Worked examples <span class="tut-stats">${wq.length} examples</span></h2>
+        <div class="worked-list">${wq.map((w, k) => workedHTML(w.q, k, allVariants(t).length > 1 ? t.variants[w.vk].name : '')).join('')}</div>` + nextTab('practice', 'Next: practice');
+      byId('tut-page').innerHTML = html;
+      return;
+    }
+    html += `<h2 class="sub-h" id="tut-practice">Practice <span id="tut-stats" class="tut-stats"></span></h2>
       <p class="hint">Check as many times as you like. "Show answer" reveals the answer and the worked solution.</p>
       <div class="ex-list">`;
-    [...REG.keys()].forEach((k) => { if (k[0] === 't') REG.delete(k); });
     ex.forEach((e, k) => {
       const cardId = 't-' + t.id + '-' + e.key;
       REG.set(cardId, {
@@ -16135,7 +16230,7 @@ ${(() => {
     byId('flash-index').innerHTML = html;
   }
   // a study session: spec = {topic} | {section} | {all}
-  function openDeck(spec, mode, from) {
+  function openDeck(spec, mode, from, viewOpts) {
     let ids, title, eyebrow;
     if (spec.topic) { ids = [spec.topic]; title = MX.byId[spec.topic].title; eyebrow = sectionOf(MX.byId[spec.topic]); }
     else if (spec.section) { ids = bySection().find(([s]) => s === spec.section)[1].map((t) => t.id); title = spec.section; eyebrow = 'Whole section'; }
@@ -16144,7 +16239,7 @@ ${(() => {
     if (from) App.deckReturn = from;
     App.deck = { spec, ids, title, eyebrow, mode: mode || 'all', shuffle: App.deck ? App.deck.shuffle : false, order: [], pos: 0, flipped: false, seen: {} };
     buildOrder();
-    setView('deck');
+    setView('deck', viewOpts);
   }
   function buildOrder() {
     const dk = App.deck, fs = flashState();
@@ -16350,26 +16445,127 @@ ${(() => {
   }
 
   // ================= navigation =================
-  const VIEWS = ['home', 'exam', 'tutorials', 'tutorial', 'flashcards', 'deck', 'grapher', 'progress'];
-  const TAB_OF = { tutorial: 'tutorials', deck: 'flashcards' };
+  const VIEWS = ['home', 'exam', 'part', 'results', 'tutorials', 'tutorial', 'flashcards', 'deck', 'grapher', 'progress'];
+  const TAB_OF = { part: 'exam', results: 'exam', tutorial: 'tutorials', deck: 'flashcards' };
+  // ================= pages and addresses =================
+  // Every page has an address after "#", so Back/Forward, reload and bookmarks work:
+  //   #/  #/exam  #/exam/part-1  #/exam/results  #/tutorials  #/tutorials/<topic>[/examples|/practice]
+  //   #/flashcards  #/flashcards/<topic> | /section/<name> | /all | /review  #/grapher[/draw]  #/progress
+  const slug = (x) => String(x).toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  function hashOf(v) {
+    switch (v) {
+      case 'exam': return '#/exam';
+      case 'part': return '#/exam/part-' + App.part;
+      case 'results': return '#/exam/results';
+      case 'tutorials': return '#/tutorials';
+      case 'tutorial': return '#/tutorials/' + App.tutId + (App.tutTab !== 'lesson' ? '/' + App.tutTab : '');
+      case 'flashcards': return '#/flashcards';
+      case 'deck': {
+        const dk = App.deck;
+        if (!dk) return '#/flashcards';
+        if (dk.spec.topic) return '#/flashcards/' + dk.spec.topic;
+        if (dk.spec.section) return '#/flashcards/section/' + slug(dk.spec.section);
+        return dk.mode === 'learning' ? '#/flashcards/review' : '#/flashcards/all';
+      }
+      case 'grapher': return MX.Grapher && MX.Grapher.state.mode === 'draw' ? '#/grapher/draw' : '#/grapher';
+      case 'progress': return '#/progress';
+      default: return '#/';
+    }
+  }
+  function titleOf(v) {
+    const ex = examState();
+    const t = App.tutId && MX.byId[App.tutId];
+    const map = {
+      home: '', exam: 'Practice Exam No. ' + ex.no, part: 'Part ' + PART_NUM[App.part] + ': ' + PART_NAME[App.part] + ' · Exam No. ' + ex.no,
+      results: 'Results · Exam No. ' + ex.no, tutorials: 'Tutorials', tutorial: t ? t.title + ' · ' + (TUT_TABS.find(([k]) => k === App.tutTab) || ['', 'Lesson'])[1] : 'Tutorial',
+      flashcards: 'Flashcards', deck: App.deck ? App.deck.title + ' · Flashcards' : 'Flashcards', grapher: MX.Grapher && MX.Grapher.state.mode === 'draw' ? 'Draw a graph · Grapher' : 'Grapher', progress: 'Progress',
+    };
+    return (map[v] ? map[v] + ' · ' : '') + 'Placement Exam Prep';
+  }
+  // read an address into a page; unknown addresses go home
+  function routeOf(h) {
+    const seg = String(h || '').replace(/^#\/?/, '').split('/').filter(Boolean).map((x) => { try { return decodeURIComponent(x); } catch (e) { return x; } });
+    const [a, b, c] = seg;
+    if (!a) return { v: 'home' };
+    if (a === 'exam') {
+      if (!b) return { v: 'exam' };
+      if (b === 'results') return { v: 'results' };
+      const m = /^part-([123])$/.exec(b);
+      return m ? { v: 'part', part: +m[1] } : { v: 'exam' };
+    }
+    if (a === 'tutorials') {
+      if (!b) return { v: 'tutorials' };
+      if (!MX.byId[b]) return { v: 'tutorials' };
+      return { v: 'tutorial', id: b, tab: c === 'examples' || c === 'practice' ? c : 'lesson' };
+    }
+    if (a === 'flashcards') {
+      if (!b) return { v: 'flashcards' };
+      if (b === 'all') return { v: 'deck', spec: { all: 1 }, mode: 'all' };
+      if (b === 'review') return { v: 'deck', spec: { all: 1 }, mode: 'learning' };
+      if (b === 'section') { const sec = bySection().find(([x]) => slug(x) === c); return sec ? { v: 'deck', spec: { section: sec[0] }, mode: 'all' } : { v: 'flashcards' }; }
+      return MX.byId[b] && cardsOf(b).length ? { v: 'deck', spec: { topic: b }, mode: 'all' } : { v: 'flashcards' };
+    }
+    if (a === 'grapher') return { v: 'grapher', mode: b === 'draw' ? 'draw' : 'graph' };
+    if (a === 'progress') return { v: 'progress' };
+    return { v: 'home' };
+  }
+  const scrollMem = {};
+  function applyRoute(h, opts = {}) {
+    const r = routeOf(h);
+    if (r.v === 'part') { App.part = r.part; renderExam(); }
+    if (r.v === 'tutorial') { if (App.tutId !== r.id) { App.returnView = 'tutorials'; App.returnItem = -1; } App.tutId = r.id; App.tutTab = r.tab; }
+    if (r.v === 'grapher' && MX.Grapher) MX.Grapher.state.mode = r.mode;
+    const scrollTo = opts.restore ? scrollMem[h] || 0 : 0;
+    if (r.v === 'deck') {
+      const same = App.deck && JSON.stringify(App.deck.spec) === JSON.stringify(r.spec);
+      if (!same) { openDeck(r.spec, r.mode, null, { fromRoute: true, replace: opts.replace, scrollTo }); return; }
+      if (r.mode === 'learning' && App.deck.mode !== 'learning') { App.deck.mode = 'learning'; buildOrder(); }
+    }
+    setView(r.v, { fromRoute: true, replace: opts.replace || hashOf(r.v) !== h, scrollTo });
+  }
+  // point the address bar at the page on screen: a new history entry, or (replace) the same one
+  function syncAddress(v, replace) {
+    const h = hashOf(v);
+    const was = App.hash;
+    App.hash = h;
+    d.title = titleOf(v);
+    if (G.location.hash === h) return;
+    if (replace || !was) {
+      try { G.history.replaceState(G.history.state, '', h); } catch (e) { G.location.replace(h); }
+    } else G.location.hash = h;
+  }
   function setView(v, opts = {}) {
-    if (App.view === 'exam' && v !== 'exam') App.examScroll = G.scrollY;
+    if (App.hash) scrollMem[App.hash] = G.scrollY; // remember where the page being left was scrolled
+    closeStaleFocus();
     App.view = v;
     VIEWS.forEach((k) => { byId('v-' + k).hidden = k !== v; });
     d.querySelectorAll('.tabs [data-view], .dnav [data-view]').forEach((b) => b.setAttribute('aria-current', b.dataset.view === (TAB_OF[v] || v) ? 'page' : 'false'));
     if (v === 'home') renderHome();
+    if (v === 'exam') renderExamHome();
+    if (v === 'results') renderResults();
     if (v === 'tutorials') renderTutIndex();
     if (v === 'progress') renderProgress();
     if (v === 'tutorial') renderTutorial();
     if (v === 'flashcards') renderFlashIndex();
     if (v === 'deck') renderDeck();
-    if (v === 'grapher' && MX.Grapher) MX.Grapher.render(byId('gr-page'));
+    if (v === 'grapher' && MX.Grapher) MX.Grapher.render(byId('gr-page'), opts.fromRoute ? { mode: MX.Grapher.state.mode } : undefined);
+    syncAddress(v, opts.replace);
     if (opts.scrollTo != null) G.scrollTo(0, opts.scrollTo);
     else if (!opts.keepScroll) G.scrollTo(0, 0);
+    // a new page: move keyboard focus to its heading, as a page load would
+    if (App.booted && !opts.keepFocus) {
+      const h1 = byId('v-' + v).querySelector('h1');
+      if (h1) { if (!h1.hasAttribute('tabindex')) h1.setAttribute('tabindex', '-1'); h1.focus({ preventScroll: true }); }
+    }
   }
+  // the grapher switched between graph and draw mode: that's a new address
+  MX.onGrapherMode = () => { if (App.view === 'grapher') syncAddress('grapher'); };
+  function closeStaleFocus() { const a = d.activeElement; if (a && a.blur && a !== d.body && !byId('drawer').contains(a)) a.blur(); }
   function gotoItem(i) {
     const it = App.items[i];
     if (!it) return;
+    const p = examPartOf(it.topic);
+    if (App.view !== 'part' || App.part !== p) { App.part = p; renderExam(); setView('part', { keepFocus: true }); }
     const el = byId('card-x' + examState().no + '-' + i);
     if (el) {
       el.scrollIntoView({ behavior: prefersReduced() ? 'auto' : 'smooth', block: 'start' });
@@ -16480,34 +16676,29 @@ ${(() => {
     else if (act === 'reveal') doReveal(b.dataset.card, +b.dataset.p);
     else if (act === 'tutorial') {
       App.tutId = b.dataset.topic;
-      if (App.view !== 'tutorial') { App.returnView = App.view; App.returnItem = App.view === 'exam' && b.dataset.item != null ? +b.dataset.item : -1; }
+      App.tutTab = 'lesson';
+      if (App.view !== 'tutorial') { App.returnView = App.view; App.returnItem = App.view === 'part' && b.dataset.item != null ? +b.dataset.item : -1; }
       setView('tutorial');
     } else if (act === 'back') {
       const v = App.returnView || 'tutorials', i = App.returnItem;
-      if (v === 'exam') { setView('exam', { keepScroll: true }); if (i != null && i >= 0) setTimeout(() => gotoItem(i), 30); else if (examState().finished) byId('results').scrollIntoView({ block: 'start' }); }
-      else setView(v);
+      if (v === 'part') { setView('part', { scrollTo: scrollMem[hashOf('part')] || 0 }); if (i != null && i >= 0) setTimeout(() => gotoItem(i), 30); }
+      else setView(v, { scrollTo: scrollMem[hashOf(v)] || 0 });
     }
     else if (act === 'view') {
-      const v = b.dataset.view;
-      if (v === 'exam' && App.view !== 'exam' && App.examScroll != null) setView('exam', { scrollTo: App.examScroll });
-      else setView(v);
+      setView(b.dataset.view);
     }
-    else if (act === 'resume') { setView('exam'); const i = firstOpenItem(); if (i > 0) setTimeout(() => gotoItem(i), 30); }
+    else if (act === 'resume') { const i = firstOpenItem(); App.part = App.items[i] ? examPartOf(App.items[i].topic) : 1; renderExam(); setView('part'); if (i > 0) setTimeout(() => gotoItem(i), 30); }
+    else if (act === 'tut-tab') { App.tutTab = b.dataset.tab; setView('tutorial'); }
     else if (act === 'goto') gotoItem(+b.dataset.item);
-    else if (act === 'to-practice') { const h = byId('tut-practice'); if (h) h.scrollIntoView({ block: 'start', behavior: prefersReduced() ? 'auto' : 'smooth' }); }
-    else if (act === 'goto-part') {
-      if (App.view !== 'exam') setView('exam', { keepScroll: true });
-      const h = byId('exam-part-' + b.dataset.part);
-      if (h) G.setTimeout(() => h.scrollIntoView({ block: 'start', behavior: prefersReduced() ? 'auto' : 'smooth' }), 30);
-    }
+    else if (act === 'to-practice') { App.tutTab = 'practice'; setView('tutorial'); }
+    else if (act === 'goto-part') { App.part = +b.dataset.part || 1; renderExam(); setView('part'); }
     else if (act === 'more') moreExercises();
-    else if (act === 'new-exam') { startNewExam(); renderExam(); setView('exam'); }
+    else if (act === 'new-exam') { startNewExam(); App.part = 1; renderExam(); setView('exam'); }
     else if (act === 'save-later') {
       Store.save();
       Store.flushRemote && Store.flushRemote();
       const i = firstOpenItem();
-      App.examScroll = null;
-      setView('home');
+        setView('home');
       toast(`Saved. Your exam will open at question ${App.items[i] ? App.items[i].n : 1} when you come back.`);
     }
     else if (act === 'end-ask') { byId('end-confirm').hidden = false; b.hidden = true; }
@@ -16519,14 +16710,15 @@ ${(() => {
     // flashcards
     else if (act === 'deck') {
       const from = b.dataset.from || (App.view === 'tutorial' ? 'tutorial' : App.view === 'home' ? 'home' : 'flashcards');
+      if (b.dataset.mode === 'learning' && b.dataset.all) { App.deck = null; }
       openDeck(b.dataset.topic ? { topic: b.dataset.topic } : b.dataset.section ? { section: b.dataset.section } : { all: 1 }, b.dataset.mode || 'all', from);
     }
-    else if (act === 'deck-back') setView(App.deckReturn === 'tutorial' && App.tutId ? 'tutorial' : App.deckReturn === 'home' ? 'home' : 'flashcards');
+    else if (act === 'deck-back') { const v = App.deckReturn === 'tutorial' && App.tutId ? 'tutorial' : App.deckReturn === 'home' ? 'home' : 'flashcards'; setView(v, { scrollTo: scrollMem[hashOf(v)] || 0 }); }
     else if (act === 'flip') flipCard();
     else if (act === 'deck-mark') markCard(+b.dataset.v);
     else if (act === 'deck-next') stepCard(1);
     else if (act === 'deck-prev') stepCard(-1);
-    else if (act === 'deck-mode') { App.deck.mode = b.dataset.mode; buildOrder(); renderDeck(); }
+    else if (act === 'deck-mode') { App.deck.mode = b.dataset.mode; buildOrder(); renderDeck(); syncAddress('deck', true); }
     else if (act === 'deck-shuffle') { App.deck.shuffle = !App.deck.shuffle; buildOrder(); renderDeck(); }
   }
   function partOf(el) {
@@ -16590,7 +16782,12 @@ ${(() => {
       if (what === 'status' && App.view === 'progress') renderProgress();
     });
     renderExam();
-    setView('home', { keepScroll: true });
+    if (G.history && 'scrollRestoration' in G.history) G.history.scrollRestoration = 'manual';
+    applyRoute(G.location.hash || '#/', { replace: true });
+    App.booted = true;
+    let st = 0;
+    G.addEventListener('scroll', () => { clearTimeout(st); st = setTimeout(() => { if (App.hash) scrollMem[App.hash] = G.scrollY; }, 80); }, { passive: true });
+    G.addEventListener('hashchange', () => { if (G.location.hash !== App.hash) applyRoute(G.location.hash, { restore: true }); });
   }
   if (d.readyState === 'loading') d.addEventListener('DOMContentLoaded', boot);
   else boot();
