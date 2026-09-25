@@ -66,6 +66,7 @@ A study app for an algebra placement exam. It started from three sample final ex
   - **Window and grid:** the x and y range and the tick spacing (1, 2, 5, 10, 0.5…), with presets and zoom.
   - **Draw a graph:** draw on the grid with a pen, points that snap to the grid, or two-point tools: a line through two points, a parabola from its vertex and one more point, a circle from its center and a point on it. Type what your drawing is the graph of and press **Check**. Pen strokes may wander about half a grid square; lines, parabolas and circles built from points must match closely; the drawing must cover the graph and pass through its intercepts and turning points. You can then show the correct graph on top of yours.
   - Your functions, colors, window and mode are saved.
+- **Stopwatch.** A round timer button floats in the lower right corner on every page. Tap it and a panel slides out of it (the button and panel form one pill) with **Start**, then **Pause** / **Resume**, **Restart** and **Stop**, and the elapsed time once it's running. A dot on the closed button shows it is running (green) or paused (amber). The time keeps counting across pages and reloads (saved in this browser), and **Stop** keeps the last time on show.
 - **Graphing by hand (practice).** A tutorial topic with "Graph it" problems (lines, parabolas, absolute value and square root graphs) answered by drawing on a grid with the same tools and checked the same way. It is practice only; exams stay the same length.
 - **Flashcards.** There are 424 cards in 72 decks, one per topic, covering the rules, formulas and quick examples.
   - Tap a card and it turns over in 3D, lifting slightly as it turns. Tapping again mid-turn reverses it smoothly. New cards slide in from the side you're moving toward. With the system's reduce-motion setting on, the two sides simply fade instead.
@@ -193,6 +194,7 @@ node test/catalog.mjs     # print the catalog above
 | `src/parse.js` | parser for typed answers (including logs, e, ∞), evaluation, polynomial/rational forms |
 | `src/verify.js` | independent answer checks: each generated part's `verify` re-derives the answer from the problem as shown (root finding, substitution, equivalence, region sampling) |
 | `src/plot.js` | the grapher's math: reading functions and equations, adaptive sampling, contours, SVG planes, checking drawings |
+| `src/stopwatch.js` | the floating stopwatch (icons from Lucide, ISC license) |
 | `src/grapher.js` | the Grapher tab, and the drawing grid used by "graph it" practice |
 | `src/check.js` | graders for each answer type (`num`, `nums`, `expr`, `factor`, `eq`, `system`, `ineq`, `point(s)`, `sci`, `radpm`, `eqform`, `set`, `interval`, `choice`) |
 | `src/editor.js` | the WYSIWYG math answer box and its button bar; its value is the plain text the graders read |

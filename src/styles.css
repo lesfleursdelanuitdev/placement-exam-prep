@@ -838,3 +838,39 @@ input.bad { border-color: var(--bad) !important; }
 .drawq .gr-actions { margin: 6px 0 0; }
 .dq-key { font-size: 13px; color: var(--muted); margin: 4px 0 0; display: flex; align-items: center; gap: 6px; }
 .dq-sw { display: inline-block; width: 22px; height: 5px; border-radius: 3px; background: var(--ok); opacity: 0.6; }
+
+/* ================= stopwatch (floating, lower right) =================
+   One pill: closed it is just the round button; open, the panel grows out of it to the left,
+   so the pill's left end is a semicircle continuing the button's shape. */
+.sw { --sw-on: #fff; position: fixed; right: calc(env(safe-area-inset-right, 0px) + 18px); bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); z-index: 45;
+  display: flex; align-items: center; height: 56px; border-radius: 28px; background: var(--accent); color: var(--sw-on); box-shadow: 0 2px 6px rgba(15, 25, 40, 0.18), 0 10px 28px rgba(15, 25, 40, 0.2); font-family: var(--f-ui); }
+:root[data-theme='dark'] .sw { --sw-on: #0c1116; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) .sw { --sw-on: #0c1116; } }
+.sw-fab { position: relative; flex: none; width: 56px; height: 56px; border-radius: 50%; border: 0; background: transparent; color: inherit; display: grid; place-items: center; cursor: pointer; }
+.sw-fab svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.sw-fab:focus-visible, .sw-b:focus-visible { outline: 3px solid var(--sw-on); outline-offset: -5px; }
+.sw-dot { position: absolute; top: 9px; right: 9px; width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--accent); display: none; }
+.sw[data-state='running'] .sw-dot { display: block; background: #3fd28b; animation: sw-pulse 1.6s ease-in-out infinite; }
+.sw[data-state='paused'] .sw-dot { display: block; background: #f3b43a; }
+.sw.open .sw-dot { display: none; }
+@keyframes sw-pulse { 50% { transform: scale(0.72); } }
+.sw-panel { display: flex; align-items: center; gap: 10px; max-width: 0; overflow: hidden; padding-left: 0; opacity: 0; white-space: nowrap;
+  transition: max-width 0.26s ease, padding 0.26s ease, opacity 0.18s ease; }
+.sw.open .sw-panel { max-width: calc(100vw - 110px); padding-left: 18px; opacity: 1; }
+.sw-read { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
+.sw-time { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
+.sw-sub { font-size: 11.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.8; }
+.sw:not(.has-time) .sw-time { display: none; }
+.sw:not(.has-time) .sw-sub { font-size: 14px; letter-spacing: 0; text-transform: none; opacity: 1; }
+.sw-btns { display: flex; gap: 6px; }
+.sw-b { width: 40px; height: 40px; flex: none; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer; color: inherit;
+  background: color-mix(in srgb, var(--sw-on) 16%, transparent); }
+.sw-b:hover { background: color-mix(in srgb, var(--sw-on) 28%, transparent); }
+.sw-b.go { background: var(--sw-on); color: var(--accent); }
+.sw-b.go:hover { background: color-mix(in srgb, var(--sw-on) 86%, var(--accent)); }
+.sw-b svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.sw-b[data-sw='start'] svg, .sw-b[data-sw='resume'] svg, .sw-b[data-sw='pause'] svg, .sw-b[data-sw='stop'] svg { fill: currentColor; }
+.sw-b span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.menu-open .sw { visibility: hidden; } /* hidden behind the slide-out menu */
+@media (prefers-reduced-motion: reduce) { .sw-panel { transition: none; } .sw[data-state='running'] .sw-dot { animation: none; } }
+@media print { .sw { display: none; } }
