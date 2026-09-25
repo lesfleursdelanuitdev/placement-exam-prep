@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const files = ['core.js', 'texmath.js', 'parse.js', 'check.js', 'svg.js', 'helpers.js', 'verify.js'].map((f) => 'src/' + f)
+const files = ['core.js', 'texmath.js', 'parse.js', 'check.js', 'svg.js', 'helpers.js', 'verify.js', 'plot.js'].map((f) => 'src/' + f)
   .concat(readdirSync(join(root, 'src/topics')).filter((f) => f.endsWith('.js')).sort().map((f) => 'src/topics/' + f))
   .concat(['src/flashcards.js']);
 const ctx = { console }; ctx.globalThis = ctx; vm.createContext(ctx);

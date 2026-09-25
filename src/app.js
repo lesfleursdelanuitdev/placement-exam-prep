@@ -62,6 +62,7 @@
   function buildExam(seed) {
     const items = [];
     for (const t of orderedTopics()) {
+      if (t.practiceOnly) continue; // tutorial practice only (drawing a graph needs a pointer), not on the exam
       const used = new Set(), usedCtx = new Set();
       slotsOf(t).forEach((slot, si) => {
         const rng = MX.rngFor(seed, t.id + '#' + si);
@@ -165,6 +166,7 @@
         const vs = val.values || [];
         return '<div class="multi">' + [0, 1].map((k) => (k ? `<span class="join">${esc(p.joiner || 'and')}</span>` : '') + `<span class="cell">${answerBox(base + '-' + k, 'point', vs[k], dis, 'short', ctx)}</span>`).join('') + '</div>';
       }
+      case 'draw': return MX.Grapher ? MX.Grapher.drawHTML({ id: base + '-0', win: p.win, tools: p.tools, value: val.value, disabled: dis, answer: dis ? p.answer : '' }) : '';
       case 'system': {
         const vs = val.values || [];
         const labs = p.inputs || ['Equation 1', 'Equation 2'];
@@ -190,6 +192,7 @@
       const n = p.kind === 'nums' ? p.count || p.answers.length : 2;
       return { values: Array.from({ length: n }, (_, k) => MX.ED.value(base + '-' + k)) };
     }
+    if (p.kind === 'draw') return { value: MX.Grapher ? MX.Grapher.drawValue(base + '-0') : '' };
     const u = byId(base + '-u');
     return { value: MX.ED.value(base + '-0'), unit: u ? u.value : undefined };
   }

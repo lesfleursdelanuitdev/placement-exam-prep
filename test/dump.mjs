@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const files = ['core.js','texmath.js','parse.js','check.js','svg.js','helpers.js','verify.js'].map(f=>'src/'+f).concat(readdirSync(join(root,'src/topics')).filter(f=>f.endsWith('.js')).sort().map(f=>'src/topics/'+f));
+const files = ['core.js','texmath.js','parse.js','check.js','svg.js','helpers.js','verify.js','plot.js'].map(f=>'src/'+f).concat(readdirSync(join(root,'src/topics')).filter(f=>f.endsWith('.js')).sort().map(f=>'src/topics/'+f));
 const ctx = { console }; ctx.globalThis = ctx; vm.createContext(ctx);
 for (const f of files) vm.runInContext(readFileSync(join(root, f), 'utf8'), ctx, { filename: f });
 const MX = ctx.MX; const only = process.argv[2]; const seed = process.argv[3] || 'dump';

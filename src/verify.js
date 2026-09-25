@@ -212,6 +212,7 @@
       case 'interval': case 'ineq': return MX.readRegion(String(part.answer));
       case 'system': return part.answers.map((s) => V.rel(Array.isArray(s) ? s[0] : s)[0]);
       case 'choice': return part.answer;
+      case 'draw': return MX.Plot.decode(part.key);
     }
     throw new Error('verify: unknown kind ' + part.kind);
   };
@@ -235,6 +236,10 @@
       }
       case 'system': return [{ lhs: a[0].lhs, op: a[0].op, rhs: { t: 'add', a: a[0].rhs, b: { t: 'num', v: 1 } } }, ...a.slice(1)];
       case 'choice': return (a + 1) % part.options.length;
+      case 'draw': { // the same drawing moved up one grid square
+        const up = (p) => [p[0], p[1] + ((part.win && part.win.ystep) || 1)];
+        return a.map((it) => (it.t === 'point' ? { t: 'point', p: up(it.p) } : it.t === 'stroke' ? { t: 'stroke', pts: it.pts.map(up) } : { t: it.t, a: up(it.a), b: up(it.b) }));
+      }
     }
     return a;
   };
@@ -384,6 +389,12 @@
   };
   // several verifiers must all pass
   V.all = (...vs) => (a, part) => { for (const f of vs) { const r = f(a, part); if (r !== true) return r; } return true; };
+  // "graph it" (draw): the drawing `a` shows the graph of spec, an equation or function written from the prompt
+  // (not part.answer), and the checker rejects the same drawing moved (that is what V.mutate feeds it)
+  V.drawing = (spec) => (a, part) => {
+    const P = MX.Plot, r = P.checkDrawing(P.read(spec), a, P.cleanWin(part.win || P.DEFAULT_WIN));
+    return r.ok ? true : 'the drawing does not show ' + spec + ': ' + r.msgs.join(' ');
+  };
   // hand-written check: fn(a, part) → true | reason
   V.custom = (fn) => (a, part) => { const r = fn(a, part); return r === true ? true : r || 'custom check failed'; };
 

@@ -791,6 +791,16 @@
     });
   };
 
+  // "graph it": the answer is an encoded drawing (see MX.Plot.encode); part.answer is the function to graph
+  CHECK.draw = function (part, input) {
+    const P = MX.Plot;
+    if (!P) return { error: 'The drawing checker didn’t load.' };
+    const items = P.decode(input && input.value);
+    if (!items.length) return { error: 'Draw the graph first.' };
+    const r = P.checkDrawing(P.read(part.answer), items, P.cleanWin(part.win || P.DEFAULT_WIN));
+    return r.ok ? { ok: true } : { ok: false, msg: r.msgs.slice(0, 2).join(' ') };
+  };
+
   MX.check = function (part, input) {
     const fn = CHECK[part.kind];
     if (!fn) return { error: 'Unknown answer type ' + part.kind };
@@ -803,6 +813,7 @@
       case 'system': return { values: part.answers.map((a) => (Array.isArray(a) ? a[0] : a)) };
       case 'points': return { values: part.answers.slice() };
       case 'choice': return { choice: part.answer };
+      case 'draw': return { value: part.key };
       case 'sci': return { value: part.answer };
       case 'set': return { value: part.answers.length ? part.answer : 'no solution' };
       case 'interval': case 'eqform': return { value: part.answer };

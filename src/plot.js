@@ -292,17 +292,44 @@
   // ---------- checking a drawing ----------
   // distance in grid squares, so "half a grid square" means the same on any window
   const gdist = (p, q, win) => Math.hypot((p[0] - q[0]) / win.xstep, (p[1] - q[1]) / win.ystep);
-  function distToSegs(p, segs, win) {
-    let best = Infinity;
+  // distance (in grid squares) from p to a set of polylines. Segments are bucketed into grid-square cells once,
+  // so each query only looks at nearby segments; distances beyond `cap` are reported as cap + 1.
+  function segIndex(segs, win) {
+    const cells = new Map(), list = [];
     for (const s of segs) for (let i = 0; i < s.length; i++) {
       const a = s[i], b = s[i + 1] || s[i];
-      const ax = a[0] / win.xstep, ay = a[1] / win.ystep, bx = b[0] / win.xstep, by = b[1] / win.ystep, px = p[0] / win.xstep, py = p[1] / win.ystep;
-      const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy;
-      let t = L ? ((px - ax) * dx + (py - ay) * dy) / L : 0;
-      t = Math.max(0, Math.min(1, t));
-      const d = Math.hypot(px - ax - t * dx, py - ay - t * dy);
-      if (d < best) best = d;
+      const ax = a[0] / win.xstep, ay = a[1] / win.ystep, bx = b[0] / win.xstep, by = b[1] / win.ystep;
+      if (![ax, ay, bx, by].every(isFinite)) continue;
+      const k = list.push([ax, ay, bx, by]) - 1;
+      const x0 = Math.floor(Math.min(ax, bx)), x1 = Math.floor(Math.max(ax, bx)), y0 = Math.floor(Math.min(ay, by)), y1 = Math.floor(Math.max(ay, by));
+      if ((x1 - x0 + 1) * (y1 - y0 + 1) > 4000) continue; // an enormous segment far off screen can't be near anything we test
+      for (let cx = x0; cx <= x1; cx++) for (let cy = y0; cy <= y1; cy++) { const key = cx + ',' + cy; let c = cells.get(key); if (!c) cells.set(key, (c = [])); c.push(k); }
     }
+    return { cells, list };
+  }
+  function distIdx(p, idx, win, cap = 3) {
+    const px = p[0] / win.xstep, py = p[1] / win.ystep, cx0 = Math.floor(px), cy0 = Math.floor(py);
+    if (!idx.stamp || idx.stamp.length < idx.list.length) { idx.stamp = new Uint32Array(idx.list.length); idx.tick = 0; }
+    const stamp = idx.stamp, tick = ++idx.tick;
+    let best = cap + 1;
+    const scan = (r0, r1) => {
+      for (let cx = cx0 - r1; cx <= cx0 + r1; cx++) for (let cy = cy0 - r1; cy <= cy0 + r1; cy++) {
+        if (Math.max(Math.abs(cx - cx0), Math.abs(cy - cy0)) < r0) continue;
+        const c = idx.cells.get(cx + ',' + cy);
+        if (!c) continue;
+        for (const k of c) {
+          if (stamp[k] === tick) continue;
+          stamp[k] = tick;
+          const q = idx.list[k], ax = q[0], ay = q[1], dx = q[2] - ax, dy = q[3] - ay, L = dx * dx + dy * dy;
+          let t = L ? ((px - ax) * dx + (py - ay) * dy) / L : 0;
+          t = t < 0 ? 0 : t > 1 ? 1 : t;
+          const ex = px - ax - t * dx, ey = py - ay - t * dy, dd = Math.sqrt(ex * ex + ey * ey);
+          if (dd < best) best = dd;
+        }
+      }
+    };
+    scan(0, 1); // the point's own cell and its neighbors
+    if (best > 1) scan(2, Math.ceil(cap)); // only look farther when nothing is within one grid square
     return best;
   }
   const inWin = (p, win) => p[0] >= win.xmin && p[0] <= win.xmax && p[1] >= win.ymin && p[1] <= win.ymax;
@@ -322,7 +349,7 @@
   }
   // the target curve as segments, sampled a little finer than the screen
   function targetSegs(g, win) {
-    if (g.kind === 'fn') return P.sample(g.f, win, 900);
+    if (g.kind === 'fn') return P.sample(g.f, win, 600);
     return P.contour(g.F, win, 240, 240);
   }
   // key points of a function's graph inside the window: intercepts and turning points
@@ -377,9 +404,10 @@
     });
     if (!dpts.length && !points.length) return { ok: false, msgs: ['Draw the graph first.'], off: [], target: tsegs };
     const off = [];
+    const tIdx = segIndex(tsegs, win), dIdx = segIndex(drawn, win);
     // 1. points: each must be on the graph
     let badPts = 0;
-    points.forEach((p) => { if (distToSegs(p, tsegs, win) > 0.2) { badPts++; off.push(p); } });
+    points.forEach((p) => { if (distIdx(p, tIdx, win) > 0.2) { badPts++; off.push(p); } });
     if (points.length && badPts) msgs.push(badPts === 1 ? 'One of your points is not on the graph.' : badPts + ' of your points are not on the graph.');
     // points only: enough of them, and spread out, to pin the graph down
     if (!dpts.length) {
@@ -390,19 +418,20 @@
     // 2. the drawing stays close to the graph
     let near = 0;
     const far = [];
-    dpts.forEach(({ p, t }) => { const d = distToSegs(p, tsegs, win); if (d <= t) near++; else far.push([p, d]); });
+    dpts.forEach(({ p, t }) => { const d = distIdx(p, tIdx, win); if (d <= t) near++; else far.push([p, d]); });
     const acc = near / dpts.length;
     const wild = far.filter(([, d]) => d > 3 * tol);
     far.forEach(([p]) => off.push(p));
-    if (acc < 0.9) msgs.push(dpts.some((q) => q.t < tol) && far.length ? 'Your line or curve is close, but not on the graph. Check the points you picked.' : 'Part of your drawing is more than half a grid square away from the graph.');
+    const exact = dpts.some((q) => q.t < tol);
+    if (acc < 0.9) msgs.push(acc < 0.6 ? (exact ? 'Your line or curve is not the graph of this equation. Check the points you picked.' : 'Most of your drawing is not on the graph.') : exact ? 'Your line or curve is close, but not on the graph. Check the points you picked.' : 'Part of your drawing is more than half a grid square away from the graph.');
     else if (wild.length > 0.02 * dpts.length) msgs.push('Some of your drawing is far from the graph.');
     // 3. the drawing covers the graph (the part inside the window)
     let covered = 0;
-    target.forEach((p) => { if (distToSegs(p, drawn, win) <= tol) covered++; });
+    target.forEach((p) => { if (distIdx(p, dIdx, win) <= tol) covered++; });
     const cov = covered / target.length;
     if (cov < 0.8) msgs.push('Your drawing doesn’t cover enough of the graph. Draw it across the whole window.');
     // 4. key points
-    const keys = keyPoints(g, win), missed = keys.filter((k) => distToSegs(k.p, drawn, win) > P.TOL_KEY);
+    const keys = keyPoints(g, win), missed = keys.filter((k) => distIdx(k.p, dIdx, win) > P.TOL_KEY);
     missed.slice(0, 3).forEach((k) => msgs.push('Your drawing misses ' + k.what + ' at (' + fmt(round2(k.p[0])) + ', ' + fmt(round2(k.p[1])) + ').'));
     const ok = acc >= 0.9 && wild.length <= 0.02 * dpts.length && cov >= 0.8 && !missed.length && !badPts;
     if (ok) msgs.unshift('Yes! Your drawing matches the graph.');
@@ -412,5 +441,50 @@
   function isLinear(g) {
     try { const p = MX.toPoly(g.ast); if (!p) return false; for (const k of p.keys ? p.keys() : Object.keys(p)) { const deg = (String(k).match(/x\^?(\d*)/) || [])[1]; if (deg && +deg > 1) return false; } return !!p; } catch (e) { return false; }
   }
+  // ---------- drawings as short text (saved answers are capped at 2000 characters) ----------
+  // "p:x,y" point · "line:x,y,x,y" · "parabola:…" · "circle:…" · "s:x,y x,y …" pen stroke; items joined by ";"
+  const r2 = (v) => Math.round(v * 100) / 100;
+  P.encode = function (items, win) {
+    const w = win || P.DEFAULT_WIN;
+    const out = [];
+    let budget = 1900;
+    for (const it of items) {
+      let s = '';
+      if (it.t === 'point') s = 'p:' + r2(it.p[0]) + ',' + r2(it.p[1]);
+      else if (it.t === 'line' || it.t === 'parabola' || it.t === 'circle') s = it.t + ':' + [it.a[0], it.a[1], it.b[0], it.b[1]].map(r2).join(',');
+      else if (it.t === 'stroke') {
+        // keep a point every ~0.2 grid squares, at most 60 per stroke
+        const keep = [it.pts[0]];
+        for (const q of it.pts) { const l = keep[keep.length - 1]; if (Math.hypot((q[0] - l[0]) / w.xstep, (q[1] - l[1]) / w.ystep) >= 0.2) keep.push(q); }
+        const last = it.pts[it.pts.length - 1];
+        if (keep[keep.length - 1] !== last) keep.push(last);
+        const step = Math.max(1, Math.ceil(keep.length / 60));
+        const pts = keep.filter((_, k) => k % step === 0 || k === keep.length - 1);
+        s = 's:' + pts.map((q) => r2(q[0]) + ',' + r2(q[1])).join(' ');
+      }
+      if (!s || s.length > budget) continue;
+      budget -= s.length + 1;
+      out.push(s);
+    }
+    return out.join(';');
+  };
+  P.decode = function (str) {
+    const items = [];
+    const num = (v) => { const n = +v; return isFinite(n) && Math.abs(n) < 1e6 ? n : null; };
+    String(str || '').split(';').slice(0, 60).forEach((part) => {
+      const m = /^(p|line|parabola|circle|s):(.*)$/.exec(part.trim());
+      if (!m) return;
+      if (m[1] === 's') {
+        const pts = m[2].split(' ').map((q) => q.split(',').map(num)).filter((q) => q.length === 2 && q[0] !== null && q[1] !== null);
+        if (pts.length > 1) items.push({ t: 'stroke', pts });
+        return;
+      }
+      const v = m[2].split(',').map(num);
+      if (v.some((x) => x === null)) return;
+      if (m[1] === 'p' && v.length === 2) items.push({ t: 'point', p: v });
+      else if (m[1] !== 'p' && v.length === 4) items.push({ t: m[1], a: [v[0], v[1]], b: [v[2], v[3]] });
+    });
+    return items;
+  };
   MX.Plot = P;
 })(typeof window !== 'undefined' ? window : globalThis);

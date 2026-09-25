@@ -197,25 +197,7 @@
     tip.style.top = Math.max(4, Math.min(dims.H - 90, S.hover.py - 40)) + 'px';
     return b;
   }
-  function drawnLayer(pl) {
-    let b = '';
-    const pt = (p, cls = 'gr-pt') => `<circle class="${cls}" cx="${pl.X(p[0]).toFixed(1)}" cy="${pl.Y(p[1]).toFixed(1)}" r="5"/>`;
-    S.items.forEach((it) => {
-      if (it.t === 'point') b += pt(it.p);
-      else if (it.t === 'stroke') b += `<path class="gr-ink" d="${P.path([it.pts], pl)}"/>`;
-      else {
-        const sh = P.shape(it.t, it.a, it.b, S.win);
-        if (sh) b += `<path class="gr-ink" d="${P.path(sh.segs, pl)}"/>`;
-        b += pt(it.a, 'gr-pt anchor') + pt(it.b, 'gr-pt anchor');
-      }
-    });
-    if (S.drawing) b += `<path class="gr-ink" d="${P.path([S.drawing], pl)}"/>`;
-    if (S.pending) {
-      b += pt(S.pending.a, 'gr-pt anchor');
-      if (S.pending.b) { const sh = P.shape(S.pending.t, S.pending.a, S.pending.b, S.win); if (sh) b += `<path class="gr-ink ghost" d="${P.path(sh.segs, pl)}"/>`; }
-    }
-    return b;
-  }
+  const drawnLayer = (pl) => drawnItems(S, pl);
 
   // ---------- events ----------
   function svgPoint(ev) {
@@ -347,6 +329,102 @@
     circle: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="1.8" class="f"/></svg>',
   };
 
+  // ---------- the drawing widget used by "graph it" practice questions ----------
+  // Rendered as HTML by the problem card; its state lives here, keyed by element id. The answer value is the
+  // encoded drawing (P.encode), kept in data-v; every change fires 'mq-change' so drafts are saved.
+  const DQ = new Map();
+  const DQ_SIZE = 340;
+  function dqState(el) {
+    let st = DQ.get(el.id);
+    if (!st || st.el !== el) {
+      let win = P.DEFAULT_WIN;
+      try { win = P.cleanWin(JSON.parse(el.dataset.win || '{}')); } catch (e) { /* default window */ }
+      const tools = (el.dataset.tools || 'pen,point,line,parabola').split(',');
+      st = { el, win, tools, tool: tools[0], items: P.decode(el.dataset.v || ''), pending: null, drawing: null, dis: el.hasAttribute('data-dis'), ans: el.dataset.ans || '' };
+      DQ.set(el.id, st);
+    }
+    return st;
+  }
+  function dqSvg(st) {
+    const pl = P.plane(st.win, DQ_SIZE, DQ_SIZE);
+    let b = pl.body + '<g>';
+    if (st.ans) { try { b += `<path class="gr-answer" d="${P.path(P.curves(P.read(st.ans), st.win, 400), pl)}"/>`; } catch (e) { /* nothing to overlay */ } }
+    b += drawnItems(st, pl) + '</g>' + pl.labels;
+    return b;
+  }
+  function drawnItems(st, pl) {
+    let b = '';
+    const pt = (p, cls = 'gr-pt') => `<circle class="${cls}" cx="${pl.X(p[0]).toFixed(1)}" cy="${pl.Y(p[1]).toFixed(1)}" r="5"/>`;
+    st.items.forEach((it) => {
+      if (it.t === 'point') b += pt(it.p);
+      else if (it.t === 'stroke') b += `<path class="gr-ink" d="${P.path([it.pts], pl)}"/>`;
+      else {
+        const sh = P.shape(it.t, it.a, it.b, st.win);
+        if (sh) b += `<path class="gr-ink" d="${P.path(sh.segs, pl)}"/>`;
+        b += pt(it.a, 'gr-pt anchor') + pt(it.b, 'gr-pt anchor');
+      }
+    });
+    if (st.drawing) b += `<path class="gr-ink" d="${P.path([st.drawing], pl)}"/>`;
+    if (st.pending) {
+      b += pt(st.pending.a, 'gr-pt anchor');
+      if (st.pending.b) { const sh = P.shape(st.pending.t, st.pending.a, st.pending.b, st.win); if (sh) b += `<path class="gr-ink ghost" d="${P.path(sh.segs, pl)}"/>`; }
+    }
+    return b;
+  }
+  function dqToolbar(st) {
+    return st.tools.map((t) => { const T = TOOLS.find((x) => x.id === t); return T ? `<button type="button" role="radio" aria-checked="${t === st.tool}" data-dq="tool" data-t="${t}" title="${esc(T.hint)}">${TOOL_ICON[t]}<span>${T.name}</span></button>` : ''; }).join('');
+  }
+  function dqRender(st) {
+    const el = st.el;
+    el.querySelector('.dq-svg').innerHTML = dqSvg(st);
+    const tb = el.querySelector('.dq-tools');
+    if (tb) tb.innerHTML = dqToolbar(st);
+    const hint = el.querySelector('.dq-hint');
+    if (hint) { const T = TOOLS.find((x) => x.id === st.tool); hint.textContent = (T ? T.hint : '') + (st.pending ? ' Now tap the second point.' : ''); }
+  }
+  function dqChanged(st) {
+    st.el.dataset.v = P.encode(st.items, st.win);
+    st.el.dispatchEvent(new CustomEvent('mq-change', { bubbles: true }));
+  }
+  function dqPoint(st, ev) {
+    const svg = st.el.querySelector('.dq-svg'), r = svg.getBoundingClientRect();
+    const pl = P.plane(st.win, DQ_SIZE, DQ_SIZE);
+    return pl.inv(((ev.clientX - r.left) / r.width) * DQ_SIZE, ((ev.clientY - r.top) / r.height) * DQ_SIZE);
+  }
+  const dqOf = (t) => { const el = t && t.closest && t.closest('.drawq'); return el && !el.hasAttribute('data-dis') ? dqState(el) : null; };
+  d.addEventListener('pointerdown', (ev) => {
+    if (!ev.target.closest || !ev.target.closest('.dq-svg')) return;
+    const st = dqOf(ev.target); if (!st) return;
+    ev.preventDefault();
+    if (st.tool === 'pen') { st.drawing = [dqPoint(st, ev)]; try { ev.target.closest('.dq-svg').setPointerCapture(ev.pointerId); } catch (e) { /* capture is optional */ } }
+  });
+  d.addEventListener('pointermove', (ev) => {
+    if (!ev.target.closest || !ev.target.closest('.dq-svg')) return;
+    const st = dqOf(ev.target); if (!st) return;
+    const m = dqPoint(st, ev);
+    if (st.drawing) { st.drawing.push(m); dqRender(st); } else if (st.pending) { st.pending.b = P.snap(m, st.win); dqRender(st); }
+  });
+  d.addEventListener('pointerup', (ev) => {
+    if (!ev.target.closest || !ev.target.closest('.dq-svg')) return;
+    const st = dqOf(ev.target); if (!st) return;
+    const sp = P.snap(dqPoint(st, ev), st.win);
+    if (st.tool === 'pen') { if (st.drawing && st.drawing.length > 1) st.items.push({ t: 'stroke', pts: st.drawing }); st.drawing = null; }
+    else if (st.tool === 'point') st.items.push({ t: 'point', p: sp });
+    else if (!st.pending) st.pending = { t: st.tool, a: sp };
+    else if ((sp[0] !== st.pending.a[0] || sp[1] !== st.pending.a[1]) && P.shape(st.tool, st.pending.a, sp, st.win)) { st.items.push({ t: st.tool, a: st.pending.a, b: sp }); st.pending = null; }
+    dqRender(st); dqChanged(st);
+  });
+  d.addEventListener('click', (ev) => {
+    const b = ev.target.closest && ev.target.closest('[data-dq]');
+    if (!b) return;
+    const st = dqOf(b); if (!st) return;
+    const a = b.dataset.dq;
+    if (a === 'tool') { st.tool = b.dataset.t; st.pending = null; }
+    else if (a === 'undo') { if (st.pending) st.pending = null; else st.items.pop(); dqChanged(st); }
+    else if (a === 'clear') { st.items = []; st.pending = null; dqChanged(st); }
+    dqRender(st);
+  });
+
   MX.Grapher = {
     render(root) {
       if (!S.built || S.root !== root) { load(); build(root); renderWin(); }
@@ -354,5 +432,18 @@
       refresh();
     },
     state: S,
+    // o = {id, win, tools:[…], value (encoded drawing), disabled, answer (function to overlay when locked)}
+    drawHTML(o) {
+      DQ.delete(o.id);
+      const win = P.cleanWin(o.win || P.DEFAULT_WIN), tools = (o.tools || ['pen', 'point', 'line', 'parabola']).filter((t) => TOOLS.some((x) => x.id === t));
+      const st = { win, tools, tool: tools[0], items: P.decode(o.value || ''), pending: null, drawing: null, ans: o.disabled && o.answer ? o.answer : '' };
+      const T = TOOLS.find((x) => x.id === st.tool);
+      return `<div class="drawq" id="${esc(o.id)}" data-win="${esc(JSON.stringify(win))}" data-tools="${esc(tools.join(','))}" data-v="${esc(o.value || '')}"${o.disabled ? ' data-dis' : ''}${st.ans ? ` data-ans="${esc(st.ans)}"` : ''}>
+        ${o.disabled ? '' : `<div class="dq-tools gr-tools" role="radiogroup" aria-label="Drawing tool">${dqToolbar(st)}</div><p class="dq-hint">${esc(T ? T.hint : '')}</p>`}
+        <svg class="dq-svg${o.disabled ? '' : ' drawing'}" viewBox="0 0 ${DQ_SIZE} ${DQ_SIZE}" role="img" aria-label="${o.disabled ? 'Your graph' : 'Drawing area: a coordinate plane'}">${dqSvg(st)}</svg>
+        ${o.disabled ? (st.ans ? '<p class="dq-key"><span class="dq-sw"></span> the correct graph</p>' : '') : '<div class="gr-actions"><button type="button" class="btn ghost sm" data-dq="undo">Undo</button><button type="button" class="btn ghost sm" data-dq="clear">Clear</button></div>'}
+      </div>`;
+    },
+    drawValue(id) { const el = d.getElementById(id); return el ? el.dataset.v || '' : ''; },
   };
 })(typeof window !== 'undefined' ? window : globalThis);

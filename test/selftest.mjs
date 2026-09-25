@@ -12,7 +12,7 @@ import { dirname, join } from 'node:path';
 import vm from 'node:vm';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-export const ENGINE_FILES = ['core.js', 'texmath.js', 'parse.js', 'check.js', 'svg.js', 'helpers.js', 'verify.js'];
+export const ENGINE_FILES = ['core.js', 'texmath.js', 'parse.js', 'check.js', 'svg.js', 'helpers.js', 'verify.js', 'plot.js'];
 const topicFiles = readdirSync(join(root, 'src/topics')).filter((f) => f.endsWith('.js')).sort();
 
 const ctx = { console };

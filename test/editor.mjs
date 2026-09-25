@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path';
 import vm from 'node:vm';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const files = ['core.js', 'texmath.js', 'parse.js', 'check.js', 'svg.js', 'helpers.js', 'verify.js'].map((f) => 'src/' + f)
+const files = ['core.js', 'texmath.js', 'parse.js', 'check.js', 'svg.js', 'helpers.js', 'verify.js', 'plot.js'].map((f) => 'src/' + f)
   .concat(readdirSync(join(root, 'src/topics')).filter((f) => f.endsWith('.js')).sort().map((f) => 'src/topics/' + f))
   .concat(['src/flashcards.js', 'src/editor.js']);
 const ctx = { console };
@@ -75,7 +75,7 @@ for (const t of MX.topics) {
     for (let i = 0; i < N; i++) {
       const q = v.gen(MX.rngFor('edtest-' + i, t.id + '/' + vk));
       q.parts.forEach((p, pi) => {
-        if (p.kind === 'choice') return;
+        if (p.kind === 'choice' || p.kind === 'draw') return; // no math box for these
         total++;
         const inp = inputFor(p);
         let r;
