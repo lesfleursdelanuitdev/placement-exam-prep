@@ -187,10 +187,27 @@
       { label: 'Proportion', source: 'Exam 1 #21', pool: PROP_POOL },
       { label: 'Proportion', source: 'Exam 2 #19', pool: PROP_POOL },
     ],
-    lesson: T`<p>When two quantities grow together at a constant rate (tax and price, sugar and cakes, miles and gallons), their ratio stays the same.</p>
-<ol><li>Write two equal fractions with the <em>same units in the same places</em>: \(\dfrac{180\text{ g}}{12\text{ cakes}} = \dfrac{x\text{ g}}{33\text{ cakes}}\).</li>
-<li>Cross-multiply: \(12x = 180\cdot33\).</li><li>Divide: \(x = 495\) grams.</li></ol>
-<p>Another way: find the unit rate first (15 g per cake), then multiply (\(15\cdot33\)). Round money to the nearest cent.</p>`,
+    lesson: T`<p>A <strong>rate</strong> compares two amounts with different units, like miles per gallon or dollars per hour. When the rate stays the same, the two amounts grow together: twice the hours, twice the pay. That lets you scale from what you know to what you want.</p>
+<div class="box def"><h4>Definition <b>Proportion</b></h4><p>A <strong>proportion</strong> is an equation that says two ratios are equal, such as \(\dfrac{8\text{ gallons}}{240\text{ miles}} = \dfrac{x\text{ gallons}}{390\text{ miles}}\).</p></div>
+<div class="box rule"><h4>Property <b>Cross products</b></h4><p>If \(\dfrac{a}{b} = \dfrac{c}{d}\), then \(ad = bc\). Multiplying across like this is called <em>cross-multiplying</em>.</p></div>
+<h3>Setting up the proportion</h3>
+<p>Many stories fit this pattern: sales tax and price, a recipe and the number of servings, inches on a map and real miles, gallons of gas and miles driven, pay and hours, paint and square feet.</p>
+<div class="box how"><h4>How to <b>solve a proportion problem</b></h4><ol>
+<li>Let \(x\) be the amount you want.</li>
+<li>Write two fractions with the <em>same units in the same places</em>: the known pair on one side, the pair with \(x\) on the other.</li>
+<li>Cross-multiply.</li>
+<li>Divide to find \(x\). Round money to the nearest cent.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>A car uses 8 gallons of gas to go 240 miles. How many gallons does it need for 390 miles?</p><table class="st">
+<tr><td>Gallons on top, miles on the bottom, on both sides.</td><td>\(\dfrac{8}{240} = \dfrac{x}{390}\)</td></tr>
+<tr><td>Cross-multiply.</td><td>\(240x = 8 \cdot 390 = 3120\)</td></tr>
+<tr><td>Divide by 240.</td><td>\(x = 13\text{ gallons}\)</td></tr></table></div>
+<h3>Another way: find the unit rate</h3>
+<p>A <strong>unit rate</strong> is the amount for one unit: the price of one item, or the pay for one hour. Find it by dividing, then multiply by how many units you want.</p>
+<div class="ex"><h4>Example</h4><p>6 notebooks cost \$9.00. How much do 14 notebooks cost?</p><table class="st">
+<tr><td>Price of one notebook.</td><td>\(9.00 \div 6 = 1.50\)</td></tr>
+<tr><td>Multiply by 14.</td><td>\(1.50 \cdot 14 = 21.00\)</td></tr>
+<tr><td>Answer.</td><td>\(\$21.00\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Keep the units in the same places. \(\dfrac{8\text{ gallons}}{240\text{ miles}} = \dfrac{390\text{ miles}}{x\text{ gallons}}\) mixes them up and gives a wrong answer.</p></div>`,
     variants: prop,
   });
 
@@ -303,11 +320,27 @@
   MX.register({
     id: 'w-percent', kind: 'word', section: SEC, title: 'Percent', sources: ['Exam 2 #25'],
     slots: [{ label: 'Percent', source: 'Exam 2 #25', pool: ['score', 'tip', 'change', 'sale', 'whole'] }],
-    lesson: T`<p>Percent means "per hundred": \(p\% = \frac{p}{100}\).</p>
-<ul><li><strong>What percent?</strong> \(\dfrac{\text{part}}{\text{whole}}\times100\). 40 correct out of 50 total: \(\frac{40}{50} = 0.8 = 80\%\). Use the <em>total</em>, not the number wrong.</li>
-<li><strong>Percent of a number</strong>: change the percent to a decimal and multiply: 18% of \$40 is \(0.18\times40\).</li>
-<li><strong>Percent change</strong>: \(\dfrac{\text{new} - \text{old}}{\text{old}}\times100\).</li>
-<li><strong>Find the whole</strong>: part \(= \frac{p}{100}\times\) whole, so whole \(=\) part \(\div \frac{p}{100}\).</li></ul>`,
+    lesson: T`<p>Percent means "per hundred." A 15% tip is 15 cents for every dollar. Tips, sales, test scores and price changes all use one idea: a percent of some whole amount.</p>
+<div class="box def"><h4>Definition <b>Percent</b></h4><p>\(p\%\) means \(\dfrac{p}{100}\). To change a percent to a decimal, move the decimal point two places to the left: \(18\% = 0.18\) and \(5\% = 0.05\).</p></div>
+<div class="box rule"><h4>Rule <b>The percent equation</b></h4><p>\(\text{part} = \text{percent} \times \text{whole}\), with the percent written as a decimal. Every problem here is this equation with a different piece missing.</p></div>
+<h3>Find a percent of a number</h3>
+<p>Change the percent to a decimal and multiply. A 15% tip on a \$36.40 meal is \(0.15 \times 36.40 = 5.46\), so the tip is \$5.46 and the total is \(36.40 + 5.46 = \$41.86\).</p>
+<p>For a sale, find the discount and subtract it. 25% off \$80 is \(0.25 \times 80 = 20\) off, so you pay \$60. Shortcut: you pay \(100\% - 25\% = 75\%\), and \(0.75 \times 80 = 60\).</p>
+<h3>Find what percent</h3>
+<p>Divide the part by the whole, then multiply by 100. A student gets 42 questions right and 8 wrong. That is 50 questions in all, so the score is \(\frac{42}{50} = 0.84 = 84\%\).</p>
+<h3>Find the whole</h3>
+<p>Write the percent equation with the whole as \(x\), then divide.</p>
+<div class="ex"><h4>Example</h4><p>18 students walk to school. That is 30% of the class. How many students are in the class?</p><table class="st">
+<tr><td>"18 is 30% of what number?"</td><td>\(18 = 0.30x\)</td></tr>
+<tr><td>Divide by 0.30.</td><td>\(x = \dfrac{18}{0.30} = 60\)</td></tr>
+<tr><td>Check: 30% of 60 is 18. ✓</td><td>\(60\text{ students}\)</td></tr></table></div>
+<h3>Percent increase or decrease</h3>
+<div class="box rule"><h4>Formula <b>Percent change</b></h4><p>\(\text{percent change} = \dfrac{\text{new} - \text{old}}{\text{old}} \times 100\). If the result is positive, it is an increase; if negative, a decrease.</p></div>
+<div class="ex"><h4>Example</h4><p>A town grew from 250 people to 300. Find the percent increase.</p><table class="st">
+<tr><td>Find the change.</td><td>\(300 - 250 = 50\)</td></tr>
+<tr><td>Divide by the <em>original</em> amount.</td><td>\(\dfrac{50}{250} = 0.2\)</td></tr>
+<tr><td>Multiply by 100.</td><td>\(20\%\text{ increase}\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Divide by the right whole. For a test score, use the total number of questions, not the number wrong. For a percent change, divide by the old value, not the new one.</p></div>`,
     variants: pct,
   });
 
@@ -397,10 +430,34 @@
   MX.register({
     id: 'w-ineq', kind: 'word', section: SEC, title: 'Inequalities from words', sources: ['Exam 3 #19'],
     slots: [{ label: 'Inequalities from words', source: 'Exam 3 #19', pool: ['phrase', 'budget', 'average'] }],
-    lesson: T`<p>Translate the key phrase into a symbol:</p>
-<ul><li><strong>at least, minimum, no less than</strong> → \(\ge\)</li><li><strong>at most, maximum, no more than</strong> → \(\le\)</li>
-<li><strong>more than, greater than, exceeds, taller than</strong> → \(\gt\)</li><li><strong>less than, fewer than, below</strong> → \(\lt\)</li></ul>
-<p>Build the expression from the story (fixed fee + rate × number), put the symbol between it and the limit, and solve like an equation. Graph with a closed dot for \(\le, \ge\) and an open dot for \(\lt, \gt\).</p>`,
+    lesson: T`<p>Some stories give a limit instead of an exact amount: a speed limit, a budget, a minimum score. An <strong>inequality</strong> describes a limit. You write and solve it almost the same way as an equation.</p>
+<div class="box def"><h4>Definition <b>Inequality symbols</b></h4><p>\(x \lt 5\): less than 5. \(x \le 5\): less than or equal to 5. \(x \gt 5\): greater than 5. \(x \ge 5\): greater than or equal to 5.</p></div>
+<h3>Translate the key phrase</h3>
+<div class="box rule"><h4>Rule <b>Words to symbols</b></h4><ul>
+<li><strong>at least, a minimum of, no less than</strong> → \(\ge\)</li>
+<li><strong>at most, a maximum of, no more than</strong> → \(\le\)</li>
+<li><strong>more than, greater than, taller than, exceeds</strong> → \(\gt\)</li>
+<li><strong>less than, fewer than, below</strong> → \(\lt\)</li></ul></div>
+<p>So "you must score at least 70" is \(x \ge 70\), and "fewer than 40 people" is \(x \lt 40\).</p>
+<h3>Graph on a number line</h3>
+<p>Put a dot at the number. Use a <strong>closed</strong> (filled) dot for \(\le\) or \(\ge\), because the number itself is included. Use an <strong>open</strong> dot for \(\lt\) or \(\gt\), because it is not. Shade to the right for "greater" and to the left for "less."</p>
+<h3>Write and solve from a story</h3>
+<div class="box how"><h4>How to <b>solve an inequality word problem</b></h4><ol>
+<li>Let \(x\) be the unknown.</li>
+<li>Build an expression for the total, such as fixed fee + rate × \(x\).</li>
+<li>Put the symbol from the key phrase between the expression and the limit.</li>
+<li>Solve it like an equation.</li>
+<li>Answer the question. If \(x\) counts things, use whole numbers.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>A gym charges a \$30 sign-up fee plus \$12 per class. Rosa can spend at most \$200. What is the greatest number of classes she can take?</p><table class="st">
+<tr><td>Total cost, "at most" 200.</td><td>\(30 + 12x \le 200\)</td></tr>
+<tr><td>Subtract 30.</td><td>\(12x \le 170\)</td></tr>
+<tr><td>Divide by 12.</td><td>\(x \le \frac{170}{12} \approx 14.2\)</td></tr>
+<tr><td>Classes are whole numbers, so round <em>down</em>.</td><td>\(14\text{ classes}\)</td></tr></table></div>
+<div class="ex"><h4>Example</h4><p>Jamal scored 78, 85 and 90 on three tests. He wants an average of at least 85 after the fourth test. What scores \(x\) will do it?</p><table class="st">
+<tr><td>Average of four scores, "at least" 85.</td><td>\(\dfrac{78 + 85 + 90 + x}{4} \ge 85\)</td></tr>
+<tr><td>Multiply both sides by 4.</td><td>\(253 + x \ge 340\)</td></tr>
+<tr><td>Subtract 253.</td><td>\(x \ge 87\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>If you multiply or divide both sides by a <em>negative</em> number, flip the symbol: \(-2x \lt 6\) becomes \(x \gt -3\).</p></div>`,
     variants: ineq,
   });
 
@@ -513,10 +570,28 @@
   MX.register({
     id: 'w-sci', kind: 'word', section: SEC, title: 'Scientific notation in context', sources: ['Exam 3 #25'],
     slots: [{ label: 'Scientific notation', source: 'Exam 3 #25', pool: ['product', 'quotient', 'tiny'] }],
-    lesson: T`<ol><li>Rewrite each number as \(a\times10^{n}\) with \(1 \le a \lt 10\): \(320{,}000 = 3.2\times10^{5}\).</li>
-<li>Multiply (or divide) the front numbers.</li><li>Add the exponents when multiplying; subtract them when dividing.</li>
-<li>If the front number is now 10 or more (or less than 1), move the decimal point and adjust the exponent: \(13.12\times10^{9} = 1.312\times10^{10}\).</li></ol>
-<p>"Total" usually means multiply (number × amount each); "per person" or "how long" usually means divide.</p>`,
+    lesson: T`<p>Science and money stories often use huge or tiny numbers: the distance to the Sun, a national debt, the mass of a grain of sand. Scientific notation writes these numbers in a short form that is easy to multiply and divide.</p>
+<div class="box def"><h4>Definition <b>Scientific notation</b></h4><p>A number is in <strong>scientific notation</strong> when it is written as \(a \times 10^{n}\), where \(1 \le a \lt 10\) and \(n\) is an integer. For example, \(4.5 \times 10^{4}\) is in scientific notation, but \(45 \times 10^{3}\) is not, because 45 is 10 or more.</p></div>
+<h3>Write a number in scientific notation</h3>
+<div class="box how"><h4>How to <b>convert to scientific notation</b></h4><ol>
+<li>Move the decimal point so that exactly one nonzero digit is to its left.</li>
+<li>Count how many places you moved it. That is the size of the exponent.</li>
+<li>A large number (10 or more) gets a positive exponent. A small number (less than 1) gets a negative exponent.</li></ol></div>
+<p>45,000 = \(4.5 \times 10^{4}\) (the point moved 4 places left). 0.000034 = \(3.4 \times 10^{-5}\) (the point moved 5 places right).</p>
+<h3>Multiply and divide</h3>
+<div class="box rule"><h4>Rule <b>Multiplying and dividing</b></h4><p>Multiply the front numbers and <strong>add</strong> the exponents: \(\left(a \times 10^{m}\right)\left(b \times 10^{n}\right) = ab \times 10^{m + n}\).</p><p>Divide the front numbers and <strong>subtract</strong> the exponents: \(\dfrac{a \times 10^{m}}{b \times 10^{n}} = \dfrac{a}{b} \times 10^{m - n}\).</p></div>
+<p>Then fix the front number if it is not between 1 and 10. Moving the point one place left adds 1 to the exponent; moving it one place right subtracts 1.</p>
+<div class="ex"><h4>Example</h4><p>A town has 32,000 homes. Each uses about 85 gallons of water a day. How many gallons is that per day?</p><table class="st">
+<tr><td>Write both numbers in scientific notation.</td><td>\(3.2 \times 10^{4}\text{ and }8.5 \times 10^{1}\)</td></tr>
+<tr><td>Multiply the front numbers.</td><td>\(3.2 \times 8.5 = 27.2\)</td></tr>
+<tr><td>Add the exponents.</td><td>\(10^{4 + 1} = 10^{5}\)</td></tr>
+<tr><td>27.2 is too big: move the point one place left.</td><td>\(27.2 \times 10^{5} = 2.72 \times 10^{6}\)</td></tr></table></div>
+<div class="ex"><h4>Example</h4><p>A debt of \(2.4 \times 10^{13}\) dollars is shared by \(3 \times 10^{8}\) people. How much is it per person?</p><table class="st">
+<tr><td>"Per person" means divide.</td><td>\(\dfrac{2.4 \times 10^{13}}{3 \times 10^{8}}\)</td></tr>
+<tr><td>Divide the front numbers; subtract the exponents.</td><td>\(0.8 \times 10^{5}\)</td></tr>
+<tr><td>0.8 is too small: move the point one place right.</td><td>\(8 \times 10^{4}\text{ dollars}\)</td></tr></table></div>
+<p>Negative exponents follow the same rules: \(10^{-6} \times 10^{5} = 10^{-1}\). "Total" usually means multiply (count × amount each). "Per person" or "how long" usually means divide.</p>
+<div class="box warn"><h4>Watch out</h4><p>An answer like \(27.2 \times 10^{5}\) has the right value but is not in scientific notation. Always adjust the front number so it is at least 1 and less than 10.</p></div>`,
     variants: sci,
   });
 })(typeof window !== 'undefined' ? window : globalThis);

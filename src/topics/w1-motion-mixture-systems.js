@@ -238,13 +238,35 @@
   MX.register({
     id: 'w-motion', kind: 'word', section: SEC, title: 'Distance, rate & time', sources: ['Exam 1 #28'],
     slots: [{ label: 'Distance, rate & time', source: 'Exam 1 #28', pool: ['toward', 'apart', 'catchup', 'roundtrip', 'current', 'average'] }],
-    lesson: T`<p>Everything comes from one formula: <strong>distance = rate × time</strong>, \(d = rt\) (so \(t = \frac{d}{r}\) and \(r = \frac{d}{t}\)).</p>
-<p>Make a small table: one row per traveler, columns rate · time = distance. Then look for the relationship the story gives you:</p>
-<ul><li><strong>Toward each other / opposite directions</strong>: the two distances <em>add</em> to the total.</li>
-<li><strong>Catching up</strong>: the two distances are <em>equal</em> (the one who left first has more time).</li>
-<li><strong>Round trip</strong>: same distance both ways; the two <em>times</em> add to the total time.</li>
-<li><strong>Current or wind</strong>: speeds become \(b + c\) (with it) and \(b - c\) (against it).</li>
-<li><strong>Average speed</strong> = total distance ÷ total time, not the average of the speeds.</li></ul>`,
+    lesson: T`<p>Motion problems are about things that move at a steady speed: cars, trains, boats, planes. You already know that a car going 50 miles per hour for 2 hours covers 100 miles. Every problem in this topic grows out of that one idea.</p>
+<div class="box rule"><h4>Formula <b>Distance, rate and time</b></h4><p>\(\text{distance} = \text{rate} \times \text{time}\), or \(d = rt\). Solve it for the other two when you need them: \(t = \dfrac{d}{r}\) and \(r = \dfrac{d}{t}\). The <strong>rate</strong> is the speed. Keep the units matched: miles per hour goes with hours and miles.</p></div>
+<h3>A plan for any word problem</h3>
+<div class="box how"><h4>How to <b>solve a motion problem</b></h4><ol>
+<li>Read the problem until you can picture it. A quick sketch helps.</li>
+<li>Say what you are asked to find.</li>
+<li>Name it with a letter, and write the other unknowns in terms of that letter.</li>
+<li>Fill in a table with one row per trip and the columns rate, time, distance. Multiply rate × time to fill the distance column.</li>
+<li>Use the story to write an equation, then solve it.</li>
+<li>Check the answer in the story and answer in a sentence, with units.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Two cars start 330 miles apart and drive toward each other. They meet after 3 hours. One car goes 10 mph faster than the other. How fast is each car?</p>
+<table class="xy"><tr><th></th><th>rate</th><th>time</th><th>distance</th></tr><tr><td>slower</td><td>\(r\)</td><td>\(3\)</td><td>\(3r\)</td></tr><tr><td>faster</td><td>\(r + 10\)</td><td>\(3\)</td><td>\(3\left(r + 10\right)\)</td></tr></table>
+<table class="st">
+<tr><td>Together they cover the whole 330 miles.</td><td>\(3r + 3\left(r + 10\right) = 330\)</td></tr>
+<tr><td>Distribute and combine like terms.</td><td>\(6r + 30 = 330\)</td></tr>
+<tr><td>Solve for \(r\).</td><td>\(6r = 300,\quad r = 50\)</td></tr>
+<tr><td>Check: \(150 + 180 = 330\). ✓</td><td>\(50\text{ mph and }60\text{ mph}\)</td></tr></table></div>
+<h3>What the story tells you</h3>
+<p>The equation comes from one sentence in the story. Look for these patterns:</p>
+<ul><li><strong>Toward each other, or opposite directions:</strong> the two distances <em>add</em> to the total gap.</li>
+<li><strong>Catching up:</strong> the two distances are <em>equal</em>. The one who left first has driven longer. If a truck at 50 mph has a 1-hour head start on a car at 60 mph, then \(50\left(t + 1\right) = 60t\), so \(t = 5\) hours.</li>
+<li><strong>Round trip:</strong> the distance is the same both ways, and the two <em>times</em> add to the total time: \(\dfrac{d}{r_{1}} + \dfrac{d}{r_{2}} = \text{total time}\).</li>
+<li><strong>With or against a current (or wind):</strong> with it, the speeds add, \(b + c\). Against it, they subtract, \(b - c\). Here \(b\) is the speed in still water or calm air and \(c\) is the current.</li></ul>
+<div class="ex"><h4>Example</h4><p>A boat goes 36 miles downstream in 2 hours and 24 miles upstream in 3 hours. Find the boat's speed \(b\) in still water and the current \(c\).</p><table class="st">
+<tr><td>Downstream rate = distance ÷ time.</td><td>\(b + c = \frac{36}{2} = 18\)</td></tr>
+<tr><td>Upstream rate = distance ÷ time.</td><td>\(b - c = \frac{24}{3} = 8\)</td></tr>
+<tr><td>Add the equations to remove \(c\).</td><td>\(2b = 26,\quad b = 13\)</td></tr>
+<tr><td>Substitute back.</td><td>\(c = 18 - 13 = 5\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Average speed is total distance ÷ total time. It is <em>not</em> the average of the two speeds. Drive 120 miles at 60 mph (2 hours), then 120 miles at 40 mph (3 hours): the average speed is \(\frac{240}{5} = 48\) mph, not 50.</p></div>`,
     variants: motion,
   });
 
@@ -411,12 +433,31 @@
       { label: 'Value mixture', source: 'Exam 1 #26', pool: ['dry', 'invest'] },
       { label: 'Percent mixture', source: 'Exam 2 #29', pool: ['solution', 'dilute', 'alloy'] },
     ],
-    lesson: T`<p>Every mixture problem gives you two equations:</p>
-<ol><li><strong>Amount</strong>: the parts add up to the whole. \(S + F = 40\)</li>
-<li><strong>Value or ingredient</strong>: (rate × amount) for each part adds up to (rate × amount) for the whole.<br>
-Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). Interest: \(0.04x + 0.06y = 620\)</li></ol>
-<p>A table helps: rows for each ingredient and the mixture; columns amount, rate, amount × rate.</p>
-<p>Pure water is 0%; a pure substance is 100%. Type equations like <code>70S + 90F = 77.5(40)</code>; any equivalent form is accepted.</p>`,
+    lesson: T`<p>In a mixture problem you combine two things with different prices or strengths to make one blend: two coffees, two acid solutions, two metals. Money split between two interest rates works the same way. Each problem has two unknown amounts, so you write two equations.</p>
+<div class="box def"><h4>Definition <b>Percent solution</b></h4><p>A 30% acid solution is 30% pure acid; the rest is water. So 10 liters of it hold \(0.30 \cdot 10 = 3\) liters of acid. Pure water is a 0% solution, and pure acid is 100%.</p></div>
+<h3>The two equations</h3>
+<div class="box rule"><h4>Rule <b>Amount and value</b></h4><p><strong>Amount equation:</strong> the two amounts add up to the amount of the mixture.</p><p><strong>Value equation:</strong> for each part, rate × amount. These add up to rate × amount for the mixture. The rate is a price per pound, a percent (as a decimal) or an interest rate.</p></div>
+<p>A table keeps it straight: one row for each part and one for the mixture, with columns amount, rate, and amount × rate. Write every percent as a decimal: 6% is 0.06.</p>
+<div class="ex"><h4>Example</h4><p>Coffee A sells for \$6 a pound and coffee B for \$10 a pound. How many pounds of each make 20 pounds of a blend worth \$7 a pound? Let \(x\) be the pounds of A and \(y\) the pounds of B.</p>
+<table class="xy"><tr><th></th><th>amount</th><th>rate</th><th>value</th></tr><tr><td>A</td><td>\(x\)</td><td>\(6\)</td><td>\(6x\)</td></tr><tr><td>B</td><td>\(y\)</td><td>\(10\)</td><td>\(10y\)</td></tr><tr><td>blend</td><td>\(20\)</td><td>\(7\)</td><td>\(7\left(20\right)\)</td></tr></table>
+<table class="st">
+<tr><td>Amount equation.</td><td>\(x + y = 20\)</td></tr>
+<tr><td>Value equation.</td><td>\(6x + 10y = 7\left(20\right) = 140\)</td></tr>
+<tr><td>Substitute \(x = 20 - y\).</td><td>\(120 - 6y + 10y = 140\)</td></tr>
+<tr><td>Solve.</td><td>\(4y = 20,\quad y = 5,\quad x = 15\)</td></tr>
+<tr><td>Check the value.</td><td>\(6\cdot15 + 10\cdot5 = 140\) ✓</td></tr></table></div>
+<h3>Percent mixtures</h3>
+<p>For solutions and alloys, the value is the amount of the pure ingredient: percent × volume (or weight). When you add water, write its term as \(0x\): water adds volume but no acid.</p>
+<div class="ex"><h4>Example</h4><p>How many liters of a 20% acid solution must you add to 30 liters of a 50% solution to get a 30% solution? Let \(x\) be the liters added and \(y\) the liters of the result.</p><table class="st">
+<tr><td>Amount equation.</td><td>\(x + 30 = y\)</td></tr>
+<tr><td>Acid equation.</td><td>\(0.20x + 0.50\left(30\right) = 0.30y\)</td></tr>
+<tr><td>Substitute \(y = x + 30\).</td><td>\(0.20x + 15 = 0.30x + 9\)</td></tr>
+<tr><td>Solve.</td><td>\(6 = 0.10x,\quad x = 60\text{ liters}\)</td></tr>
+<tr><td>Check: 12 + 15 = 27 liters of acid in 90 liters.</td><td>\(0.30\cdot90 = 27\) ✓</td></tr></table></div>
+<h3>Two interest rates</h3>
+<p>One year of simple interest is rate × amount invested. With \(x\) dollars at 4% and \(y\) dollars at 6%, the equations are \(x + y = \text{total invested}\) and \(0.04x + 0.06y = \text{total interest}\).</p>
+<div class="box warn"><h4>Watch out</h4><p>The mixture's value uses its whole amount: \(7\left(20\right)\), not just 7. And a percent must become a decimal: 4% is 0.04, not 0.4.</p></div>
+<p>When you type equations, write them like <code>6x + 10y = 7(20)</code>. Any equivalent form is accepted.</p>`,
     variants: mixture,
   });
 
@@ -557,11 +598,33 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
   MX.register({
     id: 'w-systems', kind: 'word', section: SEC, title: 'Linear systems in context', sources: ['Exam 3 #23'],
     slots: [{ label: 'Linear systems', source: 'Exam 3 #23', pool: ['tickets', 'coins', 'orders', 'numbers', 'plans'] }],
-    lesson: T`<p>When a story has <strong>two unknowns</strong>, you need <strong>two equations</strong>. Usually one counts things and the other adds up their value.</p>
-<ol><li>Name the unknowns with the letters given (\(A\) = adult tickets, \(C\) = child tickets).</li>
-<li>Count equation: \(A + C = 500\).</li><li>Value equation: (price × number) + (price × number) = total, \(7A + 3.5C = 2450\).</li>
-<li>Solve by substitution or elimination, and check that the answers make sense (whole numbers of tickets, positive amounts).</li></ol>
-<p>"Two plans cost the same" means set the two cost expressions equal.</p>`,
+    lesson: T`<p>Some stories have <strong>two unknowns</strong>, such as the number of adult tickets and the number of child tickets. One equation cannot pin down two unknowns, so you write <strong>two equations</strong>, one for each fact the story gives. Together they form a <em>system</em>.</p>
+<div class="box how"><h4>How to <b>solve a word problem with a system</b></h4><ol>
+<li>Read the story and say what you are asked to find.</li>
+<li>Name the two unknowns. Use the letters the problem gives you.</li>
+<li>Turn each fact into an equation.</li>
+<li>Solve the system.</li>
+<li>Check the answers in the story: do they make sense?</li>
+<li>Answer in a sentence.</li></ol></div>
+<h3>Common kinds of stories</h3>
+<ul><li><strong>Tickets and coins:</strong> one equation counts the items, the other adds up their value. Dimes are worth 0.10 dollars each, so \(d\) dimes are worth \(0.10d\).</li>
+<li><strong>Two orders:</strong> each order gives one equation. "3 bagels and 2 coffees cost \$9.50" is \(3b + 2c = 9.50\).</li>
+<li><strong>Two numbers:</strong> "the sum is 50" is \(x + y = 50\); "the difference is 12" is \(x - y = 12\).</li>
+<li><strong>Two plans:</strong> each plan's cost is fee + rate × number. "The plans cost the same" means set the two costs equal.</li></ul>
+<div class="box rule"><h4>Rule <b>Two ways to solve a system</b></h4><p><strong>Substitution:</strong> solve one equation for one letter, then put that expression into the other equation.</p><p><strong>Elimination:</strong> add or subtract the equations (after multiplying if needed) so that one letter cancels.</p></div>
+<div class="ex"><h4>Example</h4><p>Adult tickets cost \$8 and child tickets \$5. A theater sold 200 tickets for \$1,390. How many of each were sold? Use \(A\) and \(C\).</p><table class="st">
+<tr><td>Count equation.</td><td>\(A + C = 200\)</td></tr>
+<tr><td>Money equation: price × number for each.</td><td>\(8A + 5C = 1390\)</td></tr>
+<tr><td>Substitute \(C = 200 - A\).</td><td>\(8A + 5\left(200 - A\right) = 1390\)</td></tr>
+<tr><td>Simplify and solve.</td><td>\(3A + 1000 = 1390,\quad A = 130\)</td></tr>
+<tr><td>Find the other unknown.</td><td>\(C = 200 - 130 = 70\)</td></tr>
+<tr><td>Check the money.</td><td>\(8\cdot130 + 5\cdot70 = 1040 + 350 = 1390\) ✓</td></tr></table></div>
+<div class="ex"><h4>Example</h4><p>Plan A costs \$20 plus \$10 per class. Plan B costs \$50 plus \$7 per class. For how many classes \(x\) do they cost the same amount \(y\)?</p><table class="st">
+<tr><td>Write each cost.</td><td>\(y = 20 + 10x,\quad y = 50 + 7x\)</td></tr>
+<tr><td>Both equal \(y\), so set them equal.</td><td>\(20 + 10x = 50 + 7x\)</td></tr>
+<tr><td>Solve for \(x\).</td><td>\(3x = 30,\quad x = 10\)</td></tr>
+<tr><td>Find the cost.</td><td>\(y = 20 + 10\cdot10 = 120\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Check that your answers fit the story. You can't sell part of a ticket or have a negative number of coins. If you get one, look for a mistake in your equations.</p></div>`,
     variants: systems,
   });
 })(typeof window !== 'undefined' ? window : globalThis);

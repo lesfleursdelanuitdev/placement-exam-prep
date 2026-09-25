@@ -246,12 +246,29 @@
       { label: 'Rectangles and diagonals', source: 'Exam 2 #21', pool: ['rect', 'tv'] },
       { label: 'Algebraic side lengths', source: 'Exam 3 #21', pool: ['xd', 'consec', 'twox'] },
     ],
-    lesson: T`<p>In a right triangle with legs \(a\), \(b\) and hypotenuse \(c\) (the longest side, across from the right angle):</p>
-\[a^{2} + b^{2} = c^{2}\]
-<ul><li><strong>Find the hypotenuse</strong>: add the squares of the legs, then take the square root.</li>
-<li><strong>Find a leg</strong>: subtract: \(b^{2} = c^{2} - a^{2}\).</li>
-<li><strong>Sides written with \(x\)</strong>: substitute, expand \((x + 7)^{2} = x^{2} + 14x + 49\), and solve the quadratic. Throw out negative lengths.</li></ul>
-<p>Look for the right angle in the story: a wall and the ground, north and east, the sides of a rectangle.</p>`,
+    lesson: T`<p>A right triangle has one square corner, a \(90^{\circ}\) angle. Its three sides are tied together by one equation, the Pythagorean theorem. If you know two sides, the theorem gives you the third.</p>
+<div class="box def"><h4>Definition <b>Legs and hypotenuse</b></h4><p>In a right triangle, the two sides that form the right angle are the <strong>legs</strong>. The side across from the right angle is the <strong>hypotenuse</strong>. It is always the longest side.</p></div>
+<div class="box rule"><h4>Rule <b>Pythagorean theorem</b></h4><p>If \(a\) and \(b\) are the legs and \(c\) is the hypotenuse, then \(a^{2} + b^{2} = c^{2}\).</p></div>
+<h3>Find the right triangle in the story</h3>
+<p>Look for a square corner: a wall and the ground (ladders, poles, guy wires), a kite straight above a spot on the ground, a walk north and then east, or a rectangle cut by its diagonal. A TV's size is its diagonal. The slanted side (ladder, wire, string, diagonal) is the hypotenuse.</p>
+<h3>Find the hypotenuse</h3>
+<p>Square the two legs, add, then take the square root.</p>
+<div class="ex"><h4>Example</h4><p>A hiker walks 3 miles north, then 5 miles east. How far is she from where she started? Round to the nearest tenth.</p><table class="st">
+<tr><td>North and east make a right angle. The path back is the hypotenuse.</td><td>\(3^{2} + 5^{2} = c^{2}\)</td></tr>
+<tr><td>Square and add.</td><td>\(9 + 25 = 34 = c^{2}\)</td></tr>
+<tr><td>Take the square root and round.</td><td>\(c = \sqrt{34} \approx 5.8\text{ miles}\)</td></tr></table></div>
+<h3>Find a leg</h3>
+<p>Subtract instead: \(b^{2} = c^{2} - a^{2}\). A 10-foot ladder with its base 6 feet from a wall reaches \(\sqrt{100 - 36} = \sqrt{64} = 8\) feet up the wall.</p>
+<h3>Sides written with \(x\)</h3>
+<p>Sometimes the sides are expressions like \(x\) and \(x + 7\). Put them into the theorem, expand, and solve the quadratic equation. "Consecutive integers" means \(x\), \(x + 1\), \(x + 2\); consecutive even integers are \(x\), \(x + 2\), \(x + 4\). The largest one is the hypotenuse.</p>
+<div class="ex"><h4>Example</h4><p>The legs of a right triangle are \(x\) and \(x + 7\). The hypotenuse is 13. Find \(x\).</p><table class="st">
+<tr><td>Write the theorem.</td><td>\(x^{2} + \left(x + 7\right)^{2} = 13^{2}\)</td></tr>
+<tr><td>Expand the square.</td><td>\(x^{2} + x^{2} + 14x + 49 = 169\)</td></tr>
+<tr><td>Set it equal to 0 and divide by 2.</td><td>\(x^{2} + 7x - 60 = 0\)</td></tr>
+<tr><td>Factor.</td><td>\(\left(x + 12\right)\left(x - 5\right) = 0\)</td></tr>
+<tr><td>A length can't be negative, so drop \(-12\).</td><td>\(x = 5\)</td></tr>
+<tr><td>Check: the sides are 5, 12 and 13.</td><td>\(25 + 144 = 169\) ✓</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>\(\left(x + 7\right)^{2}\) is not \(x^{2} + 49\). Multiply it out: \(\left(x + 7\right)\left(x + 7\right) = x^{2} + 14x + 49\).</p></div>`,
     variants: pyth,
   });
 
@@ -427,12 +444,29 @@
   MX.register({
     id: 'w-triangles', kind: 'word', section: SEC, title: 'Similar triangles & triangles', sources: ['Exam 3 #22'],
     slots: [{ label: 'Triangles', source: 'Exam 3 #22', pool: ['shadow', 'mirror', 'nested', 'angles', 'perimeter', 'area'] }],
-    lesson: T`<p><strong>Similar triangles</strong> have the same angles, so their sides are proportional. Set up matching ratios and cross-multiply:</p>
-\[\frac{\text{tree height}}{\text{tree shadow}} = \frac{\text{post height}}{\text{post shadow}}\]
-<p>Similar triangles show up with shadows (same sun angle), mirrors (equal reflection angles) and shapes inside shapes (a post under a ramp).</p>
-<p><strong>Other triangle facts</strong> you'll need:</p>
-<ul><li>The three angles add to \(180^{\circ}\).</li><li>Perimeter = sum of the three sides; an isosceles triangle has two equal sides.</li>
-<li>Area = \(\frac{1}{2}\times\text{base}\times\text{height}\).</li></ul>`,
+    lesson: T`<p>Two triangles can have the same shape but different sizes, like a photo and its enlargement. Such triangles let you measure things you can't reach, such as the height of a tree. This topic also uses a few basic facts about any triangle.</p>
+<div class="box def"><h4>Definition <b>Similar triangles</b></h4><p>Two triangles are <strong>similar</strong> when their three angles match. Then their matching sides are <strong>proportional</strong>: each side of the big triangle is the same multiple of the matching side of the small one.</p></div>
+<h3>Where similar triangles show up</h3>
+<ul><li><strong>Shadows:</strong> at the same moment, the sun hits every object at the same angle. Each object, its shadow and the sun's ray form similar triangles.</li>
+<li><strong>A mirror on the ground:</strong> light bounces off at the same angle it arrives. The triangle from your eyes to the mirror is similar to the triangle from the treetop to the mirror.</li>
+<li><strong>A triangle inside a triangle:</strong> a post under a ramp makes a small triangle that shares the bottom angle with the whole ramp.</li></ul>
+<div class="box how"><h4>How to <b>use similar triangles</b></h4><ol>
+<li>Sketch both triangles and label the lengths you know.</li>
+<li>Write a proportion with the same kind of side in the same place. For example, height over base for the small triangle equals height over base for the big one.</li>
+<li>Cross-multiply and solve.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>A 6-foot man casts a 4-foot shadow. At the same time, a tree casts a 30-foot shadow. How tall is the tree?</p><table class="st">
+<tr><td>Height over shadow, for each.</td><td>\(\dfrac{6}{4} = \dfrac{h}{30}\)</td></tr>
+<tr><td>Cross-multiply.</td><td>\(4h = 6 \cdot 30 = 180\)</td></tr>
+<tr><td>Divide by 4.</td><td>\(h = 45\text{ feet}\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>In a ramp problem, the big triangle's base is the <em>whole</em> distance from the bottom. If the post is 4 feet from the bottom and the top is 6 feet farther along, the big base is \(4 + 6 = 10\) feet, not 6.</p></div>
+<h3>Facts about any triangle</h3>
+<div class="box rule"><h4>Rule <b>Angles, perimeter and area</b></h4><p>The three angles add to \(180^{\circ}\). The perimeter is the sum of the three sides. An isosceles triangle has two equal sides. The area is \(A = \frac{1}{2}bh\), where \(b\) is the base and \(h\) is the height.</p></div>
+<div class="ex"><h4>Example</h4><p>The angles of a triangle are \(x^{\circ}\), \(2x^{\circ}\) and \(\left(x + 20\right)^{\circ}\). Find \(x\) and the largest angle.</p><table class="st">
+<tr><td>The angles add to 180.</td><td>\(x + 2x + \left(x + 20\right) = 180\)</td></tr>
+<tr><td>Combine like terms.</td><td>\(4x + 20 = 180\)</td></tr>
+<tr><td>Solve.</td><td>\(4x = 160,\quad x = 40\)</td></tr>
+<tr><td>The angles are 40°, 80° and 60°.</td><td>\(\text{largest} = 80^{\circ}\)</td></tr></table></div>
+<p>An area problem can lead to a quadratic. If the base is 4 more than the height and the area is 30, then \(\frac{1}{2}h\left(h + 4\right) = 30\). Multiply by 2 to get \(h^{2} + 4h - 60 = 0\), which factors as \(\left(h + 10\right)\left(h - 6\right) = 0\). A height can't be negative, so \(h = 6\) and the base is 10.</p>`,
     variants: tri,
   });
 
@@ -502,10 +536,31 @@
   MX.register({
     id: 'w-perimeter', kind: 'word', section: SEC, title: 'Perimeter & dimensions', sources: ['Exam 2 #20'],
     slots: [{ label: 'Perimeter & dimensions', source: 'Exam 2 #20', pool: ['rect', 'fence', 'area'] }],
-    lesson: T`<ol><li>Draw the shape and label it. Let \(w\) be the width and write the length in terms of \(w\): "5 less than three times the width" is \(3w - 5\).</li>
-<li>Use the right formula: perimeter of a rectangle \(P = 2l + 2w\); area \(A = lw\). If only some sides are fenced, add only those sides.</li>
-<li>Substitute and solve for \(w\), then find the length.</li><li>Answer with units. Perimeter uses plain units (inches); area uses square units.</li></ol>
-<p>Area problems lead to quadratics: \(w\left(w + 3\right) = 40\). Set them equal to 0, factor, and keep the positive answer.</p>`,
+    lesson: T`<p>The <strong>perimeter</strong> of a shape is the distance around it, like the length of a fence. The <strong>area</strong> is the space inside, like the amount of carpet for a floor. In these problems you know the perimeter or the area and must find the length and width.</p>
+<div class="box rule"><h4>Formula <b>Rectangle</b></h4><p>For a rectangle with length \(l\) and width \(w\): the perimeter is \(P = 2l + 2w\), and the area is \(A = lw\).</p></div>
+<div class="box how"><h4>How to <b>find the dimensions of a rectangle</b></h4><ol>
+<li>Draw the rectangle and label it.</li>
+<li>Let \(w\) be the width. Write the length in terms of \(w\). "5 less than three times the width" is \(3w - 5\).</li>
+<li>Put both into the formula for perimeter or area.</li>
+<li>Solve for \(w\), then use it to find the length.</li>
+<li>Check in the story, and answer with units.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>A garden has a perimeter of 62 feet. Its length is 5 feet less than three times its width. Find its length and width.</p><table class="st">
+<tr><td>Name the width, and write the length with it.</td><td>\(l = 3w - 5\)</td></tr>
+<tr><td>Use the perimeter formula.</td><td>\(2\left(3w - 5\right) + 2w = 62\)</td></tr>
+<tr><td>Distribute and combine like terms.</td><td>\(8w - 10 = 62\)</td></tr>
+<tr><td>Solve for \(w\).</td><td>\(8w = 72,\quad w = 9\)</td></tr>
+<tr><td>Find the length.</td><td>\(l = 3\cdot9 - 5 = 22\)</td></tr>
+<tr><td>Check: \(2\cdot22 + 2\cdot9 = 62\). ✓</td><td>\(22\text{ ft by }9\text{ ft}\)</td></tr></table></div>
+<h3>Fencing only some sides</h3>
+<p>When a wall or barn forms one side, you fence only the other three: two widths and one length. With 100 feet of fence and a length (along the barn) twice the width, \(w + w + 2w = 100\), so \(w = 25\) feet and \(l = 50\) feet.</p>
+<h3>Area problems lead to quadratics</h3>
+<p>Area multiplies length by width, so you get \(w^{2}\). Set the equation equal to 0, factor, and keep the positive answer.</p>
+<div class="ex"><h4>Example</h4><p>A rug is 3 feet longer than it is wide. Its area is 40 square feet. Find its width and length.</p><table class="st">
+<tr><td>Area = length × width.</td><td>\(w\left(w + 3\right) = 40\)</td></tr>
+<tr><td>Set it equal to 0.</td><td>\(w^{2} + 3w - 40 = 0\)</td></tr>
+<tr><td>Factor.</td><td>\(\left(w + 8\right)\left(w - 5\right) = 0\)</td></tr>
+<tr><td>A width can't be negative.</td><td>\(w = 5,\quad l = 8\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>Use the right units. Perimeter is a length, so it is in feet or inches. Area is in <em>square</em> units, such as square feet.</p></div>`,
     variants: perim,
   });
 })(typeof window !== 'undefined' ? window : globalThis);
