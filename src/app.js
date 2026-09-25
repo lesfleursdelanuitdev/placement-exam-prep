@@ -268,7 +268,7 @@
       if (part !== lastPart) {
         lastPart = part;
         lastSec = null;
-        html += `<h2 class="part-h"><span>Part ${PART_NUM[part]}</span> ${esc(PART_NAME[part])}</h2>`;
+        html += `<h2 class="part-h" id="exam-part-${part}"><span>Part ${PART_NUM[part]}</span> ${esc(PART_NAME[part])}</h2>`;
         if (part === 3) html += `<p class="part-note">${PART3_NOTE}</p>`;
       }
       const sub = part === 1 ? it.topic.section : part === 3 ? it.topic.title : null;
@@ -791,7 +791,7 @@
       ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Exam</th><th>Finished</th><th class="num">Score</th><th class="num">%</th></tr></thead><tbody>${hist.slice().reverse().map((h) => `<tr><td>No. ${esc(h.no)}</td><td>${new Date(h.finished).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td><td class="num">${esc(h.earned)} / ${esc(h.total)}</td><td class="num">${Math.round((100 * h.earned) / h.total)}%</td></tr>`).join('')}</tbody></table></div>`
       : `<p class="empty">No finished exams yet. Your first score appears here when you finish Practice Exam No. ${ex.no}.</p>`;
     html += `<h2 class="sub-h">By topic <span class="tut-stats">weakest first · all exams</span></h2><div class="tbl-wrap"><table class="tbl topics"><thead><tr><th>Topic</th><th class="num">Exam points</th><th>Accuracy</th><th class="num">Practice solved</th><th class="num">Cards learned</th><th></th></tr></thead><tbody>` +
-      rows.map((r) => `<tr><td>${esc(r.t.title)}</td><td class="num">${r.pts ? r.pts[0] + ' / ' + r.pts[1] : '–'}</td><td>${r.pct == null ? '<span class="muted">no data</span>' : `<span class="meter"><span style="width:${r.pct}%" class="${r.pct >= 80 ? 'good' : r.pct >= 50 ? 'mid' : 'low'}"></span></span> ${r.pct}%`}</td><td class="num">${r.c.solved}</td><td class="num">${r.f.total ? r.f.got + ' / ' + r.f.total : '–'}</td><td><button type="button" class="btn tut sm" data-act="tutorial" data-topic="${r.t.id}">Tutorial →</button></td></tr>`).join('') +
+      rows.map((r) => `<tr><td>${esc(r.t.title)}</td><td class="num" data-l="Exam points">${r.pts ? r.pts[0] + ' / ' + r.pts[1] : '–'}</td><td data-l="Accuracy">${r.pct == null ? '<span class="muted">no data</span>' : `<span class="meter"><span style="width:${r.pct}%" class="${r.pct >= 80 ? 'good' : r.pct >= 50 ? 'mid' : 'low'}"></span></span> ${r.pct}%`}</td><td class="num" data-l="Practice">${r.c.solved}</td><td class="num" data-l="Cards">${r.f.total ? r.f.got + ' / ' + r.f.total : '–'}</td><td><button type="button" class="btn tut sm" data-act="tutorial" data-topic="${r.t.id}">Tutorial →</button></td></tr>`).join('') +
       `</tbody></table></div>
       <div class="danger"><button type="button" class="btn ghost" data-act="reset-ask">Reset all progress…</button>
       <span id="reset-confirm" hidden>This erases every exam score, practice record and flashcard mark. <button type="button" class="btn danger-btn" data-act="reset-do">Erase everything</button> <button type="button" class="btn ghost" data-act="reset-cancel">Cancel</button></span></div>`;
@@ -805,7 +805,7 @@
     if (App.view === 'exam' && v !== 'exam') App.examScroll = G.scrollY;
     App.view = v;
     VIEWS.forEach((k) => { byId('v-' + k).hidden = k !== v; });
-    d.querySelectorAll('.tabs [data-view]').forEach((b) => b.setAttribute('aria-current', b.dataset.view === (TAB_OF[v] || v) ? 'page' : 'false'));
+    d.querySelectorAll('.tabs [data-view], .dnav [data-view]').forEach((b) => b.setAttribute('aria-current', b.dataset.view === (TAB_OF[v] || v) ? 'page' : 'false'));
     if (v === 'home') renderHome();
     if (v === 'tutorials') renderTutIndex();
     if (v === 'progress') renderProgress();
@@ -835,10 +835,95 @@
   }
 
   // ================= events =================
+  // ================= mobile slide-out menu =================
+  const menu = { open: false, touch: null };
+  const MENU_MQ = G.matchMedia ? G.matchMedia('(max-width: 900px)') : null;
+  const setInert = (el, on) => { if (!el) return; if (on) el.setAttribute('inert', ''); else el.removeAttribute('inert'); };
+  function renderDrawer() {
+    const ex = examState(), sc = scoreOf(App.items, ex.res);
+    const fresh = !sc.done && !Object.keys(drafts()).some((k) => k[0] === 'x');
+    const nxt = App.items[firstOpenItem()];
+    const jumps = [1, 2, 3].map((p) => {
+      const its = App.items.filter((it) => examPartOf(it.topic) === p);
+      if (!its.length) return '';
+      return `<button type="button" class="dj" data-act="goto-part" data-part="${p}"><span class="dj-p">Part ${PART_NUM[p]}</span><span class="dj-t">${esc(NAV_NAME[p])}</span><span class="dj-n">${its[0].n}–${its[its.length - 1].n}</span></button>`;
+    }).join('');
+    byId('drawer-exam').innerHTML = `<div class="de-h">Practice Exam No. ${esc(ex.no)}${ex.finished ? ' · finished' : ''}</div>
+      <div class="de-score"><b>${sc.earned}</b> / ${sc.total} points<span>${sc.done} of ${sc.parts} parts answered</span></div>
+      ${meter(sc.parts ? sc.done / sc.parts : 0, 'wide')}
+      <div class="de-acts">${ex.finished
+        ? '<button type="button" class="btn" data-act="view" data-view="exam">Review the exam</button><button type="button" class="btn primary" data-act="new-exam">New exam</button>'
+        : `<button type="button" class="btn primary" data-act="resume">${fresh ? 'Start the exam' : 'Continue at question ' + (nxt ? nxt.n : 1)}</button>`}</div>
+      <div class="de-sub">Jump to</div><div class="djs">${jumps}</div>`;
+  }
+  function openMenu() {
+    if (menu.open) return;
+    menu.open = true;
+    renderDrawer();
+    const dr = byId('drawer');
+    setInert(dr, false);
+    setInert(d.querySelector('header.bar'), true);
+    setInert(d.querySelector('main'), true);
+    d.documentElement.classList.add('menu-open');
+    byId('menu-btn').setAttribute('aria-expanded', 'true');
+    const first = dr.querySelector('.dnav [aria-current="page"]') || dr.querySelector('.drawer-x');
+    G.requestAnimationFrame(() => first.focus({ preventScroll: true }));
+  }
+  function closeMenu(returnFocus = true) {
+    if (!menu.open) return;
+    menu.open = false;
+    const dr = byId('drawer');
+    dr.style.transform = '';
+    dr.style.transition = '';
+    d.documentElement.classList.remove('menu-open');
+    setInert(d.querySelector('header.bar'), false);
+    setInert(d.querySelector('main'), false);
+    setInert(dr, true);
+    byId('menu-btn').setAttribute('aria-expanded', 'false');
+    if (returnFocus) byId('menu-btn').focus({ preventScroll: true });
+  }
+  function menuKey(e) {
+    if (e.key === 'Escape') { e.preventDefault(); closeMenu(); return; }
+    if (e.key !== 'Tab') return;
+    const f = [...byId('drawer').querySelectorAll('button:not([disabled])')].filter((el) => el.offsetParent);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && (d.activeElement === first || !byId('drawer').contains(d.activeElement))) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (d.activeElement === last || !byId('drawer').contains(d.activeElement))) { e.preventDefault(); first.focus(); }
+  }
+  // drag the drawer to the left to close it
+  function menuTouchStart(e) {
+    if (!menu.open || e.touches.length !== 1) return;
+    menu.touch = { x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0, drag: null };
+  }
+  function menuTouchMove(e) {
+    const t = menu.touch;
+    if (!t) return;
+    t.dx = e.touches[0].clientX - t.x;
+    const dy = e.touches[0].clientY - t.y;
+    if (t.drag == null && (Math.abs(t.dx) > 8 || Math.abs(dy) > 8)) t.drag = Math.abs(t.dx) > Math.abs(dy);
+    if (!t.drag) return;
+    const dr = byId('drawer');
+    dr.style.transition = 'none';
+    dr.style.transform = `translateX(${Math.min(0, t.dx)}px)`;
+  }
+  function menuTouchEnd() {
+    const t = menu.touch;
+    menu.touch = null;
+    if (!t || !t.drag) return;
+    const dr = byId('drawer');
+    dr.style.transition = '';
+    if (t.dx < -Math.min(90, dr.offsetWidth * 0.3)) closeMenu();
+    else dr.style.transform = '';
+  }
   function onClick(e) {
     const b = e.target.closest('[data-act]');
     if (!b || b.disabled) return;
     const act = b.dataset.act;
+    if (act === 'menu-open') { openMenu(); return; }
+    if (act === 'menu-close') { closeMenu(); return; }
+    // any other choice in the menu closes it first, so the page can scroll to its target
+    if (menu.open && b.closest('#drawer')) { closeMenu(false); G.setTimeout(() => byId('menu-btn').focus({ preventScroll: true }), 0); }
     if (act === 'check') doCheck(b.dataset.card, +b.dataset.p);
     else if (act === 'reveal') doReveal(b.dataset.card, +b.dataset.p);
     else if (act === 'tutorial') {
@@ -857,6 +942,11 @@
     }
     else if (act === 'resume') { setView('exam'); const i = firstOpenItem(); if (i > 0) setTimeout(() => gotoItem(i), 30); }
     else if (act === 'goto') gotoItem(+b.dataset.item);
+    else if (act === 'goto-part') {
+      if (App.view !== 'exam') setView('exam', { keepScroll: true });
+      const h = byId('exam-part-' + b.dataset.part);
+      if (h) G.setTimeout(() => h.scrollIntoView({ block: 'start', behavior: prefersReduced() ? 'auto' : 'smooth' }), 30);
+    }
     else if (act === 'more') moreExercises();
     else if (act === 'new-exam') { startNewExam(); renderExam(); setView('exam'); }
     else if (act === 'save-later') {
@@ -904,6 +994,7 @@
     if (p) doCheck(p.cardId, p.pi);
   }
   function onKey(e) {
+    if (menu.open) { menuKey(e); return; }
     if (App.view !== 'deck' || !App.deck) return;
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -934,6 +1025,13 @@
     d.addEventListener('mq-enter', onMathEnter);
     d.addEventListener('keydown', onKey);
     d.addEventListener('change', onChange);
+    const dr = byId('drawer');
+    dr.addEventListener('touchstart', menuTouchStart, { passive: true });
+    dr.addEventListener('touchmove', menuTouchMove, { passive: true });
+    dr.addEventListener('touchend', menuTouchEnd);
+    dr.addEventListener('touchcancel', menuTouchEnd);
+    // leaving phone width (rotating, resizing) closes the menu
+    if (MENU_MQ) { const f = (ev) => { if (!ev.matches) closeMenu(false); }; if (MENU_MQ.addEventListener) MENU_MQ.addEventListener('change', f); else if (MENU_MQ.addListener) MENU_MQ.addListener(f); }
     Store.on((what) => {
       if (what === 'remote') { ensureExam(); renderAll(); }
       if (what === 'status' && App.view === 'progress') renderProgress();

@@ -6,6 +6,7 @@
 /*STYLES*/
 </style>
 <header class="bar">
+  <button type="button" id="menu-btn" class="menu-btn" data-act="menu-open" aria-label="Open menu" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   <button type="button" class="brand" data-act="view" data-view="home" aria-label="Placement Exam Prep: home"><span class="brand-mark"><i>x</i><sup>2</sup></span><span class="brand-t">Placement Exam Prep</span></button>
   <nav class="tabs" aria-label="Sections">
     <button type="button" data-act="view" data-view="home" aria-current="page">Home</button>
@@ -16,6 +17,22 @@
   </nav>
   <div id="score-chip" class="chip" aria-live="polite"></div>
 </header>
+<div id="scrim" class="scrim" data-act="menu-close" aria-hidden="true"></div>
+<aside id="drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" inert>
+  <div class="drawer-h">
+    <span class="brand-mark" aria-hidden="true"><i>x</i><sup>2</sup></span><span id="drawer-title" class="drawer-t">Placement Exam Prep</span>
+    <button type="button" class="drawer-x" data-act="menu-close" aria-label="Close menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <nav class="dnav" aria-label="Sections">
+    <button type="button" data-act="view" data-view="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.2 12 4.5l8 6.7V20h-5.5v-5.5h-5V20H4z"/></svg><span>Home</span></button>
+    <button type="button" data-act="view" data-view="exam"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4"/></svg><span>Exam</span></button>
+    <button type="button" data-act="view" data-view="tutorials"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.2c3-1.6 6-1.6 8.5.6 2.5-2.2 5.5-2.2 8.5-.6v13c-3-1.6-6-1.6-8.5.6-2.5-2.2-5.5-2.2-8.5-.6z"/><path d="M12 6.8v13"/></svg><span>Tutorials</span></button>
+    <button type="button" data-act="view" data-view="flashcards"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="8" width="13.5" height="11" rx="2"/><path d="M7 5h11.5a2 2 0 0 1 2 2v8.5"/></svg><span>Flashcards</span></button>
+    <button type="button" data-act="view" data-view="progress"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16h16"/><path d="M8.5 16v-4M12.5 16V8.5M16.5 16v-6"/></svg><span>Progress</span></button>
+  </nav>
+  <div id="drawer-exam" class="drawer-exam"></div>
+  <p class="drawer-foot">Your work saves as you go.</p>
+</aside>
 <main>
   <section id="v-home"><div id="home-page" class="page home"></div></section>
   <section id="v-exam" class="v-exam" hidden>

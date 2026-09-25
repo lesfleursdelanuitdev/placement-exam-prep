@@ -200,7 +200,10 @@
       while (i < n) {
         if (stop === '}' && src[i] === '}') break;
         if (stop === '\\right' && src.startsWith('\\right', i)) break;
-        out += one(st);
+        const tok = one(st);
+        out += tok;
+        // at the top level, a long line of math may wrap after a relation, a + or −, or a comma
+        if (stop === null && /^<span class="mo [rb]"|^<span class="mp cm"/.test(tok)) out += '<wbr>';
       }
       return out;
     }

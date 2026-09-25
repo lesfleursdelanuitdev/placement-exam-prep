@@ -252,7 +252,7 @@ main { padding-block: 22px 120px; padding-inline: 16px; }
 .ksq { border-top: 1.5px solid currentColor; padding: 2px 2px 0; margin-left: 1px; }
 kbd { font-family: var(--f-mono); font-size: 0.88em; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--paper); }
 @media (prefers-reduced-motion: reduce) { .mq.act .caret { animation: none; } }
-select.units { height: 36px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); padding: 0 8px; font-size: 14px; }
+select.units { max-width: 100%; height: 36px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); padding: 0 8px; font-size: 14px; }
 .acts { display: flex; gap: 6px; }
 .pts { margin-left: auto; font-family: var(--f-mono); color: var(--muted); font-size: 14px; line-height: 36px; }
 .fb { font-size: 14px; min-height: 0; margin-top: 4px; }
@@ -284,7 +284,7 @@ select.units { height: 36px; border: 1px solid var(--rule); border-radius: 6px; 
 .opts.graphs .optl { position: relative; }
 .ok-letter { position: absolute; top: 2px; left: 4px; font: 700 12px var(--f-cond); color: var(--muted); }
 .opts.graphs svg { width: 100%; height: auto; max-width: 230px; }
-.opts.graphs.strips { grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
+.opts.graphs.strips { grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); }
 .opts.graphs.strips .opt { padding: 16px 8px 4px; }
 .opts.graphs.strips svg { max-width: 380px; }
 .opts.list .optl { font-size: 15px; }
@@ -340,7 +340,8 @@ select.units { height: 36px; border: 1px solid var(--rule); border-radius: 6px; 
 .sub-h { font-family: var(--f-cond); font-weight: 700; font-size: 19px; letter-spacing: 0.02em; margin: 30px 0 4px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .tut-stats { font-family: var(--f-ui); font-weight: 500; font-size: 13px; color: var(--muted); }
 .hint { font-size: 14px; color: var(--muted); margin: 0 0 4px; }
-.worked { border-bottom: 0; border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px; margin: 12px 0; display: grid; gap: 8px; }
+.worked { border-bottom: 0; border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px; margin: 12px 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.worked > * { min-width: 0; }
 .worked.has-vis { grid-template-columns: minmax(0, 1fr) auto; }
 .worked .eyebrow, .worked .prompt, .worked .steps, .worked .wans { grid-column: 1; }
 .worked.has-vis .vis { grid-column: 2; grid-row: 1 / span 3; }
@@ -383,6 +384,7 @@ select.units { height: 36px; border: 1px solid var(--rule); border-radius: 6px; 
 
 /* x / y tables inside prompts */
 .xy { border-collapse: collapse; margin: 8px 0; font-family: var(--f-math); font-size: 17px; }
+@media (max-width: 560px) { .xy { display: block; max-width: 100%; overflow-x: auto; } .xy th, .xy td { padding: 4px 8px; } }
 .xy th, .xy td { border: 1px solid var(--rule); padding: 4px 12px; text-align: center; min-width: 40px; }
 .xy th { background: var(--accent-soft); font-weight: 400; }
 
@@ -536,9 +538,6 @@ select.units { height: 36px; border: 1px solid var(--rule); border-radius: 6px; 
   .bub { flex: 0 0 auto; }
 }
 @media (max-width: 720px) {
-  .bar { padding: 8px 16px; gap: 8px 10px; flex-wrap: nowrap; }
-  .brand-t { display: none; }
-  .tabs button { padding: 6px 8px; font-size: 13px; letter-spacing: 0.06em; }
   .chip { font-size: 12px; }
   .chip b { font-size: 15px; }
   .chip-l { display: none; }
@@ -554,12 +553,6 @@ select.units { height: 36px; border: 1px solid var(--rule); border-radius: 6px; 
   .prompt { font-size: 17px; }
 }
 @media (max-width: 640px) {
-  .bar { flex-wrap: wrap; padding: 8px 16px 0; gap: 4px 10px; }
-  .brand-t { display: inline; font-size: 15px; }
-  .tabs { order: 3; width: calc(100% + 32px); margin: 0 -16px; padding: 2px 8px 4px; overflow-x: auto; scrollbar-width: none; gap: 0; justify-content: space-between; }
-  .tabs button { flex: 1 0 auto; padding: 8px 4px; font-family: var(--f-ui); font-size: 13.5px; letter-spacing: 0; text-transform: none; }
-  .sheet { top: calc(env(safe-area-inset-top, 0px) + 86px); }
-  .card, .results { scroll-margin-top: 140px; }
   .home-h h1 { font-size: 30px; }
   .choice { grid-template-columns: minmax(0, 1fr); padding: 16px; gap: 8px; }
   .ch-ic svg { width: 40px; height: 40px; }
@@ -572,15 +565,127 @@ select.units { height: 36px; border: 1px solid var(--rule); border-radius: 6px; 
   .mq-bar { gap: 5px; padding: 6px; }
   .mk { height: 40px; }
 }
-@media (max-width: 400px) { .chip { display: none; } }
-@media (max-width: 360px) { .tabs button { font-size: 12px; padding: 8px 2px; } }
+@media (max-width: 380px) { .chip { display: none; } }
 @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+
+/* ---------- phone/tablet header and slide-out menu ---------- */
+.menu-btn, .scrim, .drawer { display: none; }
+/* mid widths: keep the tabs on one line */
+@media (max-width: 1120px) {
+  .bar { flex-wrap: nowrap; gap: 12px; }
+  .tabs { min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .tabs button { padding: 6px 9px; letter-spacing: 0.05em; white-space: nowrap; }
+  .chip-l { display: none; }
+}
+@media (max-width: 900px) {
+  :root { --bar-h: 56px; }
+  .bar { height: var(--bar-h); box-sizing: border-box; flex-wrap: nowrap; gap: 4px; padding: 0 10px 0 4px; padding-left: max(4px, env(safe-area-inset-left)); }
+  .tabs { display: none; }
+  .brand { min-height: 44px; padding: 0 6px; border-radius: 8px; min-width: 0; }
+  .brand-t { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip-b { min-height: 40px; align-items: center; }
+  .menu-btn {
+    display: grid; place-items: center; flex: 0 0 auto; width: 44px; height: 44px; padding: 0;
+    border: 0; border-radius: 8px; background: none; color: var(--ink); cursor: pointer;
+  }
+  .menu-btn:hover, .menu-btn[aria-expanded='true'] { background: var(--accent-soft); }
+  .menu-btn svg, .drawer-x svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+  .sheet { top: calc(env(safe-area-inset-top, 0px) + var(--bar-h)); }
+  .card, .results, .part-h { scroll-margin-top: calc(var(--bar-h) + 76px); }
+
+  .scrim {
+    display: block; position: fixed; inset: 0; z-index: 60; background: rgb(10 14 20 / 0.46);
+    opacity: 0; pointer-events: none; transition: opacity 0.24s ease;
+  }
+  .drawer {
+    display: flex; flex-direction: column; position: fixed; z-index: 61; top: 0; bottom: 0; left: 0;
+    width: min(86vw, 336px); box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain;
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+    background: var(--paper); border-right: 1px solid var(--rule); box-shadow: 8px 0 32px rgb(10 14 20 / 0.22);
+    transform: translateX(-104%); visibility: hidden;
+    transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 0.26s;
+  }
+  html.menu-open, html.menu-open body { overflow: hidden; }
+  .menu-open .scrim { opacity: 1; pointer-events: auto; }
+  .menu-open .drawer { transform: none; visibility: visible; transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+  .drawer-h { display: flex; align-items: center; gap: 10px; min-height: var(--bar-h); padding: 0 6px 0 16px; border-bottom: 1px solid var(--rule); }
+  .drawer-t { flex: 1; min-width: 0; font-family: var(--f-cond); font-weight: 600; font-size: 15.5px; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .drawer-x { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--ink); cursor: pointer; }
+  .drawer-x:hover { background: var(--accent-soft); }
+
+  .dnav { display: flex; flex-direction: column; gap: 2px; padding: 10px 8px; }
+  .dnav button {
+    display: flex; align-items: center; gap: 14px; min-height: 48px; padding: 0 12px; border: 0; border-radius: 8px;
+    background: none; color: var(--ink); font: 500 16px/1.2 var(--f-ui); text-align: left; cursor: pointer;
+  }
+  .dnav button:hover { background: var(--accent-soft); }
+  .dnav svg { flex: 0 0 auto; width: 22px; height: 22px; fill: none; stroke: var(--muted); stroke-width: 1.7; stroke-linejoin: round; stroke-linecap: round; }
+  .dnav button[aria-current='page'] { background: var(--accent-soft); color: var(--accent-2); font-weight: 600; box-shadow: inset 3px 0 0 var(--accent); }
+  .dnav button[aria-current='page'] svg { stroke: var(--accent-2); }
+
+  .drawer-exam { margin: 0 16px; padding: 16px 0 6px; border-top: 1px solid var(--rule); }
+  .de-h { font-family: var(--f-cond); font-weight: 700; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .de-score { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; margin: 6px 0 8px; font-size: 14px; color: var(--muted); }
+  .de-score b { font: 600 20px var(--f-mono); color: var(--ink); }
+  .de-score span { flex-basis: 100%; font-size: 13px; }
+  .drawer-exam .meter { display: block; width: 100%; }
+  .de-acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+  .de-acts .btn { min-height: 44px; flex: 1 1 auto; justify-content: center; }
+  .de-sub { margin: 16px 0 2px; font-family: var(--f-cond); font-weight: 700; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .djs { display: flex; flex-direction: column; }
+  .dj {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 8px; min-height: 44px;
+    padding: 10px 8px; margin: 0 -8px; border: 0; border-radius: 8px; background: none; color: var(--ink); text-align: left; cursor: pointer; font-size: 14.5px;
+  }
+  .dj:hover { background: var(--accent-soft); }
+  .dj-p { font-family: var(--f-cond); font-weight: 700; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-2); }
+  .dj-n { font-family: var(--f-mono); font-size: 12.5px; color: var(--muted); }
+  .drawer-foot { margin: auto 0 0; padding: 18px 16px 16px; font-size: 13px; color: var(--muted); }
+
+  /* 16px keeps iOS from zooming in when a dropdown gets focus */
+  select.units { font-size: 16px; height: 40px; }
+  /* bigger touch targets */
+  .howto summary { padding: 10px 0; }
+  .bub { width: 36px; height: 36px; font-size: 12px; }
+  .btn.back { min-height: 40px; }
+  .btn.tut.sm { height: 34px; font-size: 13px; }
+  .btn.tut { height: 36px; border-radius: 18px; }
+}
+@media (max-width: 900px) and (prefers-reduced-motion: reduce) {
+  .scrim, .drawer, .menu-open .drawer { transition: none; }
+}
+/* phones: the page runs edge to edge, so math and graphs get the full width */
+@media (max-width: 560px) {
+  main { padding: 0 0 96px; }
+  .v-exam { gap: 0; }
+  .page, .paper { border-radius: 0; border-left: 0; border-right: 0; box-shadow: none; }
+  .page { margin-top: 0; border-top: 0; }
+  .sheet { border-radius: 0; border-left: 0; border-right: 0; border-top: 0; box-shadow: 0 1px 0 var(--rule); padding: 8px 16px; }
+  .lesson { padding: 12px 14px; margin-inline: -4px; font-size: 17px; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .stat { padding: 10px 12px; }
+  .summary .sum-l { font-size: 11px; letter-spacing: 0.08em; }
+  /* the by-topic table becomes one block per topic */
+  .tbl.topics thead { display: none; }
+  .tbl.topics, .tbl.topics tbody { display: block; }
+  .tbl.topics tr { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; padding: 10px 0; border-bottom: 1px solid var(--rule); }
+  .tbl.topics td { display: block; border: 0; padding: 0; }
+  .tbl.topics td:first-child { flex: 1 1 60%; font-weight: 600; }
+  .tbl.topics td:last-child { flex: 0 0 auto; order: 1; margin-left: auto; }
+  .tbl.topics td[data-l] { order: 2; font-size: 13px; color: var(--muted); }
+  .tbl.topics td[data-l]::before { content: attr(data-l) ' '; font-family: var(--f-ui); }
+  .tbl.topics td[data-l].num { font-family: var(--f-mono); }
+  .tbl.topics td[data-l].num::before { font-size: 12.5px; }
+  .tbl.topics td[data-l] .meter { width: 60px; }
+}
 
 </style>
 </head>
 <body>
 
 <header class="bar">
+  <button type="button" id="menu-btn" class="menu-btn" data-act="menu-open" aria-label="Open menu" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   <button type="button" class="brand" data-act="view" data-view="home" aria-label="Placement Exam Prep: home"><span class="brand-mark"><i>x</i><sup>2</sup></span><span class="brand-t">Placement Exam Prep</span></button>
   <nav class="tabs" aria-label="Sections">
     <button type="button" data-act="view" data-view="home" aria-current="page">Home</button>
@@ -591,6 +696,22 @@ select.units { height: 36px; border: 1px solid var(--rule); border-radius: 6px; 
   </nav>
   <div id="score-chip" class="chip" aria-live="polite"></div>
 </header>
+<div id="scrim" class="scrim" data-act="menu-close" aria-hidden="true"></div>
+<aside id="drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" inert>
+  <div class="drawer-h">
+    <span class="brand-mark" aria-hidden="true"><i>x</i><sup>2</sup></span><span id="drawer-title" class="drawer-t">Placement Exam Prep</span>
+    <button type="button" class="drawer-x" data-act="menu-close" aria-label="Close menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <nav class="dnav" aria-label="Sections">
+    <button type="button" data-act="view" data-view="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.2 12 4.5l8 6.7V20h-5.5v-5.5h-5V20H4z"/></svg><span>Home</span></button>
+    <button type="button" data-act="view" data-view="exam"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4"/></svg><span>Exam</span></button>
+    <button type="button" data-act="view" data-view="tutorials"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.2c3-1.6 6-1.6 8.5.6 2.5-2.2 5.5-2.2 8.5-.6v13c-3-1.6-6-1.6-8.5.6-2.5-2.2-5.5-2.2-8.5-.6z"/><path d="M12 6.8v13"/></svg><span>Tutorials</span></button>
+    <button type="button" data-act="view" data-view="flashcards"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="8" width="13.5" height="11" rx="2"/><path d="M7 5h11.5a2 2 0 0 1 2 2v8.5"/></svg><span>Flashcards</span></button>
+    <button type="button" data-act="view" data-view="progress"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16h16"/><path d="M8.5 16v-4M12.5 16V8.5M16.5 16v-6"/></svg><span>Progress</span></button>
+  </nav>
+  <div id="drawer-exam" class="drawer-exam"></div>
+  <p class="drawer-foot">Your work saves as you go.</p>
+</aside>
 <main>
   <section id="v-home"><div id="home-page" class="page home"></div></section>
   <section id="v-exam" class="v-exam" hidden>
@@ -1026,7 +1147,10 @@ select.units { height: 36px; border: 1px solid var(--rule); border-radius: 6px; 
       while (i < n) {
         if (stop === '}' && src[i] === '}') break;
         if (stop === '\\right' && src.startsWith('\\right', i)) break;
-        out += one(st);
+        const tok = one(st);
+        out += tok;
+        // at the top level, a long line of math may wrap after a relation, a + or −, or a comma
+        if (stop === null && /^<span class="mo [rb]"|^<span class="mp cm"/.test(tok)) out += '<wbr>';
       }
       return out;
     }
@@ -11850,7 +11974,7 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
       if (part !== lastPart) {
         lastPart = part;
         lastSec = null;
-        html += `<h2 class="part-h"><span>Part ${PART_NUM[part]}</span> ${esc(PART_NAME[part])}</h2>`;
+        html += `<h2 class="part-h" id="exam-part-${part}"><span>Part ${PART_NUM[part]}</span> ${esc(PART_NAME[part])}</h2>`;
         if (part === 3) html += `<p class="part-note">${PART3_NOTE}</p>`;
       }
       const sub = part === 1 ? it.topic.section : part === 3 ? it.topic.title : null;
@@ -12373,7 +12497,7 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
       ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Exam</th><th>Finished</th><th class="num">Score</th><th class="num">%</th></tr></thead><tbody>${hist.slice().reverse().map((h) => `<tr><td>No. ${esc(h.no)}</td><td>${new Date(h.finished).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td><td class="num">${esc(h.earned)} / ${esc(h.total)}</td><td class="num">${Math.round((100 * h.earned) / h.total)}%</td></tr>`).join('')}</tbody></table></div>`
       : `<p class="empty">No finished exams yet. Your first score appears here when you finish Practice Exam No. ${ex.no}.</p>`;
     html += `<h2 class="sub-h">By topic <span class="tut-stats">weakest first · all exams</span></h2><div class="tbl-wrap"><table class="tbl topics"><thead><tr><th>Topic</th><th class="num">Exam points</th><th>Accuracy</th><th class="num">Practice solved</th><th class="num">Cards learned</th><th></th></tr></thead><tbody>` +
-      rows.map((r) => `<tr><td>${esc(r.t.title)}</td><td class="num">${r.pts ? r.pts[0] + ' / ' + r.pts[1] : '–'}</td><td>${r.pct == null ? '<span class="muted">no data</span>' : `<span class="meter"><span style="width:${r.pct}%" class="${r.pct >= 80 ? 'good' : r.pct >= 50 ? 'mid' : 'low'}"></span></span> ${r.pct}%`}</td><td class="num">${r.c.solved}</td><td class="num">${r.f.total ? r.f.got + ' / ' + r.f.total : '–'}</td><td><button type="button" class="btn tut sm" data-act="tutorial" data-topic="${r.t.id}">Tutorial →</button></td></tr>`).join('') +
+      rows.map((r) => `<tr><td>${esc(r.t.title)}</td><td class="num" data-l="Exam points">${r.pts ? r.pts[0] + ' / ' + r.pts[1] : '–'}</td><td data-l="Accuracy">${r.pct == null ? '<span class="muted">no data</span>' : `<span class="meter"><span style="width:${r.pct}%" class="${r.pct >= 80 ? 'good' : r.pct >= 50 ? 'mid' : 'low'}"></span></span> ${r.pct}%`}</td><td class="num" data-l="Practice">${r.c.solved}</td><td class="num" data-l="Cards">${r.f.total ? r.f.got + ' / ' + r.f.total : '–'}</td><td><button type="button" class="btn tut sm" data-act="tutorial" data-topic="${r.t.id}">Tutorial →</button></td></tr>`).join('') +
       `</tbody></table></div>
       <div class="danger"><button type="button" class="btn ghost" data-act="reset-ask">Reset all progress…</button>
       <span id="reset-confirm" hidden>This erases every exam score, practice record and flashcard mark. <button type="button" class="btn danger-btn" data-act="reset-do">Erase everything</button> <button type="button" class="btn ghost" data-act="reset-cancel">Cancel</button></span></div>`;
@@ -12387,7 +12511,7 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
     if (App.view === 'exam' && v !== 'exam') App.examScroll = G.scrollY;
     App.view = v;
     VIEWS.forEach((k) => { byId('v-' + k).hidden = k !== v; });
-    d.querySelectorAll('.tabs [data-view]').forEach((b) => b.setAttribute('aria-current', b.dataset.view === (TAB_OF[v] || v) ? 'page' : 'false'));
+    d.querySelectorAll('.tabs [data-view], .dnav [data-view]').forEach((b) => b.setAttribute('aria-current', b.dataset.view === (TAB_OF[v] || v) ? 'page' : 'false'));
     if (v === 'home') renderHome();
     if (v === 'tutorials') renderTutIndex();
     if (v === 'progress') renderProgress();
@@ -12417,10 +12541,95 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
   }
 
   // ================= events =================
+  // ================= mobile slide-out menu =================
+  const menu = { open: false, touch: null };
+  const MENU_MQ = G.matchMedia ? G.matchMedia('(max-width: 900px)') : null;
+  const setInert = (el, on) => { if (!el) return; if (on) el.setAttribute('inert', ''); else el.removeAttribute('inert'); };
+  function renderDrawer() {
+    const ex = examState(), sc = scoreOf(App.items, ex.res);
+    const fresh = !sc.done && !Object.keys(drafts()).some((k) => k[0] === 'x');
+    const nxt = App.items[firstOpenItem()];
+    const jumps = [1, 2, 3].map((p) => {
+      const its = App.items.filter((it) => examPartOf(it.topic) === p);
+      if (!its.length) return '';
+      return `<button type="button" class="dj" data-act="goto-part" data-part="${p}"><span class="dj-p">Part ${PART_NUM[p]}</span><span class="dj-t">${esc(NAV_NAME[p])}</span><span class="dj-n">${its[0].n}–${its[its.length - 1].n}</span></button>`;
+    }).join('');
+    byId('drawer-exam').innerHTML = `<div class="de-h">Practice Exam No. ${esc(ex.no)}${ex.finished ? ' · finished' : ''}</div>
+      <div class="de-score"><b>${sc.earned}</b> / ${sc.total} points<span>${sc.done} of ${sc.parts} parts answered</span></div>
+      ${meter(sc.parts ? sc.done / sc.parts : 0, 'wide')}
+      <div class="de-acts">${ex.finished
+        ? '<button type="button" class="btn" data-act="view" data-view="exam">Review the exam</button><button type="button" class="btn primary" data-act="new-exam">New exam</button>'
+        : `<button type="button" class="btn primary" data-act="resume">${fresh ? 'Start the exam' : 'Continue at question ' + (nxt ? nxt.n : 1)}</button>`}</div>
+      <div class="de-sub">Jump to</div><div class="djs">${jumps}</div>`;
+  }
+  function openMenu() {
+    if (menu.open) return;
+    menu.open = true;
+    renderDrawer();
+    const dr = byId('drawer');
+    setInert(dr, false);
+    setInert(d.querySelector('header.bar'), true);
+    setInert(d.querySelector('main'), true);
+    d.documentElement.classList.add('menu-open');
+    byId('menu-btn').setAttribute('aria-expanded', 'true');
+    const first = dr.querySelector('.dnav [aria-current="page"]') || dr.querySelector('.drawer-x');
+    G.requestAnimationFrame(() => first.focus({ preventScroll: true }));
+  }
+  function closeMenu(returnFocus = true) {
+    if (!menu.open) return;
+    menu.open = false;
+    const dr = byId('drawer');
+    dr.style.transform = '';
+    dr.style.transition = '';
+    d.documentElement.classList.remove('menu-open');
+    setInert(d.querySelector('header.bar'), false);
+    setInert(d.querySelector('main'), false);
+    setInert(dr, true);
+    byId('menu-btn').setAttribute('aria-expanded', 'false');
+    if (returnFocus) byId('menu-btn').focus({ preventScroll: true });
+  }
+  function menuKey(e) {
+    if (e.key === 'Escape') { e.preventDefault(); closeMenu(); return; }
+    if (e.key !== 'Tab') return;
+    const f = [...byId('drawer').querySelectorAll('button:not([disabled])')].filter((el) => el.offsetParent);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && (d.activeElement === first || !byId('drawer').contains(d.activeElement))) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (d.activeElement === last || !byId('drawer').contains(d.activeElement))) { e.preventDefault(); first.focus(); }
+  }
+  // drag the drawer to the left to close it
+  function menuTouchStart(e) {
+    if (!menu.open || e.touches.length !== 1) return;
+    menu.touch = { x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0, drag: null };
+  }
+  function menuTouchMove(e) {
+    const t = menu.touch;
+    if (!t) return;
+    t.dx = e.touches[0].clientX - t.x;
+    const dy = e.touches[0].clientY - t.y;
+    if (t.drag == null && (Math.abs(t.dx) > 8 || Math.abs(dy) > 8)) t.drag = Math.abs(t.dx) > Math.abs(dy);
+    if (!t.drag) return;
+    const dr = byId('drawer');
+    dr.style.transition = 'none';
+    dr.style.transform = `translateX(${Math.min(0, t.dx)}px)`;
+  }
+  function menuTouchEnd() {
+    const t = menu.touch;
+    menu.touch = null;
+    if (!t || !t.drag) return;
+    const dr = byId('drawer');
+    dr.style.transition = '';
+    if (t.dx < -Math.min(90, dr.offsetWidth * 0.3)) closeMenu();
+    else dr.style.transform = '';
+  }
   function onClick(e) {
     const b = e.target.closest('[data-act]');
     if (!b || b.disabled) return;
     const act = b.dataset.act;
+    if (act === 'menu-open') { openMenu(); return; }
+    if (act === 'menu-close') { closeMenu(); return; }
+    // any other choice in the menu closes it first, so the page can scroll to its target
+    if (menu.open && b.closest('#drawer')) { closeMenu(false); G.setTimeout(() => byId('menu-btn').focus({ preventScroll: true }), 0); }
     if (act === 'check') doCheck(b.dataset.card, +b.dataset.p);
     else if (act === 'reveal') doReveal(b.dataset.card, +b.dataset.p);
     else if (act === 'tutorial') {
@@ -12439,6 +12648,11 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
     }
     else if (act === 'resume') { setView('exam'); const i = firstOpenItem(); if (i > 0) setTimeout(() => gotoItem(i), 30); }
     else if (act === 'goto') gotoItem(+b.dataset.item);
+    else if (act === 'goto-part') {
+      if (App.view !== 'exam') setView('exam', { keepScroll: true });
+      const h = byId('exam-part-' + b.dataset.part);
+      if (h) G.setTimeout(() => h.scrollIntoView({ block: 'start', behavior: prefersReduced() ? 'auto' : 'smooth' }), 30);
+    }
     else if (act === 'more') moreExercises();
     else if (act === 'new-exam') { startNewExam(); renderExam(); setView('exam'); }
     else if (act === 'save-later') {
@@ -12486,6 +12700,7 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
     if (p) doCheck(p.cardId, p.pi);
   }
   function onKey(e) {
+    if (menu.open) { menuKey(e); return; }
     if (App.view !== 'deck' || !App.deck) return;
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -12516,6 +12731,13 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
     d.addEventListener('mq-enter', onMathEnter);
     d.addEventListener('keydown', onKey);
     d.addEventListener('change', onChange);
+    const dr = byId('drawer');
+    dr.addEventListener('touchstart', menuTouchStart, { passive: true });
+    dr.addEventListener('touchmove', menuTouchMove, { passive: true });
+    dr.addEventListener('touchend', menuTouchEnd);
+    dr.addEventListener('touchcancel', menuTouchEnd);
+    // leaving phone width (rotating, resizing) closes the menu
+    if (MENU_MQ) { const f = (ev) => { if (!ev.matches) closeMenu(false); }; if (MENU_MQ.addEventListener) MENU_MQ.addEventListener('change', f); else if (MENU_MQ.addListener) MENU_MQ.addListener(f); }
     Store.on((what) => {
       if (what === 'remote') { ensureExam(); renderAll(); }
       if (what === 'status' && App.view === 'progress') renderProgress();
