@@ -40,6 +40,25 @@
   }
 
   // ================= exam model =================
+  // Generate a question and make sure its answer key checks out: the grader accepts the key and the
+  // independent verifier (src/verify.js) agrees with it. A question that fails is replaced by one from the
+  // next seed (and then by another variant of the same topic), so a generator bug never reaches a student.
+  // A sound question keeps its original seed, so saved exams and practice rebuild exactly the same questions.
+  MX.V.opts.n = 4000; // a lighter sample count than the tests use; this is the safety net, not the audit
+  MX.unsound = [];
+  function soundGen(t, vk, seed, key) {
+    const tryGen = (v, k) => {
+      let q = null, why;
+      try { q = t.variants[v].gen(MX.rngFor(seed, key + (k ? '|fix' + k : '') + (v !== vk ? '|' + v : ''))); why = MX.sound(q); } catch (e) { why = 'generator threw: ' + (e && e.message); }
+      if (why === true) return q;
+      MX.unsound.push({ topic: t.id, variant: v, seed, key, why });
+      if (G.console) G.console.warn('Replaced a question whose answer key failed its check:', t.id + '/' + v, why);
+      return null;
+    };
+    for (let k = 0; k < 6; k++) { const q = tryGen(vk, k); if (q) return q; }
+    for (const v of allVariants(t)) if (v !== vk) { const q = tryGen(v, 0); if (q) return q; }
+    return t.variants[vk].gen(MX.rngFor(seed, key)); // nothing passed: fall back rather than break the page
+  }
   function buildExam(seed) {
     const items = [];
     for (const t of orderedTopics()) {
@@ -52,7 +71,7 @@
         used.add(vk);
         let q, tries = 0;
         do {
-          q = t.variants[vk].gen(MX.rngFor(seed, t.id + '#' + si + '|' + vk + '|' + tries));
+          q = soundGen(t, vk, seed, t.id + '#' + si + '|' + vk + '|' + tries);
           tries++;
         } while (t.distinctContexts && q.ctx && usedCtx.has(q.ctx) && tries < 20);
         if (q.ctx) usedCtx.add(q.ctx);
@@ -476,7 +495,7 @@
     return workedPlan(t).map((vk, k) => {
       let q, sig, tries = 0;
       do {
-        q = t.variants[vk].gen(MX.rngFor('tutorial-worked', t.id + '|' + vk + '|' + k + (tries ? '|' + tries : '')));
+        q = soundGen(t, vk, 'tutorial-worked', t.id + '|' + vk + '|' + k + (tries ? '|' + tries : ''));
         sig = q.prompt + '|' + q.parts.map((p) => p.answer + (p.answers || []).join(',')).join('|');
         tries++;
       } while (tries < 12 && (seenQ.has(sig) || (t.distinctContexts && q.ctx && seenCtx.has(q.ctx) && tries < 6)));
@@ -495,12 +514,12 @@
     const start = legacyWorked % vs.length;
     for (let k = 0; k < 3; k++) {
       const vk = vs[(start + k) % vs.length];
-      ex.push({ key: 'e' + k, vk, q: t.variants[vk].gen(MX.rngFor('tutorial-ex', t.id + '|' + k)) });
+      ex.push({ key: 'e' + k, vk, q: soundGen(t, vk, 'tutorial-ex', t.id + '|' + k) });
     }
     st.batches.forEach((choice, b) => {
       for (let k = 0; k < 3; k++) {
         const vk = choice && t.variants[choice] ? choice : vs[(b * 3 + k + start) % vs.length];
-        ex.push({ key: 'b' + b + '-' + k, vk, q: t.variants[vk].gen(MX.rngFor('tutorial-more', t.id + '|' + b + '|' + k + '|' + vk)) });
+        ex.push({ key: 'b' + b + '-' + k, vk, q: soundGen(t, vk, 'tutorial-more', t.id + '|' + b + '|' + k + '|' + vk) });
       }
     });
     return { wq, ex };
