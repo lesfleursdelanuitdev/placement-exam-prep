@@ -647,6 +647,33 @@
     Store.save();
     dk.pos++;
     dk.flipped = false;
+    dk.enter = 'next';
+    renderDeck();
+  }
+  // turn the current card over in place, so the CSS flip animates (a re-render would jump straight to the other side)
+  function flipCard() {
+    const dk = App.deck, el = byId('fc');
+    if (!dk || !el) return;
+    dk.flipped = !dk.flipped;
+    el.classList.toggle('flipped', dk.flipped);
+    el.setAttribute('aria-label', dk.flipped ? 'Answer side. Press to flip back.' : 'Question side. Press to see the answer.');
+    el.querySelector('.fc-front').setAttribute('aria-hidden', String(dk.flipped));
+    el.querySelector('.fc-back').setAttribute('aria-hidden', String(!dk.flipped));
+    // restart the lift that goes with each turn (and drop the slide-in, which would outrank it)
+    const w = el.closest('.fc-wrap');
+    if (w) w.classList.remove('enter-next', 'enter-prev');
+    el.classList.remove('lift');
+    void el.offsetWidth;
+    el.classList.add('lift');
+    el.focus({ preventScroll: true });
+  }
+  function stepCard(delta) {
+    const dk = App.deck;
+    const pos = Math.max(0, dk.pos + delta);
+    if (pos === dk.pos) return;
+    dk.pos = pos;
+    dk.flipped = false;
+    dk.enter = delta > 0 ? 'next' : 'prev';
     renderDeck();
   }
   function renderDeck() {
@@ -654,6 +681,8 @@
     if (!dk) return setView('flashcards');
     const cnt = flashCounts(dk.ids);
     const single = dk.spec.topic;
+    const enter = dk.enter;
+    dk.enter = null;
     const backTo = App.deckReturn === 'tutorial' ? '← Back to the tutorial' : App.deckReturn === 'home' ? '← Home' : '← All flashcards';
     let html = `<div class="tut-top"><button type="button" class="btn back" data-act="deck-back">${backTo}</button>
         ${single ? `<button type="button" class="btn tut" data-act="tutorial" data-topic="${single}">Open the tutorial →</button>` : ''}</div>
@@ -682,11 +711,11 @@
       const mark = (flashState()[id] || {})[i];
       const tag = mark === 1 ? '<span class="fc-tag ok">Got it</span>' : mark === 0 ? '<span class="fc-tag lrn">Still learning</span>' : '';
       const topicLine = dk.ids.length > 1 ? `<span class="fc-topic">${esc(MX.byId[id].title)}</span>` : '';
-      html += `<div class="fc-wrap">
+      html += `<div class="fc-wrap${enter ? ' enter-' + enter : ''}">
         <div class="fc${dk.flipped ? ' flipped' : ''}" id="fc" role="button" tabindex="0" data-act="flip" aria-label="${dk.flipped ? 'Answer side. Press to flip back.' : 'Question side. Press to see the answer.'}">
           <div class="fc-inner">
-            <div class="fc-face fc-front" aria-hidden="${dk.flipped}"><div class="fc-meta"><span>Card ${dk.pos + 1} of ${dk.order.length}</span>${topicLine}${tag}</div><div class="fc-body">${R(front)}</div><div class="fc-hint">Tap to flip</div></div>
-            <div class="fc-face fc-back" aria-hidden="${!dk.flipped}"><div class="fc-meta"><span>Answer</span>${topicLine}</div><div class="fc-body">${R(back)}</div><div class="fc-hint">Tap to flip back</div></div>
+            <div class="fc-face fc-front" aria-hidden="${dk.flipped}"><div class="fc-meta"><span>Card ${dk.pos + 1} of ${dk.order.length}</span>${topicLine}${tag}</div><div class="fc-body"><div class="fc-text">${R(front)}</div></div><div class="fc-hint">Tap to flip</div></div>
+            <div class="fc-face fc-back" aria-hidden="${!dk.flipped}"><div class="fc-meta"><span>Answer</span>${topicLine}</div><div class="fc-body"><div class="fc-text">${R(back)}</div></div><div class="fc-hint">Tap to flip back</div></div>
           </div>
         </div>
         <div class="fc-acts">
@@ -969,10 +998,10 @@
       openDeck(b.dataset.topic ? { topic: b.dataset.topic } : b.dataset.section ? { section: b.dataset.section } : { all: 1 }, b.dataset.mode || 'all', from);
     }
     else if (act === 'deck-back') setView(App.deckReturn === 'tutorial' && App.tutId ? 'tutorial' : App.deckReturn === 'home' ? 'home' : 'flashcards');
-    else if (act === 'flip') { App.deck.flipped = !App.deck.flipped; renderDeck(); const f = byId('fc'); if (f) f.focus({ preventScroll: true }); }
+    else if (act === 'flip') flipCard();
     else if (act === 'deck-mark') markCard(+b.dataset.v);
-    else if (act === 'deck-next') { App.deck.pos++; App.deck.flipped = false; renderDeck(); }
-    else if (act === 'deck-prev') { App.deck.pos = Math.max(0, App.deck.pos - 1); App.deck.flipped = false; renderDeck(); }
+    else if (act === 'deck-next') stepCard(1);
+    else if (act === 'deck-prev') stepCard(-1);
     else if (act === 'deck-mode') { App.deck.mode = b.dataset.mode; buildOrder(); renderDeck(); }
     else if (act === 'deck-shuffle') { App.deck.shuffle = !App.deck.shuffle; buildOrder(); renderDeck(); }
   }
@@ -999,11 +1028,11 @@
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.ctrlKey || e.metaKey || e.altKey) return;
     const onCard = e.target.id === 'fc';
-    if ((e.key === ' ' || e.key === 'Enter') && (onCard || e.target === d.body)) { e.preventDefault(); if (byId('fc')) { App.deck.flipped = !App.deck.flipped; renderDeck(); byId('fc').focus({ preventScroll: true }); } }
+    if ((e.key === ' ' || e.key === 'Enter') && (onCard || e.target === d.body)) { e.preventDefault(); flipCard(); }
     else if (e.key === '1' && byId('fc')) markCard(0);
     else if (e.key === '2' && byId('fc')) markCard(1);
-    else if (e.key === 'ArrowRight' && byId('fc')) { App.deck.pos++; App.deck.flipped = false; renderDeck(); }
-    else if (e.key === 'ArrowLeft' && byId('fc') && App.deck.pos > 0) { App.deck.pos--; App.deck.flipped = false; renderDeck(); }
+    else if (e.key === 'ArrowRight' && byId('fc')) stepCard(1);
+    else if (e.key === 'ArrowLeft' && byId('fc') && App.deck.pos > 0) stepCard(-1);
   }
   function onChange(e) {
     const r = e.target;

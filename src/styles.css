@@ -481,9 +481,24 @@ select.units { max-width: 100%; height: 36px; border: 1px solid var(--rule); bor
 .seg button:disabled { cursor: default; opacity: 0.5; }
 .btn[aria-pressed='true'] { background: var(--accent-soft); }
 .fc-wrap { max-width: 640px; margin: 0 auto; }
-.fc { perspective: 1400px; cursor: pointer; outline-offset: 4px; border-radius: 12px; -webkit-tap-highlight-color: transparent; }
-.fc-inner { display: grid; transition: transform 0.45s cubic-bezier(0.3, 0.7, 0.3, 1); transform-style: preserve-3d; }
+.fc { perspective: 1100px; cursor: pointer; outline-offset: 4px; border-radius: 12px; -webkit-tap-highlight-color: transparent; }
+/* the card turns over around its vertical axis; the transition reverses smoothly if tapped again mid-turn */
+.fc-inner {
+  display: grid; position: relative; transform-style: preserve-3d; -webkit-transform-style: preserve-3d;
+  transition: transform 0.62s cubic-bezier(0.45, 0.05, 0.25, 1);
+}
 .fc.flipped .fc-inner { transform: rotateY(180deg); }
+/* while it turns, the card lifts toward you and its shadow spreads, then settles */
+.fc.lift { animation: fc-lift 0.62s cubic-bezier(0.45, 0.05, 0.25, 1); }
+.fc.lift .fc-face { animation: fc-shadow 0.62s cubic-bezier(0.45, 0.05, 0.25, 1); }
+@keyframes fc-lift { 0%, 100% { transform: none; } 50% { transform: translateY(-8px) scale(1.035); } }
+@keyframes fc-shadow { 0%, 100% { box-shadow: var(--shadow); } 50% { box-shadow: 0 22px 40px -12px rgb(10 14 20 / 0.35); } }
+/* a new card slides in from the side you're moving toward */
+#v-deck { overflow-x: hidden; overflow-x: clip; } /* the slide-in must never make the page scroll sideways */
+.fc-wrap.enter-next .fc { animation: fc-in-next 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.fc-wrap.enter-prev .fc { animation: fc-in-prev 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes fc-in-next { from { opacity: 0; transform: translateX(36px) rotate(1.5deg); } }
+@keyframes fc-in-prev { from { opacity: 0; transform: translateX(-36px) rotate(-1.5deg); } }
 .fc-face {
   grid-area: 1 / 1; min-height: 260px; display: flex; flex-direction: column; gap: 10px; padding: 18px 22px 16px;
   background: var(--paper); border: 1.5px solid var(--rule); border-radius: 12px; box-shadow: var(--shadow);
@@ -498,6 +513,7 @@ select.units { max-width: 100%; height: 36px; border: 1px solid var(--rule); bor
 .fc-tag.lrn { background: var(--warn-soft); color: var(--warn); }
 .fc-body { flex: 1; display: grid; place-items: center; text-align: center; font-family: var(--f-math); font-size: 22px; line-height: 1.5; padding: 10px 4px; overflow-wrap: anywhere; }
 .fc-back .fc-body { font-size: 19px; }
+.fc-text { max-width: 100%; }
 .fc-hint { text-align: center; font-size: 12.5px; color: var(--faint); }
 .fc-acts { display: grid; grid-template-columns: auto 1fr 1fr auto; gap: 10px; margin-top: 16px; }
 .fc-acts .btn { justify-content: center; height: 44px; }
@@ -511,7 +527,15 @@ select.units { max-width: 100%; height: 36px; border: 1px solid var(--rule); bor
 .fc-done .res-acts { justify-content: center; }
 .deck-link { margin-left: auto; }
 .btn:disabled { opacity: 0.45; cursor: default; }
-@media (prefers-reduced-motion: reduce) { .fc-inner { transition: none; } }
+/* reduced motion: no turning or sliding; the sides swap with a short fade instead */
+@media (prefers-reduced-motion: reduce) {
+  .fc-inner, .fc.flipped .fc-inner { transition: none; transform: none; }
+  .fc-back { transform: none; }
+  .fc-face { transition: opacity 0.18s linear, visibility 0.18s linear; }
+  .fc .fc-back, .fc.flipped .fc-front { opacity: 0; visibility: hidden; }
+  .fc.flipped .fc-back { opacity: 1; visibility: visible; }
+  .fc.lift, .fc.lift .fc-face, .fc-wrap.enter-next .fc, .fc-wrap.enter-prev .fc { animation: none; }
+}
 
 .toast {
   position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); transform: translateX(-50%); z-index: 40;
