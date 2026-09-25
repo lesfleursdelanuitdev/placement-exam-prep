@@ -796,7 +796,8 @@
     return [H.iv(lo, hi, lc, hc)];
   }
   function unionReg(r1, r2) {
-    const all = [r1, r2].map((r) => ({ lo: +r.lo, hi: +r.hi, lc: r.lc, hc: r.hc })).sort((a, b) => a.lo - b.lo);
+    const all = [r1, r2].map((r) => ({ lo: +r.lo, hi: +r.hi, lc: r.lc, hc: r.hc }))
+      .sort((a, b) => a.lo - b.lo || (b.lc ? 1 : 0) - (a.lc ? 1 : 0)); // same start: the closed one first, so x > 1 or x >= 1 gives [1, inf)
     const out = [];
     for (const x of all) {
       const last = out[out.length - 1];
