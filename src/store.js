@@ -6,6 +6,75 @@
   'use strict';
   const MX = G.MX;
   const KEY = 'm098-prep-state-v1';
+
+  // Saved progress comes from storage we don't fully control (browser storage, the account copy),
+  // so clean it on every load: numbers must be finite numbers, maps must be plain objects,
+  // and anything unexpected is dropped. The page never has to trust a saved value's type.
+  const isObj = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
+  const num = (v, dflt) => (typeof v === 'number' && isFinite(v) ? v : dflt);
+  const int = (v, dflt) => { const n = num(v, NaN); return Number.isInteger(n) && n >= 0 ? n : dflt; };
+  const str = (v) => (typeof v === 'string' ? v.slice(0, 2000) : '');
+  const key = (k) => /^[\w#|:.-]{1,80}$/.test(k);
+  function cleanInput(v) {
+    if (!isObj(v)) return undefined;
+    const o = {};
+    if ('value' in v) o.value = str(v.value);
+    if ('unit' in v && v.unit != null) o.unit = str(v.unit);
+    if ('choice' in v && v.choice != null) o.choice = String(int(+v.choice, 0));
+    if (Array.isArray(v.values)) o.values = v.values.slice(0, 6).map(str);
+    return o;
+  }
+  function cleanRes(r) {
+    if (!isObj(r)) return null;
+    const o = {};
+    if (typeof r.ok === 'boolean') o.ok = r.ok;
+    if (r.revealed === true) o.revealed = true;
+    if (r.skipped === true) o.skipped = true;
+    if ('msg' in r) o.msg = str(r.msg);
+    if ('tries' in r) o.tries = int(r.tries, 0);
+    const val = cleanInput(r.val);
+    if (val) o.val = val;
+    return o;
+  }
+  function cleanParts(rr) {
+    const o = {};
+    if (isObj(rr)) for (const [pi, r] of Object.entries(rr)) { const c = /^\d{1,2}$/.test(pi) && cleanRes(r); if (c) o[pi] = c; }
+    return o;
+  }
+  function sanitize(s) {
+    if (!isObj(s) || s.v !== 1) return null;
+    const out = { v: 1, exam: null, history: [], tut: {}, flash: {}, drafts: {}, updated: num(s.updated, 0) };
+    const e = s.exam;
+    if (isObj(e) && typeof e.seed === 'string' && /^[\w-]{1,40}$/.test(e.seed)) {
+      out.exam = { no: Math.max(1, int(e.no, 1)), seed: e.seed, gv: int(e.gv, 0), started: num(e.started, Date.now()), finished: e.finished == null ? null : num(e.finished, null), res: {} };
+      if (isObj(e.res)) for (const [k, rr] of Object.entries(e.res)) if (key(k)) out.exam.res[k] = cleanParts(rr);
+    }
+    if (Array.isArray(s.history)) {
+      s.history.slice(-60).forEach((h) => {
+        if (!isObj(h)) return;
+        const earned = num(h.earned, NaN), total = num(h.total, NaN), no = int(h.no, NaN);
+        if (!(total > 0) || !(earned >= 0) || !(no >= 1)) return;
+        const byTopic = {};
+        if (isObj(h.byTopic)) for (const [k, v] of Object.entries(h.byTopic)) if (key(k) && Array.isArray(v)) byTopic[k] = [num(v[0], 0), num(v[1], 0)];
+        out.history.push({ no, earned, total, started: num(h.started, 0), finished: num(h.finished, 0), byTopic });
+      });
+    }
+    if (isObj(s.tut)) for (const [id, t] of Object.entries(s.tut)) {
+      if (!key(id) || !isObj(t)) continue;
+      const res = {};
+      if (isObj(t.res)) for (const [k, rr] of Object.entries(t.res)) if (key(k)) res[k] = cleanParts(rr);
+      out.tut[id] = { batches: Array.isArray(t.batches) ? t.batches.slice(0, 200).map((b) => (typeof b === 'string' && key(b) ? b : '')) : [], res };
+    }
+    if (isObj(s.flash)) for (const [id, m] of Object.entries(s.flash)) {
+      if (!key(id) || !isObj(m)) continue;
+      const o = {};
+      for (const [i, v] of Object.entries(m)) if (/^\d{1,3}$/.test(i) && (v === 0 || v === 1)) o[i] = v;
+      out.flash[id] = o;
+    }
+    if (isObj(s.drafts)) for (const [k, v] of Object.entries(s.drafts)) { const c = key(k) && cleanInput(v); if (c) out.drafts[k] = c; }
+    return out;
+  }
+
   const Store = {
     state: null,
     ref: null,
@@ -18,8 +87,8 @@
       try {
         const raw = G.localStorage && G.localStorage.getItem(KEY);
         if (raw) {
-          const s = JSON.parse(raw);
-          if (s && s.v === 1) return s;
+          const s = sanitize(JSON.parse(raw));
+          if (s) return s;
         }
       } catch (e) { /* storage blocked */ }
       return null;
@@ -39,9 +108,9 @@
         if (!uid) return;
         this.ref = db.doc('data/users/' + uid + '/state');
         const snap = await this.ref.get();
-        const remote = snap.exists ? snap.data() : null;
+        const remote = snap.exists ? sanitize(snap.data()) : null;
         if (remote && remote.v === 1 && (remote.updated || 0) > (this.state.updated || 0)) {
-          this.state = JSON.parse(JSON.stringify(remote));
+          this.state = remote;
           this.writeLocal();
           this.remoteStatus = 'synced';
           this.listeners.forEach((f) => f('remote'));
@@ -87,5 +156,6 @@
       this.save();
     },
   };
+  Store.sanitize = sanitize;
   MX.Store = Store;
 })(typeof window !== 'undefined' ? window : globalThis);

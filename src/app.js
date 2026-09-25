@@ -276,7 +276,7 @@
   function renderChip() {
     const ex = examState();
     const sc = scoreOf(App.items, ex.res);
-    byId('score-chip').innerHTML = `<button type="button" class="chip-b" data-act="view" data-view="exam" title="Go to the exam"><span class="chip-l">Final No. ${ex.no}</span><b>${sc.earned}</b><span>/ ${sc.total}</span></button>`;
+    byId('score-chip').innerHTML = `<button type="button" class="chip-b" data-act="view" data-view="exam" title="Go to the exam"><span class="chip-l">Final No. ${esc(ex.no)}</span><b>${sc.earned}</b><span>/ ${sc.total}</span></button>`;
   }
   function renderExamHeader() {
     const ex = examState();
@@ -727,7 +727,7 @@
       </div>
       <h2 class="sub-h">Your progress</h2>
       <div class="stats">
-        <div class="stat"><span class="stat-n">${last ? Math.round((100 * last.earned) / last.total) + '%' : '–'}</span><span class="stat-l">${last ? `last exam (No. ${last.no}: ${last.earned} / ${last.total})` : 'last exam score (none finished yet)'}</span></div>
+        <div class="stat"><span class="stat-n">${last ? Math.round((100 * last.earned) / last.total) + '%' : '–'}</span><span class="stat-l">${last ? `last exam (No. ${esc(last.no)}: ${esc(last.earned)} / ${esc(last.total)})` : 'last exam score (none finished yet)'}</span></div>
         <div class="stat"><span class="stat-n">${practiced}<small> / ${topics.length}</small></span><span class="stat-l">tutorials practiced</span></div>
         <div class="stat"><span class="stat-n">${fc.got}<small> / ${fc.total}</small></span><span class="stat-l">flashcards learned</span></div>
       </div>
@@ -752,7 +752,7 @@
       [50, 75, 100].forEach((y) => { const yy = Hh - 20 - (y / 100) * (Hh - 34); b += `<line class="grid" x1="30" x2="${W}" y1="${yy}" y2="${yy}"/><text class="tx tick" x="24" y="${yy + 4}" text-anchor="end">${y}%</text>`; });
       bars.forEach((h, k) => {
         const p = Math.round((100 * h.earned) / h.total), x = 38 + k * (bw + 6), hh = (p / 100) * (Hh - 34);
-        b += `<rect class="${k === bars.length - 1 ? 'accf' : 'soft2'}" x="${x}" y="${Hh - 20 - hh}" width="${bw}" height="${hh}" rx="3"/><text class="tx tick" x="${x + bw / 2}" y="${Hh - 6}" text-anchor="middle">${h.no}</text>`;
+        b += `<rect class="${k === bars.length - 1 ? 'accf' : 'soft2'}" x="${x}" y="${Hh - 20 - hh}" width="${bw}" height="${hh}" rx="3"/><text class="tx tick" x="${x + bw / 2}" y="${Hh - 6}" text-anchor="middle">${esc(h.no)}</text>`;
         if (k === bars.length - 1) b += `<text class="tx small" x="${x + bw / 2}" y="${Hh - 24 - hh}" text-anchor="middle" font-weight="700">${p}%</text>`;
       });
       chart = `<svg class="sv chart" viewBox="0 0 ${W} ${Hh}" width="${W}" height="${Hh}" role="img" aria-label="Exam scores over time">${b}</svg>`;
@@ -775,7 +775,7 @@
       ${chart ? `<h2 class="sub-h">Exam scores</h2><div class="chart-wrap">${chart}</div>` : ''}
       <h2 class="sub-h">History</h2>`;
     html += hist.length
-      ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Exam</th><th>Finished</th><th class="num">Score</th><th class="num">%</th></tr></thead><tbody>${hist.slice().reverse().map((h) => `<tr><td>No. ${h.no}</td><td>${new Date(h.finished).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td><td class="num">${h.earned} / ${h.total}</td><td class="num">${Math.round((100 * h.earned) / h.total)}%</td></tr>`).join('')}</tbody></table></div>`
+      ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Exam</th><th>Finished</th><th class="num">Score</th><th class="num">%</th></tr></thead><tbody>${hist.slice().reverse().map((h) => `<tr><td>No. ${esc(h.no)}</td><td>${new Date(h.finished).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td><td class="num">${esc(h.earned)} / ${esc(h.total)}</td><td class="num">${Math.round((100 * h.earned) / h.total)}%</td></tr>`).join('')}</tbody></table></div>`
       : `<p class="empty">No finished exams yet. Your first score appears here when you finish Practice Final No. ${ex.no}.</p>`;
     html += `<h2 class="sub-h">By topic <span class="tut-stats">weakest first · all exams</span></h2><div class="tbl-wrap"><table class="tbl topics"><thead><tr><th>Topic</th><th class="num">Exam points</th><th>Accuracy</th><th class="num">Practice solved</th><th class="num">Cards learned</th><th></th></tr></thead><tbody>` +
       rows.map((r) => `<tr><td>${esc(r.t.title)}</td><td class="num">${r.pts ? r.pts[0] + ' / ' + r.pts[1] : '–'}</td><td>${r.pct == null ? '<span class="muted">no data</span>' : `<span class="meter"><span style="width:${r.pct}%" class="${r.pct >= 80 ? 'good' : r.pct >= 50 ? 'mid' : 'low'}"></span></span> ${r.pct}%`}</td><td class="num">${r.c.solved}</td><td class="num">${r.f.total ? r.f.got + ' / ' + r.f.total : '–'}</td><td><button type="button" class="btn tut sm" data-act="tutorial" data-topic="${r.t.id}">Tutorial →</button></td></tr>`).join('') +

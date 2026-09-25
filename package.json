@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "test": "node test/selftest.mjs 60 && node test/editor.mjs 20"
+    "test": "node test/selftest.mjs 60 && node test/editor.mjs 20 && node test/security.mjs"
   },
   "license": "UNLICENSED"
 }

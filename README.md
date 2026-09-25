@@ -126,12 +126,13 @@ Flashcards: 311 cards in 55 decks.
 
 ## Development
 
-No dependencies. Node 18+.
+No dependencies: no React, no Next.js, no npm packages at all. The page is plain JavaScript and loads nothing external except the Google Fonts stylesheet. Node 18+ is needed only to build and test.
 
 ```
 node build.mjs            # bundle src/ into docs/index.html (and dist/artifact.html)
 node test/selftest.mjs    # generate every variant with many seeds and check the answer keys
 node test/editor.mjs      # rebuild every answer key in the math box (stacked fractions, exponents, radicals) and re-grade it; replay keystrokes
+node test/security.mjs    # tampered saved progress must be cleaned before the page uses it
 node test/dump.mjs w-pyth # print sample problems + solutions for a topic (prefix match)
 node test/catalog.mjs     # print the catalog above
 ```
@@ -147,7 +148,7 @@ node test/catalog.mjs     # print the catalog above
 | `src/topics/t*.js` | skill-topic generators and lessons |
 | `src/topics/w*.js` | word-problem groups, variations, visuals and lessons |
 | `src/flashcards.js` | flashcard decks, one per topic |
-| `src/store.js` | saving progress (localStorage + optional Claude artifact db) |
+| `src/store.js` | saving progress (localStorage + optional Claude artifact db); every load is sanitized, since saved data is untrusted input |
 | `src/app.js` | home, exam, tutorial, flashcard and progress views |
 
 ### Adding a topic
