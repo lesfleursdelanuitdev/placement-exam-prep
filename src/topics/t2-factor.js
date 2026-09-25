@@ -31,7 +31,7 @@
           const m = p * s, n = q * r;
           return {
             prompt: T`Factor completely: \(${Tri.tex}\)`,
-            parts: [{ kind: 'factor', answer: ans, factors: [F1.asc, F2.asc], show: T`\left(${F1.tex}\right)\left(${F2.tex}\right)`, points: 3 }],
+            parts: [{ kind: 'factor', answer: ans, factors: [F1.asc, F2.asc], show: T`\left(${F1.tex}\right)\left(${F2.tex}\right)`, points: 3, verify: MX.V.equiv(Tri.asc) }],
             solution: [
               T`There is no common factor. Multiply \(a \cdot c = ${a} \cdot ${MX.par(c)} = ${a * c}\).`,
               T`Two numbers that multiply to \(${a * c}\) and add to \(${b}\): \(${m}\) and \(${n}\).`,
@@ -53,7 +53,7 @@
           const F1 = binom(1, q, v), F2 = binom(1, s, v);
           return {
             prompt: T`Factor completely: \(${Tri.tex}\)`,
-            parts: [{ kind: 'factor', answer: g + '(' + F1.asc + ')(' + F2.asc + ')', factors: [String(g), F1.asc, F2.asc], show: T`${g}\left(${F1.tex}\right)\left(${F2.tex}\right)`, points: 3 }],
+            parts: [{ kind: 'factor', answer: g + '(' + F1.asc + ')(' + F2.asc + ')', factors: [String(g), F1.asc, F2.asc], show: T`${g}\left(${F1.tex}\right)\left(${F2.tex}\right)`, points: 3, verify: MX.V.equiv(Tri.asc) }],
             solution: [
               T`Every term is divisible by ${g}: \(${g}\left(${In.tex}\right)\)`,
               T`Two numbers that multiply to \(${q * s}\) and add to \(${q + s}\): \(${q}\) and \(${s}\).`,
@@ -75,7 +75,7 @@
           const lead = (g === 1 ? '' : g) + v;
           return {
             prompt: T`Factor completely: \(${Tri.tex}\)`,
-            parts: [{ kind: 'factor', answer: lead + '(' + F1.asc + ')(' + F2.asc + ')', factors: [String(g), v, F1.asc, F2.asc], show: T`${lead}\left(${F1.tex}\right)\left(${F2.tex}\right)`, points: 3 }],
+            parts: [{ kind: 'factor', answer: lead + '(' + F1.asc + ')(' + F2.asc + ')', factors: [String(g), v, F1.asc, F2.asc], show: T`${lead}\left(${F1.tex}\right)\left(${F2.tex}\right)`, points: 3, verify: MX.V.equiv(Tri.asc) }],
             solution: [
               T`The GCF is \(${lead}\): \(${lead}\left(${In.tex}\right)\)`,
               T`Two numbers that multiply to \(${q * s}\) and add to \(${q + s}\): \(${q}\) and \(${s}\).`,
@@ -105,7 +105,7 @@
           const F1 = binom(1, p, u), F2 = binom(1, q, w);
           return {
             prompt: T`Factor completely: \(${E.tex}\)`,
-            parts: [{ kind: 'factor', answer: '(' + F1.asc + ')(' + F2.asc + ')', factors: [F1.asc, F2.asc], show: T`\left(${F1.tex}\right)\left(${F2.tex}\right)`, points: 2 }],
+            parts: [{ kind: 'factor', answer: '(' + F1.asc + ')(' + F2.asc + ')', factors: [F1.asc, F2.asc], show: T`\left(${F1.tex}\right)\left(${F2.tex}\right)`, points: 2, verify: MX.V.equiv(E.asc) }],
             solution: [
               T`Group the first two and last two terms: \(\left(${u}${w} ${MX.sgnTerm(p)}${w}\right) + \left(${poly([[q, { [u]: 1 }], [p * q, {}]]).tex}\right)\)`,
               T`Factor each group: \(${w}\left(${F1.tex}\right) ${MX.sgnTerm(q)}\left(${F1.tex}\right)\)`,
@@ -126,7 +126,7 @@
           const g1 = (c === 1 ? '' : c) + 'xy';
           return {
             prompt: T`Factor completely: \(${E.tex}\)`,
-            parts: [{ kind: 'factor', answer: '(' + F1.asc + ')(' + F2.asc + ')', factors: [F1.asc, F2.asc], show: T`\left(${F1.tex}\right)\left(${F2.tex}\right)`, points: 3 }],
+            parts: [{ kind: 'factor', answer: '(' + F1.asc + ')(' + F2.asc + ')', factors: [F1.asc, F2.asc], show: T`\left(${F1.tex}\right)\left(${F2.tex}\right)`, points: 3, verify: MX.V.equiv(E.asc) }],
             solution: [
               T`Group: \(\left(${poly([[a * c, { x: 2, y: 1 }], [b * c, { x: 1, y: 2 }]], ['x', 'y']).tex}\right) + \left(${poly([[-a * sd, { x: 1 }], [-b * sd, { y: 1 }]], ['x', 'y']).tex}\right)\)`,
               T`Factor \(${g1}\) from the first group and \(${-sd}\) from the second: \(${g1}\left(${F1.tex}\right) ${MX.sgnTerm(-sd)}\left(${F1.tex}\right)\)`,
@@ -144,7 +144,7 @@
           const F1 = binom(1, a, 'x');
           return {
             prompt: T`Factor completely: \(${E.tex}\)`,
-            parts: [{ kind: 'factor', answer: '(x' + (a < 0 ? a : '+' + a) + ')(x-' + b + ')(x+' + b + ')', factors: [F1.asc, 'x-' + b, 'x+' + b], show: T`\left(${F1.tex}\right)\left(x - ${b}\right)\left(x + ${b}\right)`, points: 3 }],
+            parts: [{ kind: 'factor', answer: '(x' + (a < 0 ? a : '+' + a) + ')(x-' + b + ')(x+' + b + ')', factors: [F1.asc, 'x-' + b, 'x+' + b], show: T`\left(${F1.tex}\right)\left(x - ${b}\right)\left(x + ${b}\right)`, points: 3, verify: MX.V.equiv(E.asc) }],
             solution: [
               T`Group: \(x^{2}\left(${F1.tex}\right) - ${b * b}\left(${F1.tex}\right) = \left(${F1.tex}\right)\left(x^{2} - ${b * b}\right)\)`,
               T`\(x^{2} - ${b * b}\) is a difference of squares: \(\left(x - ${b}\right)\left(x + ${b}\right)\)`,
@@ -182,7 +182,7 @@
     steps.push(T`\(${H.box(ansT)}\) (the quadratic factor doesn’t factor any further)`);
     return {
       prompt: T`Factor completely: \(${full.tex}\)`,
-      parts: [{ kind: 'factor', answer: pre + '(' + F1.asc + ')(' + F2.asc + ')', factors: facs, show: ansT, points: 3 }],
+      parts: [{ kind: 'factor', answer: pre + '(' + F1.asc + ')(' + F2.asc + ')', factors: facs, show: ansT, points: 3, verify: MX.V.equiv(full.asc) }],
       solution: steps,
     };
   }
@@ -203,7 +203,7 @@
     steps.push(T`So it is \(\left(A ${s < 0 ? '-' : '+'} B\right)^{2}\): \(${H.box(ansT)}\)`);
     return {
       prompt: T`Factor completely: \(${E.tex}\)`,
-      parts: [{ kind: 'factor', answer: pre + '(' + F.asc + ')^2', factors: (g > 1 ? [String(g)] : []).concat([F.asc, F.asc]), show: ansT, points: 3 }],
+      parts: [{ kind: 'factor', answer: pre + '(' + F.asc + ')^2', factors: (g > 1 ? [String(g)] : []).concat([F.asc, F.asc]), show: ansT, points: 3, verify: MX.V.equiv(E.asc) }],
       solution: steps,
     };
   }
@@ -243,7 +243,7 @@
           const F1 = poly([[a, { x: 1 }], [-b, { y: k }]], ['x', 'y']), F2 = poly([[a, { x: 1 }], [b, { y: k }]], ['x', 'y']);
           return {
             prompt: T`Factor completely: \(${E.tex}\)`,
-            parts: [{ kind: 'factor', answer: '(' + F1.asc + ')(' + F2.asc + ')', factors: [F1.asc, F2.asc], show: T`\left(${F1.tex}\right)\left(${F2.tex}\right)`, points: 3 }],
+            parts: [{ kind: 'factor', answer: '(' + F1.asc + ')(' + F2.asc + ')', factors: [F1.asc, F2.asc], show: T`\left(${F1.tex}\right)\left(${F2.tex}\right)`, points: 3, verify: MX.V.equiv(E.asc) }],
             solution: [
               T`Both terms are perfect squares: \(${a * a === 1 ? '' : a * a}x^{2} = \left(${MX.coef(a)}${Aa}\right)^{2}\) and \(${b * b === 1 ? '' : b * b}y^{${2 * k}} = \left(${Bt.tex}\right)^{2}\)`,
               T`Use \(A^{2} - B^{2} = (A - B)(A + B)\).`,
@@ -259,7 +259,7 @@
           const E = poly([[g, { [v]: 2 }], [-g * c * c, {}]]);
           return {
             prompt: T`Factor completely: \(${E.tex}\)`,
-            parts: [{ kind: 'factor', answer: g + '(' + v + '-' + c + ')(' + v + '+' + c + ')', factors: [String(g), v + '-' + c, v + '+' + c], show: T`${g}\left(${v} - ${c}\right)\left(${v} + ${c}\right)`, points: 3 }],
+            parts: [{ kind: 'factor', answer: g + '(' + v + '-' + c + ')(' + v + '+' + c + ')', factors: [String(g), v + '-' + c, v + '+' + c], show: T`${g}\left(${v} - ${c}\right)\left(${v} + ${c}\right)`, points: 3, verify: MX.V.equiv(E.asc) }],
             solution: [
               T`Factor out the GCF ${g}: \(${g}\left(${v}^{2} - ${c * c}\right)\)`,
               T`\(${v}^{2} - ${c * c} = \left(${v} - ${c}\right)\left(${v} + ${c}\right)\)`,
@@ -275,7 +275,7 @@
           const E = poly([[1, { [v]: 4 }], [-Math.pow(c, 4), {}]]);
           return {
             prompt: T`Factor completely: \(${E.tex}\)`,
-            parts: [{ kind: 'factor', answer: `(${v}^2+${c * c})(${v}-${c})(${v}+${c})`, factors: [`${v}^2+${c * c}`, `${v}-${c}`, `${v}+${c}`], show: T`\left(${v}^{2} + ${c * c}\right)\left(${v} - ${c}\right)\left(${v} + ${c}\right)`, points: 3 }],
+            parts: [{ kind: 'factor', answer: `(${v}^2+${c * c})(${v}-${c})(${v}+${c})`, factors: [`${v}^2+${c * c}`, `${v}-${c}`, `${v}+${c}`], show: T`\left(${v}^{2} + ${c * c}\right)\left(${v} - ${c}\right)\left(${v} + ${c}\right)`, points: 3, verify: MX.V.equiv(E.asc) }],
             solution: [
               T`\(${v}^{4} = \left(${v}^{2}\right)^{2}\) and \(${Math.pow(c, 4)} = ${c * c}^{2}\), so \(${E.tex} = \left(${v}^{2} - ${c * c}\right)\left(${v}^{2} + ${c * c}\right)\)`,
               T`\(${v}^{2} - ${c * c}\) is again a difference of squares; \(${v}^{2} + ${c * c}\) is a sum and does not factor.`,
@@ -306,7 +306,7 @@
           const ansT = ft.map((x) => T`\left(${x.tex}\right)`).join('');
           return {
             prompt: T`Factor completely: \(${E.tex}\)`,
-            parts: [{ kind: 'factor', answer: f.map((x) => '(' + x + ')').join(''), factors: f, show: ansT, points: 3 }],
+            parts: [{ kind: 'factor', answer: f.map((x) => '(' + x + ')').join(''), factors: f, show: ansT, points: 3, verify: MX.V.equiv(E.asc) }],
             solution: [
               T`\(${v}^{6} = \left(${v}^{3}\right)^{2}\) and \(${Math.pow(c, 6)} = ${c * c * c}^{2}\): start with a difference of squares, \(\left(${v}^{3} - ${c * c * c}\right)\left(${v}^{3} + ${c * c * c}\right)\).`,
               T`Now each factor is a cube pattern: \(${v}^{3} - ${c * c * c} = ${T`\left(${ft[0].tex}\right)\left(${ft[2].tex}\right)`}\) and \(${v}^{3} + ${c * c * c} = ${T`\left(${ft[1].tex}\right)\left(${ft[3].tex}\right)`}\).`,
@@ -333,10 +333,27 @@
   });
 
   // ---------- factoring strategy ----------
+  // "prime" is right only if the displayed quadratic (read back from its text) has integer content 1
+  // and a non-square discriminant, i.e. no factorization over the integers at all
+  function primeCheck(src) {
+    return MX.V.custom((a) => {
+      if (!a || !a.prime) return 'the polynomial is prime';
+      const f = MX.V.fn(src, (MX.ast.vars(MX.V.parse(src)).values().next().value));
+      const c = f(0), b = (f(1) - f(-1)) / 2, A = (f(1) + f(-1)) / 2 - c;
+      for (const t of [2, -3, 5]) if (!MX.V.close(f(t), A * t * t + b * t + c)) return 'not a quadratic';
+      if (![A, b, c].every(Number.isInteger) || A === 0) return 'not an integer quadratic';
+      if (MX.gcdAll([A, b, c].map(Math.abs).filter((x) => x)) !== 1) return 'there is a common factor ' + MX.gcdAll([A, b, c].map(Math.abs).filter((x) => x));
+      const D = b * b - 4 * A * c;
+      if (D >= 0 && Math.round(Math.sqrt(D)) ** 2 === D) return 'it factors: the discriminant ' + D + ' is a perfect square';
+      return true;
+    });
+  }
   function primePoly(rng) {
     const v = rng.pick(['x', 'y', 'n']);
     if (rng.chance(0.4)) {
-      const a = rng.pick([1, 1, 4, 9]), c = rng.int(1, 9);
+      const a0 = rng.pick([1, 1, 4, 9]), c = rng.int(1, 9);
+      const a = MX.gcd(a0, c) === 1 ? a0 : 1; // 4x^2 + 16 = 4(x^2 + 4) has a GCF, so it is not prime
+
       const E = poly([[a, { [v]: 2 }], [c * c, {}]]);
       return { E, why: [T`Two terms added together: \(${E.tex}\) is a <em>sum</em> of squares.`, T`A sum of squares has no real factors, and there is no common factor to take out.`] };
     }
@@ -376,7 +393,7 @@
           const ansT = T`${mono.tex}\left(${inner.tex}\right)`;
           return {
             prompt: T`Factor completely. If the polynomial can't be factored, type prime. \(${full.tex}\)`,
-            parts: [{ kind: 'factor', answer: mono.asc + '(' + inner.asc + ')', factors: facs, show: ansT, points: 3 }],
+            parts: [{ kind: 'factor', answer: mono.asc + '(' + inner.asc + ')', factors: facs, show: ansT, points: 3, verify: MX.V.equiv(full.asc) }],
             solution: [
               T`GCF of the numbers: ${g}. Smallest power of \(x\): \(x^{${p}}\); of \(y\): \(y^{${q}}\). So the GCF is \(${mono.tex}\).`,
               T`Divide each term by \(${mono.tex}\): \(${inner.tex}\)`,
@@ -391,7 +408,7 @@
           const { E, why } = primePoly(rng);
           return {
             prompt: T`Factor completely. If the polynomial can't be factored, type prime. \(${E.tex}\)`,
-            parts: [{ kind: 'factor', answer: 'prime', poly: E.asc, show: '\\text{prime}', points: 3 }],
+            parts: [{ kind: 'factor', answer: 'prime', poly: E.asc, show: '\\text{prime}', points: 3, verify: primeCheck(E.asc) }],
             solution: [...why, T`\(${H.box('\\text{prime}')}\)`],
           };
         },
@@ -406,7 +423,7 @@
             const c = rng.int(1, 7);
             const E = poly([[g, { [v]: 3 }], [-g * c * c, { [v]: 1 }]]);
             const ansT = T`${g}${v}\left(${v} - ${c}\right)\left(${v} + ${c}\right)`;
-            return { prompt: T`Factor completely. If the polynomial can't be factored, type prime. \(${E.tex}\)`, parts: [{ kind: 'factor', answer: `${g}${v}(${v}-${c})(${v}+${c})`, factors: [String(g), v, `${v}-${c}`, `${v}+${c}`], show: ansT, points: 3 }],
+            return { prompt: T`Factor completely. If the polynomial can't be factored, type prime. \(${E.tex}\)`, parts: [{ kind: 'factor', answer: `${g}${v}(${v}-${c})(${v}+${c})`, factors: [String(g), v, `${v}-${c}`, `${v}+${c}`], show: ansT, points: 3, verify: MX.V.equiv(E.asc) }],
               solution: [T`GCF: \(${g}${v}\), leaving \(${v}^{2} - ${c * c}\).`, T`Two terms, a difference of squares: \(\left(${v} - ${c}\right)\left(${v} + ${c}\right)\)`, T`\(${H.box(ansT)}\)`] };
           }
           if (kind === 1) { // g (v^2 + (r+s) v + rs)
@@ -414,14 +431,14 @@
             const E = MX.quad(g, g * (r + s2), g * r * s2, v), In = MX.quad(1, r + s2, r * s2, v);
             const F1 = poly([[1, { [v]: 1 }], [r, {}]]), F2 = poly([[1, { [v]: 1 }], [s2, {}]]);
             const ansT = T`${g}\left(${F1.tex}\right)\left(${F2.tex}\right)`;
-            return { prompt: T`Factor completely. If the polynomial can't be factored, type prime. \(${E.tex}\)`, parts: [{ kind: 'factor', answer: `${g}(${F1.asc})(${F2.asc})`, factors: [String(g), F1.asc, F2.asc], show: ansT, points: 3 }],
+            return { prompt: T`Factor completely. If the polynomial can't be factored, type prime. \(${E.tex}\)`, parts: [{ kind: 'factor', answer: `${g}(${F1.asc})(${F2.asc})`, factors: [String(g), F1.asc, F2.asc], show: ansT, points: 3, verify: MX.V.equiv(E.asc) }],
               solution: [T`GCF: ${g}, leaving \(${In.tex}\).`, T`Three terms: two numbers that multiply to ${r * s2} and add to ${r + s2} are ${r} and ${s2}.`, T`\(${H.box(ansT)}\)`] };
           }
           if (kind === 2) { // g (v^2 + c^2): GCF then prime part
             const c = rng.int(1, 6);
             const E = poly([[g, { [v]: 2 }], [g * c * c, {}]]);
             const ansT = T`${g}\left(${v}^{2} + ${c * c}\right)`;
-            return { prompt: T`Factor completely. If the polynomial can't be factored, type prime. \(${E.tex}\)`, parts: [{ kind: 'factor', answer: `${g}(${v}^2+${c * c})`, factors: [String(g), `${v}^2+${c * c}`], show: ansT, points: 3 }],
+            return { prompt: T`Factor completely. If the polynomial can't be factored, type prime. \(${E.tex}\)`, parts: [{ kind: 'factor', answer: `${g}(${v}^2+${c * c})`, factors: [String(g), `${v}^2+${c * c}`], show: ansT, points: 3, verify: MX.V.equiv(E.asc) }],
               solution: [T`GCF: ${g}, leaving \(${v}^{2} + ${c * c}\).`, T`That's a sum of squares, which doesn't factor. The polynomial isn't prime, because the GCF came out.`, T`\(${H.box(ansT)}\)`] };
           }
           // four terms: grouping
@@ -429,7 +446,7 @@
           const E = poly([[1, { [v]: 3 }], [a, { [v]: 2 }], [-b * b, { [v]: 1 }], [-a * b * b, {}]]);
           const F1 = poly([[1, { [v]: 1 }], [a, {}]]);
           const ansT = T`\left(${F1.tex}\right)\left(${v} - ${b}\right)\left(${v} + ${b}\right)`;
-          return { prompt: T`Factor completely. If the polynomial can't be factored, type prime. \(${E.tex}\)`, parts: [{ kind: 'factor', answer: `(${F1.asc})(${v}-${b})(${v}+${b})`, factors: [F1.asc, `${v}-${b}`, `${v}+${b}`], show: ansT, points: 3 }],
+          return { prompt: T`Factor completely. If the polynomial can't be factored, type prime. \(${E.tex}\)`, parts: [{ kind: 'factor', answer: `(${F1.asc})(${v}-${b})(${v}+${b})`, factors: [F1.asc, `${v}-${b}`, `${v}+${b}`], show: ansT, points: 3, verify: MX.V.equiv(E.asc) }],
             solution: [T`No GCF. Four terms, so group: \(${v}^{2}\left(${F1.tex}\right) - ${b * b}\left(${F1.tex}\right) = \left(${F1.tex}\right)\left(${v}^{2} - ${b * b}\right)\)`, T`Check each factor: \(${v}^{2} - ${b * b}\) is a difference of squares.`, T`\(${H.box(ansT)}\)`] };
         },
       },
