@@ -8,6 +8,41 @@
   const money2 = (v) => '$' + Number(MX.money(v)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const $ = (v) => (Number.isInteger(v) ? '$' + MX.commas(v) : money2(v));
 
+  // ---------- verifiers (built from the numbers stated in the prompt) ----------
+  const MV = MX.V;
+  // a positive root of a one-variable equation (lengths, speeds, amounts); answers can exceed 200
+  const pos = (eq, o = {}) => MV.solves(eq, Object.assign({ lo: 0, hi: 2000, keep: (x) => x > 0 }, o));
+  // "round to the nearest tenth if needed": the key is the exact value (fn()) rounded half-up to a tenth
+  const tenth = (fn) => MV.custom((a) => {
+    const x = fn(), want = Math.floor(x * 10 + 0.5 + 1e-9) / 10;
+    if (typeof a !== 'number') return 'expected a number';
+    return (MV.close(a, want, 1e-9) && Math.abs(a - x) <= 0.05 + 1e-9) || 'the exact value is ' + MX.num(x, 6) + ', which rounds to ' + want;
+  });
+  // solve a 2×2 linear system given as equation strings (parser syntax) by Cramer's rule;
+  // the coefficients are read off the equations by evaluating their residuals
+  function lin2(eqs, vars) {
+    const [u, w] = vars;
+    const rs = eqs.map((e) => MV.rel(e)[0]);
+    const res = (r, x, y) => { const env = { [u]: x, [w]: y }; return MX.evalAST(r.lhs, env) - MX.evalAST(r.rhs, env); };
+    const M = rs.map((r) => { const c = res(r, 0, 0); return [res(r, 1, 0) - c, res(r, 0, 1) - c, -c]; });
+    const det = M[0][0] * M[1][1] - M[0][1] * M[1][0];
+    if (Math.abs(det) < 1e-12) return null;
+    const sol = { [u]: (M[0][2] * M[1][1] - M[0][1] * M[1][2]) / det, [w]: (M[0][0] * M[1][2] - M[0][2] * M[1][0]) / det };
+    // the system must really be linear: it holds at the solution
+    return rs.every((r) => Math.abs(res(r, sol[u], sol[w])) < 1e-7 * Math.max(1, Math.abs(M[0][2]), Math.abs(M[1][2]))) ? sol : null;
+  }
+  // verifiers for a story system: part a models it, the num parts are its (positive, maybe whole) solution
+  function sysVerify(eqs, vars, whole) {
+    const sol = lin2(eqs, vars);
+    const why = !sol ? 'the stated equations do not determine one solution'
+      : vars.every((x) => sol[x] > 0 && (!whole || MV.close(sol[x], Math.round(sol[x]), 1e-9))) ? null
+      : 'the story has no ' + (whole ? 'positive whole-number' : 'positive') + ' solution';
+    return {
+      model: (a, part) => why || MV.model(sol)(a, part),
+      of: (v) => (a) => why || MV.value(sol[v], 1e-9)(a),
+    };
+  }
+
   // ================= DISTANCE, RATE & TIME =================
   function road(W, H, y) {
     return S.rect(20, y, W - 40, 16, 'road nostroke') + S.line(28, y + 8, W - 28, y + 8, 'roadline');
@@ -36,8 +71,8 @@
           prompt: T`Two ${v.many} start from towns ${D} miles apart and travel toward each other on the same road. They pass one another ${t} hours later. Find the speed of each ${v.one} if one travels ${d} mph slower than the other.`,
           visual: S.svg(W, Hh, b, 'Two vehicles approaching each other on a road between two towns'),
           parts: [
-            { label: 'a', ask: `Speed of the faster ${v.one}`, kind: 'num', answer: String(r), show: r + '\\text{ mph}', post: 'mph', points: 2 },
-            { label: 'b', ask: `Speed of the slower ${v.one}`, kind: 'num', answer: String(r - d), show: r - d + '\\text{ mph}', post: 'mph', points: 2 },
+            { label: 'a', ask: `Speed of the faster ${v.one}`, kind: 'num', answer: String(r), show: r + '\\text{ mph}', post: 'mph', points: 2, verify: pos(`${t}x+${t}(x-${d})=${D}`, { keep: (x) => x - d > 0 }) },
+            { label: 'b', ask: `Speed of the slower ${v.one}`, kind: 'num', answer: String(r - d), show: r - d + '\\text{ mph}', post: 'mph', points: 2, verify: pos(`${t}x+${t}(x+${d})=${D}`) },
           ],
           solution: [
             T`Let \(r\) be the faster speed; the slower speed is \(r - ${d}\). Each travels for ${t} hours, and distance = rate × time.`,
@@ -64,8 +99,8 @@
           prompt: T`Two ${v.many} leave the same place at the same time and travel in opposite directions. One travels ${d} mph faster than the other. After ${t} hours they are ${D} miles apart. Find the speed of each.`,
           visual: S.svg(W, Hh, b, 'Two vehicles moving apart in opposite directions'),
           parts: [
-            { label: 'a', ask: `Speed of the slower ${v.one}`, kind: 'num', answer: String(r), show: r + '\\text{ mph}', post: 'mph', points: 2 },
-            { label: 'b', ask: `Speed of the faster ${v.one}`, kind: 'num', answer: String(r + d), show: r + d + '\\text{ mph}', post: 'mph', points: 2 },
+            { label: 'a', ask: `Speed of the slower ${v.one}`, kind: 'num', answer: String(r), show: r + '\\text{ mph}', post: 'mph', points: 2, verify: pos(`${t}x+${t}(x+${d})=${D}`) },
+            { label: 'b', ask: `Speed of the faster ${v.one}`, kind: 'num', answer: String(r + d), show: r + d + '\\text{ mph}', post: 'mph', points: 2, verify: pos(`${t}x+${t}(x-${d})=${D}`, { keep: (x) => x - d > 0 }) },
           ],
           solution: [
             T`Let \(r\) be the slower speed; the faster is \(r + ${d}\). Both travel ${t} hours.`,
@@ -92,8 +127,8 @@
           prompt: T`A truck leaves a depot traveling ${r1} mph. ${t0} hour${t0 > 1 ? 's' : ''} later, a car leaves the same depot and follows the same road at ${r2} mph. How long after the car leaves will it catch up to the truck, and how far from the depot will they be?`,
           visual: S.svg(W, Hh, b, 'A truck with a head start and a faster car behind it'),
           parts: [
-            { label: 'a', ask: 'Hours after the car leaves', kind: 'num', answer: String(t), show: t + '\\text{ hours}', post: 'hours', points: 2 },
-            { label: 'b', ask: 'Distance from the depot', kind: 'num', answer: String(dist), show: dist + '\\text{ miles}', post: 'miles', points: 2 },
+            { label: 'a', ask: 'Hours after the car leaves', kind: 'num', answer: String(t), show: t + '\\text{ hours}', post: 'hours', points: 2, verify: pos(`${r1}(x+${t0})=${r2}x`) },
+            { label: 'b', ask: 'Distance from the depot', kind: 'num', answer: String(dist), show: dist + '\\text{ miles}', post: 'miles', points: 2, verify: pos(`x/${r1}-x/${r2}=${t0}`) },
           ],
           solution: [
             T`Let \(t\) be the car's time. The truck has driven \(t + ${t0}\) hours. When the car catches up, the distances are equal.`,
@@ -121,7 +156,7 @@
         return {
           prompt: T`Jordan drove to the city at an average speed of ${r1} mph and returned home on the same road at ${r2} mph. The round trip took ${Tt} hours of driving. How far is the city from Jordan's home?`,
           visual: S.svg(W, Hh, b, 'Round trip between home and the city at two speeds'),
-          parts: [{ kind: 'num', answer: String(D), show: D + '\\text{ miles}', post: 'miles', points: 4 }],
+          parts: [{ kind: 'num', answer: String(D), show: D + '\\text{ miles}', post: 'miles', points: 4, verify: pos(`x/${r1}+x/${r2}=${Tt}`) }],
           solution: [
             T`Let \(d\) be the one-way distance. Time = distance ÷ rate, so the trip there takes \(\frac{d}{${r1}}\) hours and back takes \(\frac{d}{${r2}}\) hours.`,
             T`\(\dfrac{d}{${r1}} + \dfrac{d}{${r2}} = ${Tt}\)`,
@@ -159,8 +194,8 @@
             : T`A boat travels ${Dd} miles downstream in ${t1} hours. Going upstream, it travels ${Du} miles in ${t2} hours. Find the speed of the boat in still water and the speed of the current.`,
           visual: S.svg(W, Hh, b, plane ? 'A plane flying with and against the wind' : 'A boat going downstream and upstream'),
           parts: [
-            { label: 'a', ask: `Speed of the ${what} ${still}`, kind: 'num', answer: String(bs), show: bs + '\\text{ mph}', post: 'mph', points: 2 },
-            { label: 'b', ask: `Speed of the ${flow}`, kind: 'num', answer: String(c), show: c + '\\text{ mph}', post: 'mph', points: 2 },
+            { label: 'a', ask: `Speed of the ${what} ${still}`, kind: 'num', answer: String(bs), show: bs + '\\text{ mph}', post: 'mph', points: 2, verify: pos(`${t2}(x-(${Dd}/${t1}-x))=${Du}`, { keep: (x) => x > 0 && Dd / t1 - x > 0 }) },
+            { label: 'b', ask: `Speed of the ${flow}`, kind: 'num', answer: String(c), show: c + '\\text{ mph}', post: 'mph', points: 2, verify: pos(`${t2}((${Dd}/${t1}-x)-x)=${Du}`) },
           ],
           solution: [
             T`Let \(b\) = ${what} speed ${still} and \(c\) = ${flow} speed. With the ${flow} the speeds add; against it they subtract.`,
@@ -187,8 +222,8 @@
           prompt: T`On a road trip, Priya drove ${d1} miles at ${r1} mph, then ${d2} more miles at ${r2} mph. What was her average speed for the whole trip? Round to the nearest tenth if needed.`,
           visual: S.svg(W, Hh, b, 'A two-leg trip with different speeds'),
           parts: [
-            { label: 'a', ask: 'Total driving time', kind: 'num', answer: String(Tt), show: Tt + '\\text{ hours}', post: 'hours', points: 1 },
-            { label: 'b', ask: 'Average speed for the whole trip', kind: 'num', answer: String(avgR), tol: 0.051, show: avgR + '\\text{ mph}', post: 'mph', points: 3 },
+            { label: 'a', ask: 'Total driving time', kind: 'num', answer: String(Tt), show: Tt + '\\text{ hours}', post: 'hours', points: 1, verify: MV.value(`${d1}/${r1}+${d2}/${r2}`) },
+            { label: 'b', ask: 'Average speed for the whole trip', kind: 'num', answer: String(avgR), tol: 0.051, show: avgR + '\\text{ mph}', post: 'mph', points: 3, verify: tenth(() => (d1 + d2) / (d1 / r1 + d2 / r2)) },
           ],
           solution: [
             T`Time for each leg = distance ÷ rate: \(\frac{${d1}}{${r1}} = ${t1}\) h and \(\frac{${d2}}{${r2}} = ${t2}\) h, so ${Tt} hours in total.`,
@@ -220,9 +255,9 @@
     { a: 'peanuts', b: 'cashews', unit: 'pound', units: 'pounds', A: 'P', B: 'C', pa: [3, 5], pb: [8, 12], step: 1 },
     { a: 'lemon drops', b: 'chocolates', unit: 'pound', units: 'pounds', A: 'L', B: 'C', pa: [2, 4], pb: [7, 10], step: 1 },
   ];
-  function sysParts(vars, eqs, eqShow, solveParts) {
+  function sysParts(vars, eqs, eqShow, solveParts, model) {
     return [
-      { label: 'a', ask: 'Write a system of two equations that models the situation.', kind: 'system', vars, answers: eqs, show: eqShow, points: 4, inputs: ['Equation 1', 'Equation 2'] },
+      { label: 'a', ask: 'Write a system of two equations that models the situation.', kind: 'system', vars, answers: eqs, show: eqShow, points: 4, inputs: ['Equation 1', 'Equation 2'], verify: model },
       ...solveParts,
     ];
   }
@@ -246,13 +281,14 @@
         v += S.text(300, 88, N + ' ' + c.units, { cls: 'tx', w: 700 }) + S.text(300, 108, 'at ' + money2(pm), { cls: 'tx small' });
         const e1 = `${c.A}+${c.B}=${N}`, e2 = `${pa}${c.A}+${pb}${c.B}=${pm}*${N}`;
         const e1t = `${c.A} + ${c.B} = ${N}`, e2t = `${pa}${c.A} + ${pb}${c.B} = ${MX.num(pm)}\\left(${N}\\right)`;
+        const sv = sysVerify([`${c.A}+${c.B}=${N}`, `${pa}${c.A}+${pb}${c.B}=${pm}(${c.A}+${c.B})`], [c.A, c.B], true);
         return {
           prompt: T`How many ${c.units} of ${c.a} worth ${money2(pa)} per ${c.unit} and ${c.b} worth ${money2(pb)} per ${c.unit} should be mixed to get ${N} ${c.units} of a mixture worth ${money2(pm)} per ${c.unit}? Let \(${c.A}\) be the number of ${c.units} of ${c.a} and \(${c.B}\) the number of ${c.units} of ${c.b}.`,
           visual: S.svg(W, Hh, v, 'Two products with different prices mixed into one blend'),
           parts: sysParts([c.A, c.B], [e1, e2], T`${e1t},\quad ${e2t}`, [
-            { label: 'b', ask: T`Solve: ${c.units} of ${c.a}`, kind: 'num', pre: c.A + ' =', answer: String(a), show: c.A + ' = ' + a, points: 1 },
-            { label: 'c', ask: T`${c.units[0].toUpperCase() + c.units.slice(1)} of ${c.b}`, kind: 'num', pre: c.B + ' =', answer: String(bq), show: c.B + ' = ' + bq, points: 1 },
-          ]),
+            { label: 'b', ask: T`Solve: ${c.units} of ${c.a}`, kind: 'num', pre: c.A + ' =', answer: String(a), show: c.A + ' = ' + a, points: 1, verify: sv.of(c.A) },
+            { label: 'c', ask: T`${c.units[0].toUpperCase() + c.units.slice(1)} of ${c.b}`, kind: 'num', pre: c.B + ' =', answer: String(bq), show: c.B + ' = ' + bq, points: 1, verify: sv.of(c.B) },
+          ], sv.model),
           solution: solveSteps(e1t, e2t + ' = ' + total, [
             T`Quantity equation: the amounts add to ${N}. Value equation: price × amount for each adds to the value of the mixture, \(${MX.num(pm)}\cdot${N} = ${total}\).`,
             T`Substitute \(${c.A} = ${N} - ${c.B}\): \(${pa}\left(${N} - ${c.B}\right) + ${pb}${c.B} = ${total}\), so \(${pb - pa}${c.B} = ${total - pa * N}\) and \(${c.B} = ${bq}\)`,
@@ -273,13 +309,14 @@
         v += I.coin(318, 36, 14, '$') + I.coin(342, 44, 14, '$');
         const e1 = `x+y=${P}`, e2 = `${r1 / 100}x+${r2 / 100}y=${I1}`;
         const e1t = `x + y = ${MX.commas(P)}`, e2t = `${r1 / 100}x + ${r2 / 100}y = ${MX.commas(I1)}`;
+        const sv = sysVerify([`x+y=${P}`, `${r1}x+${r2}y=100*${I1}`], ['x', 'y']);
         return {
           prompt: T`Ms. Lee invested a total of ${$(P)} in two accounts. One pays ${r1}% simple interest per year and the other pays ${r2}%. After one year she earned ${$(I1)} in interest. How much did she invest at each rate? Let \(x\) be the amount at ${r1}% and \(y\) the amount at ${r2}%.`,
           visual: S.svg(W, Hh, v, 'Money split between two accounts with different interest rates'),
           parts: sysParts(['x', 'y'], [e1, e2], T`${e1t},\quad ${e2t}`, [
-            { label: 'b', ask: T`Amount at ${r1}%`, kind: 'num', pre: 'x = $', answer: String(x), show: '\\$' + MX.commas(x), points: 1 },
-            { label: 'c', ask: T`Amount at ${r2}%`, kind: 'num', pre: 'y = $', answer: String(y), show: '\\$' + MX.commas(y), points: 1 },
-          ]),
+            { label: 'b', ask: T`Amount at ${r1}%`, kind: 'num', pre: 'x = $', answer: String(x), show: '\\$' + MX.commas(x), points: 1, verify: sv.of('x') },
+            { label: 'c', ask: T`Amount at ${r2}%`, kind: 'num', pre: 'y = $', answer: String(y), show: '\\$' + MX.commas(y), points: 1, verify: sv.of('y') },
+          ], sv.model),
           solution: solveSteps(e1t, e2t, [
             T`Interest = rate × amount, with the rate as a decimal (${r1}% = ${r1 / 100}).`,
             T`Multiply equation 2 by 100: \(${r1}x + ${r2}y = ${I1 * 100}\). Substitute \(x = ${P} - y\): \(${r1 * P} + ${r2 - r1}y = ${I1 * 100}\), so \(y = ${y}\)`,
@@ -300,12 +337,13 @@
         v += S.text(236, 94, '=', { cls: 'tx', size: 24, w: 700 }) + I.beaker(264, 124, 80, 80, 0.7, p3 + '%') + S.text(304, 144, 'y ' + sub[1], { cls: 'tx small' });
         const e1 = `x+${V}=y`, e2 = [`${p1 / 100}x+${p2 / 100}*${V}=${p3 / 100}y`, `${p1 / 100}x+${p2 / 100}*${V}=${p3 / 100}(x+${V})`];
         const e1t = `x + ${V} = y`, e2t = `${p1 / 100}x + ${p2 / 100}\\left(${V}\\right) = ${p3 / 100}y`;
+        const sv = sysVerify([`y-x=${V}`, `${p1}x+${p2}*${V}=${p3}y`], ['x', 'y']);
         return {
           prompt: T`How many ${sub[1]} of a ${p1}% ${sub[0]} solution should be added to ${V} ${sub[1]} of a ${p2}% ${sub[0]} solution to make a ${p3}% ${sub[0]} solution? Let \(x\) be the ${sub[1]} of ${p1}% solution added and \(y\) the ${sub[1]} of the final mixture.`,
           visual: S.svg(W, Hh, v, 'Two solutions of different strengths combined into a mixture'),
           parts: sysParts(['x', 'y'], [e1, e2], T`${e1t},\quad ${e2t}`, [
-            { label: 'b', ask: T`Solve: ${sub[1]} of the ${p1}% solution`, kind: 'num', pre: 'x =', answer: String(x), show: 'x = ' + x, post: sub[1], points: 2 },
-          ]),
+            { label: 'b', ask: T`Solve: ${sub[1]} of the ${p1}% solution`, kind: 'num', pre: 'x =', answer: String(x), show: 'x = ' + x, post: sub[1], points: 2, verify: sv.of('x') },
+          ], sv.model),
           solution: solveSteps(e1t, e2t, [
             T`Volumes add (equation 1). The amount of pure ${sub[0]}, percent × volume, also adds (equation 2).`,
             T`Substitute \(y = x + ${V}\): \(${p1 / 100}x + ${(p2 * V) / 100} = ${p3 / 100}x + ${(p3 * V) / 100}\), so \(${(p3 - p1) / 100}x = ${((p2 - p3) * V) / 100}\) and \(x = ${x}\)`,
@@ -325,12 +363,13 @@
         v += S.text(236, 94, '=', { cls: 'tx', size: 24, w: 700 }) + I.beaker(264, 124, 80, 80, 0.8, q + '%') + S.text(304, 144, 'y L', { cls: 'tx small' });
         const e1 = `x+${V}=y`, e2 = [`${p / 100}*${V}=${q / 100}y`, `${p / 100}*${V}=${q / 100}(x+${V})`];
         const e1t = `x + ${V} = y`, e2t = `0x + ${p / 100}\\left(${V}\\right) = ${q / 100}y`;
+        const sv = sysVerify([`y-x=${V}`, `0x+${p}*${V}=${q}y`], ['x', 'y']);
         return {
           prompt: T`A lab has ${V} liters of a ${p}% acid solution. How many liters of pure water must be added to dilute it to a ${q}% solution? Let \(x\) be the liters of water added and \(y\) the liters of the final solution.`,
           visual: S.svg(W, Hh, v, 'Water added to an acid solution'),
           parts: sysParts(['x', 'y'], [e1, e2], T`${e1t},\quad ${e2t}`, [
-            { label: 'b', ask: 'Solve: liters of water to add', kind: 'num', pre: 'x =', answer: String(w), show: 'x = ' + w, post: 'liters', points: 2 },
-          ]),
+            { label: 'b', ask: 'Solve: liters of water to add', kind: 'num', pre: 'x =', answer: String(w), show: 'x = ' + w, post: 'liters', points: 2, verify: sv.of('x') },
+          ], sv.model),
           solution: solveSteps(e1t, e2t, [
             T`Water contains 0% acid, so only the original solution contributes acid: \(${p / 100}\cdot${V} = ${(p * V) / 100}\) liters.`,
             T`\(${(p * V) / 100} = ${q / 100}y\) gives \(y = ${y}\), so \(x = ${y} - ${V} = ${w}\)`,
@@ -350,13 +389,14 @@
         v += S.text(228, 82, '=', { cls: 'tx', size: 24, w: 700 }) + ingot(250, 90, p3 + '%', 'soft2') + S.text(288, 112, N + ' kg', { cls: 'tx small' }) + S.text(190, 130, 'percent copper by weight', { cls: 'tx small mut' });
         const e1 = `a+b=${N}`, e2 = `${p1 / 100}a+${p2 / 100}b=${p3 / 100}*${N}`;
         const e1t = `a + b = ${N}`, e2t = `${p1 / 100}a + ${p2 / 100}b = ${p3 / 100}\\left(${N}\\right)`;
+        const sv = sysVerify([`a+b=${N}`, `${p1}a+${p2}b=${p3}(a+b)`], ['a', 'b']);
         return {
           prompt: T`A metalworker has one alloy that is ${p1}% copper and another that is ${p2}% copper. How many kilograms of each should be melted together to make ${N} kg of an alloy that is ${p3}% copper? Let \(a\) be the kilograms of ${p1}% alloy and \(b\) the kilograms of ${p2}% alloy.`,
           visual: S.svg(W, Hh, v, 'Two copper alloys combined into one'),
           parts: sysParts(['a', 'b'], [e1, e2], T`${e1t},\quad ${e2t}`, [
-            { label: 'b', ask: T`kg of the ${p1}% alloy`, kind: 'num', pre: 'a =', answer: String(a), show: 'a = ' + a, post: 'kg', points: 1 },
-            { label: 'c', ask: T`kg of the ${p2}% alloy`, kind: 'num', pre: 'b =', answer: String(b2), show: 'b = ' + b2, post: 'kg', points: 1 },
-          ]),
+            { label: 'b', ask: T`kg of the ${p1}% alloy`, kind: 'num', pre: 'a =', answer: String(a), show: 'a = ' + a, post: 'kg', points: 1, verify: sv.of('a') },
+            { label: 'c', ask: T`kg of the ${p2}% alloy`, kind: 'num', pre: 'b =', answer: String(b2), show: 'b = ' + b2, post: 'kg', points: 1, verify: sv.of('b') },
+          ], sv.model),
           solution: solveSteps(e1t, e2t, [
             T`Weights add to ${N}; the copper in each part adds to the copper in the result, \(${p3 / 100}\cdot${N} = ${(p3 * N) / 100}\) kg.`,
             T`Substitute \(a = ${N} - b\): \(${p1 / 100}\left(${N} - b\right) + ${p2 / 100}b = ${(p3 * N) / 100}\), so \(${(p2 - p1) / 100}b = ${((p3 - p1) * N) / 100}\) and \(b = ${b2}\)`,
@@ -393,13 +433,14 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
         v += S.text(270, 64, N + ' tickets sold', { cls: 'tx', w: 700 }) + S.text(270, 92, 'total ' + money2(R), { cls: 'tx', w: 700 });
         const e1 = `A+C=${N}`, e2 = `${pa}A+${pc}C=${R}`;
         const e1t = `A + C = ${N}`, e2t = `${MX.num(pa)}A + ${MX.num(pc)}C = ${MX.commas(R)}`;
+        const sv = sysVerify([`A+C=${N}`, `${pa * 2}A+${pc * 2}C=${R * 2}`], ['A', 'C'], true);
         return {
           prompt: T`A theater charges ${money2(pa)} for an adult ticket and ${money2(pc)} for a child's ticket. For ${ev}, ${N} tickets were sold for a total revenue of ${money2(R)}. How many of each ticket were sold? Use \(A\) for adult tickets and \(C\) for child tickets.`,
           visual: S.svg(W, Hh, v, 'Adult and child tickets with prices and totals'),
           parts: sysParts(['A', 'C'], [e1, e2], T`${e1t},\quad ${e2t}`, [
-            { label: 'b', ask: 'Adult tickets sold', kind: 'num', pre: 'A =', answer: String(A), show: 'A = ' + A, points: 1 },
-            { label: 'c', ask: 'Child tickets sold', kind: 'num', pre: 'C =', answer: String(C), show: 'C = ' + C, points: 1 },
-          ]),
+            { label: 'b', ask: 'Adult tickets sold', kind: 'num', pre: 'A =', answer: String(A), show: 'A = ' + A, points: 1, verify: sv.of('A') },
+            { label: 'c', ask: 'Child tickets sold', kind: 'num', pre: 'C =', answer: String(C), show: 'C = ' + C, points: 1, verify: sv.of('C') },
+          ], sv.model),
           solution: solveSteps(e1t, e2t, [
             T`Count equation: the tickets add to ${N}. Money equation: price × number for each type adds to ${money2(R)}.`,
             T`Substitute \(C = ${N} - A\): \(${MX.num(pa)}A + ${MX.num(pc)}\left(${N} - A\right) = ${R}\), so \(${MX.num(pa - pc)}A = ${MX.num(R - pc * N)}\) and \(A = ${A}\)`,
@@ -421,13 +462,14 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
         v += S.text(310, 58, N + ' coins', { cls: 'tx', w: 700 }) + S.text(310, 84, 'worth ' + money2(V), { cls: 'tx', w: 700 });
         const e1 = `${s1}+${s2}=${N}`, e2 = `${v1}${s1}+${v2}${s2}=${V}`;
         const e1t = `${s1} + ${s2} = ${N}`, e2t = `${v1}${s1} + ${v2}${s2} = ${MX.money(V)}`;
+        const sv = sysVerify([`${s1}+${s2}=${N}`, `${Math.round(v1 * 100)}${s1}+${Math.round(v2 * 100)}${s2}=${Math.round(V * 100)}`], [s1, s2], true);
         return {
           prompt: T`A jar holds only ${n1} and ${n2}. There are ${N} coins worth ${money2(V)} in all. How many of each coin are there? Let \(${s1}\) be the number of ${n1} and \(${s2}\) the number of ${n2}.`,
           visual: S.svg(W, Hh, v, 'A pile of two kinds of coins'),
           parts: sysParts([s1, s2], [e1, e2], T`${e1t},\quad ${e2t}`, [
-            { label: 'b', ask: T`Number of ${n1}`, kind: 'num', pre: s1 + ' =', answer: String(a), show: s1 + ' = ' + a, points: 1 },
-            { label: 'c', ask: T`Number of ${n2}`, kind: 'num', pre: s2 + ' =', answer: String(b2), show: s2 + ' = ' + b2, points: 1 },
-          ]),
+            { label: 'b', ask: T`Number of ${n1}`, kind: 'num', pre: s1 + ' =', answer: String(a), show: s1 + ' = ' + a, points: 1, verify: sv.of(s1) },
+            { label: 'c', ask: T`Number of ${n2}`, kind: 'num', pre: s2 + ' =', answer: String(b2), show: s2 + ' = ' + b2, points: 1, verify: sv.of(s2) },
+          ], sv.model),
           solution: solveSteps(e1t, e2t, [
             T`Multiply equation 2 by 100 to work in cents: \(${Math.round(v1 * 100)}${s1} + ${Math.round(v2 * 100)}${s2} = ${Math.round(V * 100)}\)`,
             T`Substitute \(${s1} = ${N} - ${s2}\): \(${Math.round(v1 * 100) * N} + ${Math.round((v2 - v1) * 100)}${s2} = ${Math.round(V * 100)}\), so \(${s2} = ${b2}\)`,
@@ -450,13 +492,14 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
         const v = receipt(30, 1, a1, b1, T1) + receipt(210, 2, a2, b2, T2);
         const e1 = `${a1}${s1}+${b1}${s2}=${T1}`, e2 = `${a2}${s1}+${b2}${s2}=${T2}`;
         const e1t = `${MX.coef(a1)}${s1} + ${MX.coef(b1)}${s2} = ${MX.money(T1)}`, e2t = `${MX.coef(a2)}${s1} + ${MX.coef(b2)}${s2} = ${MX.money(T2)}`;
+        const sv = sysVerify([`${4 * a1}${s1}+${4 * b1}${s2}=${4 * T1}`, `${4 * a2}${s1}+${4 * b2}${s2}=${4 * T2}`], [s1, s2]);
         return {
           prompt: T`At a food stand, ${qty(a1, i1)} and ${qty(b1, i2)} cost ${money2(T1)}. At the same prices, ${qty(a2, i1)} and ${qty(b2, i2)} cost ${money2(T2)}. Find the price of each item. Let \(${s1}\) be the price of one of the ${i1} and \(${s2}\) the price of one of the ${i2}.`,
           visual: S.svg(W, Hh, v, 'Two receipts with different quantities and totals'),
           parts: sysParts([s1, s2], [e1, e2], T`${e1t},\quad ${e2t}`, [
-            { label: 'b', ask: T`Price of one of the ${i1}`, kind: 'num', pre: s1 + ' = $', answer: MX.money(p1), tol: 0.005, show: '\\$' + MX.money(p1), points: 1 },
-            { label: 'c', ask: T`Price of one of the ${i2}`, kind: 'num', pre: s2 + ' = $', answer: MX.money(p2), tol: 0.005, show: '\\$' + MX.money(p2), points: 1 },
-          ]),
+            { label: 'b', ask: T`Price of one of the ${i1}`, kind: 'num', pre: s1 + ' = $', answer: MX.money(p1), tol: 0.005, show: '\\$' + MX.money(p1), points: 1, verify: sv.of(s1) },
+            { label: 'c', ask: T`Price of one of the ${i2}`, kind: 'num', pre: s2 + ' = $', answer: MX.money(p2), tol: 0.005, show: '\\$' + MX.money(p2), points: 1, verify: sv.of(s2) },
+          ], sv.model),
           solution: solveSteps(e1t, e2t, [
             T`Each order gives one equation: (number × price) for each item adds to the total.`,
             T`Eliminate one variable (multiply so the \(${s1}\)-terms match, then subtract): \(${s2} = ${MX.money(p2)}\), then substitute back: \(${s1} = ${MX.money(p1)}\)`,
@@ -473,13 +516,14 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
         let v = S.rect(40, 30, 150, 34, 'ln soft', 4) + S.rect(190, 30, 90, 34, 'ln soft2', 4);
         v += S.text(115, 52, 'x', { cls: 'tx', w: 700 }) + S.text(235, 52, 'y', { cls: 'tx', w: 700 });
         v += S.dim(40, 84, 280, 84, 'sum ' + S1) + S.text(330, 52, 'x − y = ' + D1, { cls: 'tx small' });
+        const sv = sysVerify([`x+y=${S1}`, `x=y+${D1}`], ['x', 'y']);
         return {
           prompt: T`The sum of two numbers is ${S1}. Their difference is ${D1}. Find the numbers. Let \(x\) be the larger number and \(y\) the smaller.`,
           visual: S.svg(W, Hh, v, 'Two bars for the unknown numbers with their sum'),
           parts: sysParts(['x', 'y'], [`x+y=${S1}`, `x-y=${D1}`], T`x + y = ${S1},\quad x - y = ${D1}`, [
-            { label: 'b', ask: 'Larger number', kind: 'num', pre: 'x =', answer: String(x), show: 'x = ' + x, points: 1 },
-            { label: 'c', ask: 'Smaller number', kind: 'num', pre: 'y =', answer: String(y), show: 'y = ' + y, points: 1 },
-          ]),
+            { label: 'b', ask: 'Larger number', kind: 'num', pre: 'x =', answer: String(x), show: 'x = ' + x, points: 1, verify: sv.of('x') },
+            { label: 'c', ask: 'Smaller number', kind: 'num', pre: 'y =', answer: String(y), show: 'y = ' + y, points: 1, verify: sv.of('y') },
+          ], sv.model),
           solution: solveSteps(`x + y = ${S1}`, `x - y = ${D1}`, [T`Add the equations: \(2x = ${S1 + D1}\), so \(x = ${x}\). Then \(y = ${S1} - ${x} = ${y}\).`], T`\(${H.box(T`x = ${x},\ y = ${y}`)}\)`),
         };
       },
@@ -494,13 +538,14 @@ Price: \(70S + 90F = 77.50\cdot 40\). Percent: \(0.20x + 0.70\cdot60 = 0.50y\). 
         let v = pl.body + pl.seg(0, f1, x0 * 2, f1 + r1 * x0 * 2, 'acc thick') + pl.seg(0, f2, x0 * 2, f2 + r2 * x0 * 2, 'ln thick dash') + S.q(pl.X(x0), pl.Y(y0) - 8, '?');
         v = S.g(v, 'translate(140 0)') + S.text(70, 50, 'Plan A: ' + $(f1), { cls: 'tx small', w: 700 }) + S.text(70, 66, '+ ' + $(r1) + ' per class', { cls: 'tx small' }) +
           S.text(70, 100, 'Plan B: ' + $(f2), { cls: 'tx small', w: 700 }) + S.text(70, 116, '+ ' + $(r2) + ' per class', { cls: 'tx small' });
+        const sv = sysVerify([`y-${r1}x=${f1}`, `y-${r2}x=${f2}`], ['x', 'y'], true);
         return {
           prompt: T`A gym offers two plans. Plan A costs ${$(f1)} to join plus ${$(r1)} per class. Plan B costs ${$(f2)} to join plus ${$(r2)} per class. Let \(x\) be the number of classes and \(y\) the total cost in dollars. For how many classes do the plans cost the same, and what is that cost?`,
           visual: S.svg(380, 170, v, 'Two cost lines crossing on a graph'),
           parts: sysParts(['x', 'y'], [`y=${f1}+${r1}x`, `y=${f2}+${r2}x`], T`y = ${f1} + ${r1}x,\quad y = ${f2} + ${r2}x`, [
-            { label: 'b', ask: 'Number of classes when the costs are equal', kind: 'num', pre: 'x =', answer: String(x0), show: 'x = ' + x0, points: 1 },
-            { label: 'c', ask: 'The cost at that point', kind: 'num', pre: 'y = $', answer: String(y0), show: '\\$' + y0, points: 1 },
-          ]),
+            { label: 'b', ask: 'Number of classes when the costs are equal', kind: 'num', pre: 'x =', answer: String(x0), show: 'x = ' + x0, points: 1, verify: sv.of('x') },
+            { label: 'c', ask: 'The cost at that point', kind: 'num', pre: 'y = $', answer: String(y0), show: '\\$' + y0, points: 1, verify: sv.of('y') },
+          ], sv.model),
           solution: solveSteps(`y = ${f1} + ${r1}x`, `y = ${f2} + ${r2}x`, [
             T`Both equal \(y\), so set them equal: \(${f1} + ${r1}x = ${f2} + ${r2}x\)`,
             T`\(${r1 - r2}x = ${f2 - f1}\), so \(x = ${x0}\); then \(y = ${f1} + ${r1}\cdot${x0} = ${y0}\)`,

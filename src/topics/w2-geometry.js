@@ -6,6 +6,25 @@
   const I = S.I;
   const SEC = 'Word problems';
   const r1 = (x) => Math.round(x * 10) / 10;
+  // ---------- verifiers (built from the numbers stated in the prompt) ----------
+  const MV = MX.V;
+  // the one positive solution of an equation for a length (keep adds conditions such as "the other side is positive")
+  const pos = (eq, keep) => MV.solves(eq, { lo: 0, hi: 2000, keep: (x) => x > 0 && (!keep || keep(x)) });
+  // "round to the nearest tenth if necessary": find the exact positive root of eq numerically and check that the
+  // key is that root rounded half-up to a tenth (and exactly the root when the root is a whole number)
+  const tenthRoot = (eq) => {
+    let root = null;
+    return MV.custom((a) => {
+      if (root === null) {
+        const rs = MV.roots(eq, { lo: 0, hi: 2000 });
+        root = rs === 'all' ? [] : rs.filter((x) => x > 0);
+      }
+      if (root.length !== 1) return 'expected exactly one positive solution, found ' + root.length;
+      const x = root[0], want = Math.floor(x * 10 + 0.5 + 1e-9) / 10;
+      if (typeof a !== 'number') return 'expected a number';
+      return (MV.close(a, want, 1e-9) && Math.abs(a - x) <= 0.05 + 1e-9) || 'the exact value is ' + MX.num(x, 6) + ', which rounds to ' + want;
+    });
+  };
   const TRIPLES = [[3, 4, 5], [5, 12, 13], [8, 15, 17], [7, 24, 25], [20, 21, 29], [9, 40, 41]];
   // a right triangle drawing with the right angle at bottom-left
   function rightTri(x0, y0, w, h, labels, o = {}) {
@@ -44,7 +63,7 @@
             ? T`A ladder leans against the side of a house. The top of the ladder is ${h} feet from the ground. The bottom of the ladder is ${d} feet from the side of the house. Find the length of the ladder. If necessary, round your answer to the nearest tenth.`
             : T`A ${L}-foot ladder leans against a wall with its base ${d} feet from the wall. How high up the wall does the ladder reach? If necessary, round to the nearest tenth.`,
           visual: S.svg(W, Hh, b, 'A ladder leaning against a house forming a right triangle'),
-          parts: [{ kind: 'num', answer: String(ans), tol: exact ? undefined : 0.051, show: ans + '\\text{ feet}', post: 'feet', points: 4 }],
+          parts: [{ kind: 'num', answer: String(ans), tol: exact ? undefined : 0.051, show: ans + '\\text{ feet}', post: 'feet', points: 4, verify: tenthRoot(findLadder ? `${h}^2+${d}^2=x^2` : `x^2+${d}^2=${L}^2`) }],
           solution: findLadder
             ? [pyStep(), T`The wall and the ground are the legs: \(${h}^{2} + ${d}^{2} = c^{2}\)`, T`\(${h * h} + ${d * d} = ${h * h + d * d} = c^{2}\), so \(c = \sqrt{${h * h + d * d}}${exact ? '' : ' \\approx ' + MX.num(L, 3)}\)`, T`\(${H.box(ans + '\\text{ ft}')}\)`]
             : [pyStep(), T`The ladder is the hypotenuse: \(h^{2} + ${d}^{2} = ${L}^{2}\)`, T`\(h^{2} = ${L * L} - ${d * d} = ${L * L - d * d}\), so \(h = \sqrt{${L * L - d * d}}${exact ? '' : ' \\approx ' + MX.num(h, 3)}\)`, T`\(${H.box(ans + '\\text{ ft}')}\)`],
@@ -61,7 +80,7 @@
         return {
           prompt: T`A guy wire runs from the top of a ${h}-foot pole to a stake in the ground ${d} feet from the base of the pole. How long is the wire? Round to the nearest tenth if necessary.`,
           visual: S.svg(W, Hh, b, 'A wire from the top of a pole to the ground'),
-          parts: [{ kind: 'num', answer: String(ans), tol: exact ? undefined : 0.051, show: ans + '\\text{ feet}', post: 'feet', points: 4 }],
+          parts: [{ kind: 'num', answer: String(ans), tol: exact ? undefined : 0.051, show: ans + '\\text{ feet}', post: 'feet', points: 4, verify: tenthRoot(`${h}^2+${d}^2=x^2`) }],
           solution: [pyStep(), T`\(${h}^{2} + ${d}^{2} = c^{2}\), so \(c^{2} = ${h * h + d * d}\)`, T`\(c = \sqrt{${h * h + d * d}}${exact ? '' : ' \\approx ' + MX.num(L, 3)}\)`, T`\(${H.box(ans + '\\text{ ft}')}\)`],
         };
       },
@@ -79,7 +98,7 @@
         return {
           prompt: T`Maya lets out ${L} feet of kite string. The kite is directly above a spot on the ground ${d} feet away from her. Ignoring her height, how high is the kite? Round to the nearest tenth if necessary.`,
           visual: S.svg(W, Hh, b, 'A kite on a string forming a right triangle with the ground'),
-          parts: [{ kind: 'num', answer: String(ans), tol: exact ? undefined : 0.051, show: ans + '\\text{ feet}', post: 'feet', points: 4 }],
+          parts: [{ kind: 'num', answer: String(ans), tol: exact ? undefined : 0.051, show: ans + '\\text{ feet}', post: 'feet', points: 4, verify: tenthRoot(`x^2+${d}^2=${L}^2`) }],
           solution: [pyStep(), T`The string is the hypotenuse: \(h^{2} + ${d}^{2} = ${L}^{2}\)`, T`\(h^{2} = ${L * L} - ${d * d} = ${L * L - d * d}\)`, T`\(h = \sqrt{${L * L - d * d}}${exact ? '' : ' \\approx ' + MX.num(h, 3)}\). \(${H.box(ans + '\\text{ ft}')}\)`],
         };
       },
@@ -113,7 +132,7 @@
         return {
           prompt: T`A hiker walks ${a} miles ${dir1}, then turns and walks ${b2} miles ${dir2}. How far is she from her starting point, in a straight line? Round to the nearest tenth if necessary.`,
           visual: S.svg(W, Hh, b, 'Two legs of a walk at right angles with the straight-line distance'),
-          parts: [{ kind: 'num', answer: String(ans), tol: exact ? undefined : 0.051, show: ans + '\\text{ miles}', post: 'miles', points: 4 }],
+          parts: [{ kind: 'num', answer: String(ans), tol: exact ? undefined : 0.051, show: ans + '\\text{ miles}', post: 'miles', points: 4, verify: tenthRoot(`${a}^2+${b2}^2=x^2`) }],
           solution: [T`The two directions are perpendicular, so the path forms a right triangle.`, T`\(${a}^{2} + ${b2}^{2} = c^{2} = ${a * a + b2 * b2}\)`, T`\(c = \sqrt{${a * a + b2 * b2}}${exact ? '' : ' \\approx ' + MX.num(c, 3)}\). \(${H.box(ans + '\\text{ mi}')}\)`],
         };
       },
@@ -131,7 +150,7 @@
         return {
           prompt: T`${ctx[0]} is ${w} ${ctx[1]} wide and ${l} ${ctx[1]} long. What is the length of the diagonal? Round to the nearest tenth if necessary.`,
           visual: S.svg(W, Hh, b, 'A rectangle with its diagonal drawn'),
-          parts: [{ kind: 'num', answer: String(ans), tol: exact ? undefined : 0.051, show: ans + '\\text{ ' + ctx[1] + '}', post: ctx[1], points: 4 }],
+          parts: [{ kind: 'num', answer: String(ans), tol: exact ? undefined : 0.051, show: ans + '\\text{ ' + ctx[1] + '}', post: ctx[1], points: 4, verify: tenthRoot(`${w}^2+${l}^2=x^2`) }],
           solution: [T`The diagonal splits the rectangle into two right triangles; the sides are the legs.`, T`\(${w}^{2} + ${l}^{2} = c^{2} = ${w * w} + ${l * l} = ${w * w + l * l}\)`, T`\(c = \sqrt{${w * w + l * l}}${exact ? ' = ' + c : ' \\approx ' + MX.num(c, 3)}\). \(${H.box(ans + '\\text{ ' + ctx[2] + '}')}\)`],
         };
       },
@@ -148,7 +167,7 @@
         return {
           prompt: T`A screen is advertised as ${diag} inches, which is the length of its diagonal. The screen is ${h} inches tall. How wide is it?`,
           visual: S.svg(W, Hh, b, 'A screen with its diagonal and height labeled'),
-          parts: [{ kind: 'num', answer: String(w), show: w + '\\text{ inches}', post: 'inches', points: 4 }],
+          parts: [{ kind: 'num', answer: String(w), show: w + '\\text{ inches}', post: 'inches', points: 4, verify: pos(`${h}^2+x^2=${diag}^2`) }],
           solution: [T`The diagonal is the hypotenuse; the height and width are the legs.`, T`\(${h}^{2} + w^{2} = ${diag}^{2}\), so \(w^{2} = ${diag * diag} - ${h * h} = ${w * w}\)`, T`\(w = \sqrt{${w * w}} = ${w}\). \(${H.box(w + '\\text{ in}')}\)`],
         };
       },
@@ -163,7 +182,7 @@
         return {
           prompt: T`Find the value of \(x\). The legs of the right triangle are \(x\) and \(x + ${d}\), and the hypotenuse is ${c}.`,
           visual: S.svg(W, Hh, v, 'A right triangle with legs x and x plus ' + d),
-          parts: [{ kind: 'num', var: 'x', answer: String(a), show: 'x = ' + a, points: 4 }],
+          parts: [{ kind: 'num', var: 'x', answer: String(a), show: 'x = ' + a, points: 4, verify: pos(`x^2+(x+${d})^2=${c}^2`) }],
           solution: [
             T`\(x^{2} + \left(x + ${d}\right)^{2} = ${c}^{2}\)`,
             T`\(x^{2} + x^{2} + ${2 * d}x + ${d * d} = ${c * c}\), so \(2x^{2} + ${2 * d}x - ${c * c - d * d} = 0\)`,
@@ -184,8 +203,8 @@
           prompt: T`The side lengths of a right triangle are consecutive ${even ? 'even ' : ''}integers. Find the length of the shortest side, then the hypotenuse.`,
           visual: S.svg(W, Hh, v, 'A right triangle with consecutive side lengths'),
           parts: [
-            { label: 'a', ask: 'Shortest side', kind: 'num', var: 'x', answer: String(a), show: 'x = ' + a, points: 3 },
-            { label: 'b', ask: 'Hypotenuse', kind: 'num', answer: String(a + 2 * s), show: String(a + 2 * s), points: 1 },
+            { label: 'a', ask: 'Shortest side', kind: 'num', var: 'x', answer: String(a), show: 'x = ' + a, points: 3, verify: MV.all(pos(`x^2+(x+${s})^2=(x+${2 * s})^2`), (x) => x % s === 0 || 'the side must be a consecutive ' + (even ? 'even ' : '') + 'integer') },
+            { label: 'b', ask: 'Hypotenuse', kind: 'num', answer: String(a + 2 * s), show: String(a + 2 * s), points: 1, verify: pos(`(x-${2 * s})^2+(x-${s})^2=x^2`, (x) => x - 2 * s > 0) },
           ],
           solution: [
             T`Let the sides be \(x\), \(x + ${s}\), \(x + ${2 * s}\); the longest is the hypotenuse.`,
@@ -207,8 +226,8 @@
           prompt: T`One leg of a right triangle is \(x\). The other leg is ${Math.abs(k)} ${k < 0 ? 'less' : 'more'} than twice the first leg. The hypotenuse is ${c}. Find both legs.`,
           visual: S.svg(W, Hh, v, 'A right triangle with legs x and 2x plus a constant'),
           parts: [
-            { label: 'a', ask: 'Shorter leg', kind: 'num', var: 'x', answer: String(a), show: 'x = ' + a, points: 3 },
-            { label: 'b', ask: 'Longer leg', kind: 'num', answer: String(b), show: String(b), points: 1 },
+            { label: 'a', ask: 'Shorter leg', kind: 'num', var: 'x', answer: String(a), show: 'x = ' + a, points: 3, verify: pos(`x^2+(2x+(${k}))^2=${c}^2`, (x) => 2 * x + k > 0 && x < 2 * x + k) },
+            { label: 'b', ask: 'Longer leg', kind: 'num', answer: String(b), show: String(b), points: 1, verify: pos(`((x-(${k}))/2)^2+x^2=${c}^2`, (x) => x - k > 0 && x > (x - k) / 2) },
           ],
           solution: [
             T`\(x^{2} + \left(2x ${MX.sgnTerm(k)}\right)^{2} = ${c}^{2}\)`,
@@ -261,7 +280,7 @@
         return {
           prompt: T`A ${h1}-foot ${n1} casts a ${s1}-foot shadow. At the same time, a ${n2} casts a ${s2}-foot shadow. What is the height of the ${n2}?`,
           visual: S.svg(W, Math.max(Hh, 170), b, 'Two objects and their shadows forming similar triangles'),
-          parts: [{ kind: 'num', answer: String(h2), show: h2 + '\\text{ feet}', post: 'feet', points: 3 }],
+          parts: [{ kind: 'num', answer: String(h2), show: h2 + '\\text{ feet}', post: 'feet', points: 3, verify: pos(`${h1}/${s1}=x/${s2}`) }],
           solution: [
             T`The sun's rays hit both objects at the same angle, so the triangles (object, shadow, ray) are similar: their sides are proportional.`,
             T`\(\dfrac{\text{height}}{\text{shadow}}:\ \dfrac{${h1}}{${s1}} = \dfrac{h}{${s2}}\)`,
@@ -285,7 +304,7 @@
         return {
           prompt: T`To measure a tree, Sam places a mirror flat on the ground ${d2} feet from the base of the tree. He stands ${d1} feet from the mirror, on the other side, and sees the top of the tree in it. His eyes are ${e} feet above the ground. How tall is the tree?`,
           visual: S.svg(W, 180, b, 'Using a mirror on the ground to measure a tree'),
-          parts: [{ kind: 'num', answer: String(h), show: h + '\\text{ feet}', post: 'feet', points: 3 }],
+          parts: [{ kind: 'num', answer: String(h), show: h + '\\text{ feet}', post: 'feet', points: 3, verify: pos(`${e}/${d1}=x/${d2}`) }],
           solution: [
             T`Light reflects at equal angles, so the triangle (Sam, mirror) and the triangle (tree, mirror) are similar.`,
             T`\(\dfrac{${e}}{${d1}} = \dfrac{h}{${d2}}\)`,
@@ -308,7 +327,7 @@
         return {
           prompt: T`A wheelchair ramp rises steadily from the ground. A support post ${a} feet from the bottom of the ramp is ${h1} feet tall. The top of the ramp is ${b2} feet farther along. How high is the top of the ramp?`,
           visual: S.svg(W, Hh, v, 'A ramp with a shorter support post forming nested similar triangles'),
-          parts: [{ kind: 'num', answer: String(H2), show: H2 + '\\text{ feet}', post: 'feet', points: 3 }],
+          parts: [{ kind: 'num', answer: String(H2), show: H2 + '\\text{ feet}', post: 'feet', points: 3, verify: pos(`${h1}/${a}=x/(${a}+${b2})`) }],
           solution: [
             T`The small triangle (post) and the whole ramp share the same angle at the bottom, so they're similar.`,
             T`The whole ramp's base is \(${a} + ${b2} = ${a + b2}\) ft: \(\dfrac{${h1}}{${a}} = \dfrac{h}{${a + b2}}\)`,
@@ -329,6 +348,17 @@
         } while (!Number.isInteger(x) || c.some(([m, k]) => m * x + k <= 5));
         const vals = c.map(([m, k]) => m * x + k), big = Math.max(...vals);
         const lab = c.map(([m, k]) => MX.poly([[m, { x: 1 }], [k, {}]]));
+        // the angle sum equation as displayed; the largest angle comes from evaluating the displayed expressions at its root
+        const angleEq = `(${lab[0].asc})+(${lab[1].asc})+(${lab[2].asc})=180`;
+        const angleX = MV.all(MV.solves(angleEq), MV.custom((xv) => lab.every((l) => MV.fn(l.asc, 'x')(xv) > 0) || 'an angle is not positive'));
+        let angleRoots = null;
+        const angleBig = MV.custom((a) => {
+          const rs = angleRoots || (angleRoots = MV.roots(angleEq));
+          if (!Array.isArray(rs) || rs.length !== 1) return 'the angle equation should have one solution';
+          const ang = lab.map((l) => MV.fn(l.asc, 'x')(rs[0]));
+          if (ang.some((t) => !(t > 0))) return 'an angle is not positive';
+          return MV.value(Math.max(...ang))(a);
+        });
         const W = 320, Hh = 170;
         let v = S.poly([[40, 140], [290, 140], [120, 30]], 'ln soft');
         v += S.label(70, 132, lab[0].asc.replace(/-/g, ' − ').replace(/\+/g, ' + ') + '°', { cls: 'lbl', a: 'start' }) + S.label(258, 132, lab[1].asc.replace(/-/g, ' − ').replace(/\+/g, ' + ') + '°', { cls: 'lbl', a: 'end' }) + S.label(122, 56, lab[2].asc.replace(/-/g, ' − ').replace(/\+/g, ' + ') + '°', { cls: 'lbl' });
@@ -336,8 +366,8 @@
           prompt: T`The angles of a triangle measure \((${lab[0].tex})^{\circ}\), \((${lab[1].tex})^{\circ}\) and \((${lab[2].tex})^{\circ}\). Find \(x\) and the measure of the largest angle.`,
           visual: S.svg(W, Hh, v, 'A triangle with its angles written in terms of x'),
           parts: [
-            { label: 'a', ask: 'Value of x', kind: 'num', var: 'x', answer: String(x), show: 'x = ' + x, points: 2 },
-            { label: 'b', ask: 'Largest angle', kind: 'num', answer: String(big), show: big + '^{\\circ}', post: 'degrees', points: 2 },
+            { label: 'a', ask: 'Value of x', kind: 'num', var: 'x', answer: String(x), show: 'x = ' + x, points: 2, verify: angleX },
+            { label: 'b', ask: 'Largest angle', kind: 'num', answer: String(big), show: big + '^{\\circ}', post: 'degrees', points: 2, verify: angleBig },
           ],
           solution: [
             T`The angles of any triangle add to \(180^{\circ}\).`,
@@ -361,8 +391,8 @@
           prompt: T`An isosceles triangle has two equal sides. The third side (the base) is ${k} ${unit} shorter than each of the equal sides. The perimeter is ${P} ${unit}. Find the length of the equal sides and of the base.`,
           visual: S.svg(W, Hh, v, 'An isosceles triangle with sides x, x and x minus ' + k),
           parts: [
-            { label: 'a', ask: 'Each equal side', kind: 'num', answer: String(leg), show: leg + '\\text{ ' + unit + '}', post: unit, points: 2 },
-            { label: 'b', ask: 'Base', kind: 'num', answer: String(base), show: base + '\\text{ ' + unit + '}', post: unit, points: 2 },
+            { label: 'a', ask: 'Each equal side', kind: 'num', answer: String(leg), show: leg + '\\text{ ' + unit + '}', post: unit, points: 2, verify: pos(`x+x+(x-${k})=${P}`, (x) => x - k > 0) },
+            { label: 'b', ask: 'Base', kind: 'num', answer: String(base), show: base + '\\text{ ' + unit + '}', post: unit, points: 2, verify: pos(`2(x+${k})+x=${P}`) },
           ],
           solution: [T`Let \(x\) be an equal side; the base is \(x - ${k}\).`, T`Perimeter: \(x + x + \left(x - ${k}\right) = ${P}\), so \(3x - ${k} = ${P}\)`, T`\(3x = ${P + k}\), \(x = ${leg}\); base \(= ${leg} - ${k} = ${base}\)`, T`\(${H.box(T`${leg},\ ${leg},\ ${base}`)}\)`],
         };
@@ -381,8 +411,8 @@
           prompt: T`The base of a triangle is ${k} ${unit} longer than its height. The area is ${A} square ${unit}. Find the height and the base.`,
           visual: S.svg(W, Hh, v, 'A triangle with height h and base h plus ' + k),
           parts: [
-            { label: 'a', ask: 'Height', kind: 'num', answer: String(h), show: h + '\\text{ ' + unit + '}', post: unit, points: 2 },
-            { label: 'b', ask: 'Base', kind: 'num', answer: String(h + k), show: h + k + '\\text{ ' + unit + '}', post: unit, points: 2 },
+            { label: 'a', ask: 'Height', kind: 'num', answer: String(h), show: h + '\\text{ ' + unit + '}', post: unit, points: 2, verify: pos(`(1/2)(x+${k})x=${A}`) },
+            { label: 'b', ask: 'Base', kind: 'num', answer: String(h + k), show: h + k + '\\text{ ' + unit + '}', post: unit, points: 2, verify: pos(`(1/2)x(x-${k})=${A}`, (x) => x - k > 0) },
           ],
           solution: [
             T`Area of a triangle: \(A = \frac{1}{2}bh\), so \(\frac{1}{2}\left(h + ${k}\right)h = ${A}\)`,
@@ -424,8 +454,8 @@
           prompt: T`${ctx} has a perimeter of ${P} ${u}. ${phr} Find the length and the width. Include units in your answers.`,
           visual: S.svg(W, Hh, v, 'A rectangle with width w and length in terms of w'),
           parts: [
-            { label: 'a', ask: 'Length', kind: 'num', answer: String(l), units: unitOpts(u, u2), show: l + '\\text{ ' + u + '}', points: 2 },
-            { label: 'b', ask: 'Width', kind: 'num', answer: String(w), units: unitOpts(u, u2), show: w + '\\text{ ' + u + '}', points: 2 },
+            { label: 'a', ask: 'Length', kind: 'num', answer: String(l), units: unitOpts(u, u2), show: l + '\\text{ ' + u + '}', points: 2, verify: pos(`2x+2(x-(${k}))/${a}=${P}`, (x) => x - k > 0) },
+            { label: 'b', ask: 'Width', kind: 'num', answer: String(w), units: unitOpts(u, u2), show: w + '\\text{ ' + u + '}', points: 2, verify: pos(`2(${a}x+(${k}))+2x=${P}`, (x) => a * x + k > 0) },
           ],
           solution: [T`Let \(w\) be the width; the length is \(${a}w ${MX.sgnTerm(k)}\).`, T`\(P = 2l + 2w\): \(2\left(${a}w ${MX.sgnTerm(k)}\right) + 2w = ${P}\)`, T`\(${2 * a + 2}w ${MX.sgnTerm(2 * k)} = ${P}\), so \(w = ${w}\) and \(l = ${a}\cdot${w} ${MX.sgnTerm(k)} = ${l}\)`, T`\(${H.box(T`l = ${l}\text{ ${u}},\ w = ${w}\text{ ${u}}`)}\)`],
         };
@@ -443,8 +473,8 @@
           prompt: T`A farmer has ${F} feet of fencing to make a rectangular pen along the side of a barn. The barn wall forms one side, so only three sides need fencing. The side parallel to the barn is ${k === 0 ? 'twice' : Math.abs(k) + ' feet ' + (k < 0 ? 'less' : 'more') + ' than twice'} the width. Find the width and the length of the pen.`,
           visual: S.svg(W, Hh, v, 'A pen fenced on three sides against a barn'),
           parts: [
-            { label: 'a', ask: 'Width (each side touching the barn)', kind: 'num', answer: String(w), show: w + '\\text{ ft}', post: 'feet', points: 2 },
-            { label: 'b', ask: 'Length (side parallel to the barn)', kind: 'num', answer: String(l), show: l + '\\text{ ft}', post: 'feet', points: 2 },
+            { label: 'a', ask: 'Width (each side touching the barn)', kind: 'num', answer: String(w), show: w + '\\text{ ft}', post: 'feet', points: 2, verify: pos(`x+x+(2x+(${k}))=${F}`, (x) => 2 * x + k > 0) },
+            { label: 'b', ask: 'Length (side parallel to the barn)', kind: 'num', answer: String(l), show: l + '\\text{ ft}', post: 'feet', points: 2, verify: pos(`2(x-(${k}))/2+x=${F}`, (x) => x - k > 0) },
           ],
           solution: [T`Fencing covers two widths and one length: \(w + w + l = ${F}\), with \(l = 2w ${MX.sgnTerm(k)}\).`, T`\(2w + 2w ${MX.sgnTerm(k)} = ${F}\), so \(4w = ${F - k}\) and \(w = ${w}\)`, T`\(l = 2\cdot${w} ${MX.sgnTerm(k)} = ${l}\). \(${H.box(T`w = ${w}\text{ ft},\ l = ${l}\text{ ft}`)}\)`],
         };
@@ -461,8 +491,8 @@
           prompt: T`${ctx} is ${k} ${u} longer than it is wide. Its area is ${A} ${u2}. Find its width and length.`,
           visual: S.svg(W, Hh, v, 'A rectangle with width w and length w plus ' + k),
           parts: [
-            { label: 'a', ask: 'Width', kind: 'num', answer: String(w), units: unitOpts(u, u2), show: w + '\\text{ ' + u + '}', points: 2 },
-            { label: 'b', ask: 'Length', kind: 'num', answer: String(w + k), units: unitOpts(u, u2), show: w + k + '\\text{ ' + u + '}', points: 2 },
+            { label: 'a', ask: 'Width', kind: 'num', answer: String(w), units: unitOpts(u, u2), show: w + '\\text{ ' + u + '}', points: 2, verify: pos(`x(x+${k})=${A}`) },
+            { label: 'b', ask: 'Length', kind: 'num', answer: String(w + k), units: unitOpts(u, u2), show: w + k + '\\text{ ' + u + '}', points: 2, verify: pos(`x(x-${k})=${A}`, (x) => x - k > 0) },
           ],
           solution: [T`Area = length × width: \(w\left(w + ${k}\right) = ${A}\)`, T`\(w^{2} + ${k}w - ${A} = 0\), which factors as \(\left(w - ${w}\right)\left(w + ${w + k}\right) = 0\)`, T`A width can't be negative, so \(w = ${w}\) and the length is ${w + k}.`, T`\(${H.box(T`${w}\text{ ${u}} \times ${w + k}\text{ ${u}}`)}\)`],
         };
