@@ -19,8 +19,29 @@
   const FLIP = { '<': '>', '<=': '>=', '>': '<', '>=': '<=' };
   const OPS = ['<', '<=', '>', '>='];
   const ray = (v, op) => ({ '<': [H.iv(-INF, v, false, false)], '<=': [H.iv(-INF, v, false, true)], '>': [H.iv(v, INF, false, false)], '>=': [H.iv(v, INF, true, false)] }[op]);
-  const ivPart = (reg, points, extra) => Object.assign({ kind: 'interval', answer: H.regionAsc(reg), show: H.regionTex(reg), points }, extra || {});
-  const graphPart = (rng, reg, label, extra) => { const c = H.regionChoices(rng, reg, extra); return { label, ask: 'Which graph shows the solution?', kind: 'choice', graph: true, options: c.options, answer: c.answer, points: 1 }; };
+  const Vf = MX.V;
+  // spec: the inequality as displayed (parser syntax), or a function ({ x }) => bool; o: V.region options
+  // 4000 samples on [-200, 200] (step 0.1) is plenty here: every region in this file has pieces and gaps at least 0.25
+  // wide, V.region bisects each boundary it finds, and it always probes the answer's own endpoints
+  const RO = (o) => Object.assign({ n: 4000 }, o);
+  const ivPart = (reg, points, extra, spec, o) => Object.assign({ kind: 'interval', answer: H.regionAsc(reg), show: H.regionTex(reg), points, verify: Vf.region(spec, RO(o)) }, extra || {});
+  const graphPart = (rng, reg, label, extra, spec, o) => { const c = H.regionChoices(rng, reg, extra); return { label, ask: 'Which graph shows the solution?', kind: 'choice', graph: true, options: c.options, answer: c.answer, data: c.data, points: 1, verify: Vf.choiceRegion(spec, RO(o)) }; };
+  // the (numeric) answer satisfies the relation stated in the problem, written in the variable v
+  const sat = (eq, v = 'x', more) => Vf.custom((a) => {
+    if (typeof a !== 'number') return 'expected a number';
+    if (!Vf.truth(eq)({ [v]: a })) return 'the answer does not satisfy ' + eq;
+    return more ? more(a) : true;
+  });
+  // the smallest / largest whole number n for which pred(n) holds (pred monotone)
+  const minInt = (pred) => Vf.custom((a) => (Number.isInteger(a) && pred(a) && !pred(a - 1) ? true : 'not the smallest whole number that works'));
+  const maxInt = (pred) => Vf.custom((a) => (Number.isInteger(a) && pred(a) && !pred(a + 1) ? true : 'not the largest whole number that works'));
+  // a dollar amount: whole cents, and within half a cent of the exact value
+  const cents = (exact) => Vf.custom((a) => {
+    if (typeof a !== 'number') return 'expected a number';
+    const w = exact();
+    return Math.abs(a * 100 - Math.round(a * 100)) < 1e-6 && Math.abs(a - w) <= 0.005 + 1e-9 ? true : 'the amount is ' + w + ' (to the cent), not ' + a;
+  });
+  const shown = (s) => Number(String(s).replace(/[$,]/g, '')); // the number a money string displays
   const qx = (q) => (q instanceof Q ? q : new Q(q));
   const texQ = (q) => qx(q).tex();
 
@@ -66,15 +87,18 @@
     const a = rng.pick([2, 3, 4, 5, -2, -3]), b = rng.nz(-7, 7), c = rng.nz(-5, 6);
     const L = T`${a}\left(${lin(1, b).tex}\right) ${c === 1 ? '+ x' : c === -1 ? '- x' : sg(c) + 'x'}`;
     const lx = a + c, l0 = a * b;
-    let R, ans, show, steps;
-    if (type === 'identity') { R = rng.chance(0.5) ? lin(lx, l0).tex : T`${l0} ${lx === 1 ? '+ x' : lx === -1 ? '- x' : sg(lx) + 'x'}`; ans = 'allreal'; show = '\\text{all real numbers}'; steps = T`Both sides simplify to \(${lin(lx, l0).tex}\): the equation is always true, so it is an <strong>identity</strong>.`; }
-    else if (type === 'contra') { const k = rng.nz(-9, 9); R = lin(lx, l0 + k).tex; ans = 'nosol'; show = '\\text{no solution}'; steps = T`Subtracting \(${MX.coef(lx) || '1'}x\) from both sides leaves \(${l0} = ${l0 + k}\), which is false: a <strong>contradiction</strong>.`; }
-    else { let e; do { e = rng.nz(-6, 8); } while (e === lx); const x0 = rng.nz(-8, 8), f = lx * x0 + l0 - e * x0; R = lin(e, f).tex; ans = String(x0); show = 'x = ' + x0; steps = T`\(${lin(lx, l0).tex} = ${lin(e, f).tex}\) gives \(${lx - e}x = ${f - l0}\), so \(x = ${x0}\): one solution, a <strong>conditional</strong> equation.`; }
+    let R, Ra, ans, show, steps;
+    if (type === 'identity') { const f1 = rng.chance(0.5); R = f1 ? lin(lx, l0).tex : T`${l0} ${lx === 1 ? '+ x' : lx === -1 ? '- x' : sg(lx) + 'x'}`; Ra = f1 ? lin(lx, l0).asc : `${l0}+(${lx})x`; ans = 'allreal'; show = '\\text{all real numbers}'; steps = T`Both sides simplify to \(${lin(lx, l0).tex}\): the equation is always true, so it is an <strong>identity</strong>.`; }
+    else if (type === 'contra') { const k = rng.nz(-9, 9); R = lin(lx, l0 + k).tex; Ra = lin(lx, l0 + k).asc; ans = 'nosol'; show = '\\text{no solution}'; steps = T`Subtracting \(${MX.coef(lx) || '1'}x\) from both sides leaves \(${l0} = ${l0 + k}\), which is false: a <strong>contradiction</strong>.`; }
+    else { let e; do { e = rng.nz(-6, 8); } while (e === lx); const x0 = rng.nz(-8, 8), f = lx * x0 + l0 - e * x0; R = lin(e, f).tex; Ra = lin(e, f).asc; ans = String(x0); show = 'x = ' + x0; steps = T`\(${lin(lx, l0).tex} = ${lin(e, f).tex}\) gives \(${lx - e}x = ${f - l0}\), so \(x = ${x0}\): one solution, a <strong>conditional</strong> equation.`; }
+    const eq = `${a}(${lin(1, b).asc})+(${c})x=${Ra}`;
+    const solve = Vf.solves(eq);
+    const kindOf = () => { const rs = Vf.roots(eq); return rs === 'all' ? 1 : rs.length === 0 ? 2 : rs.length === 1 ? 0 : -1; };
     return {
       prompt: T`Classify the equation as conditional, an identity, or a contradiction, then give its solution: \(${L} = ${R}\)`,
       parts: [
-        { label: 'a', ask: 'Type of equation', kind: 'choice', options: CLASS, answer: type === 'identity' ? 1 : type === 'contra' ? 2 : 0, points: 1 },
-        { label: 'b', ask: 'Solution (a number, “no solution”, or “all real numbers”)', kind: 'num', var: 'x', answer: ans, show, points: 2 },
+        { label: 'a', ask: 'Type of equation', kind: 'choice', options: CLASS, answer: type === 'identity' ? 1 : type === 'contra' ? 2 : 0, points: 1, verify: Vf.choice((i) => i === kindOf()) },
+        { label: 'b', ask: 'Solution (a number, “no solution”, or “all real numbers”)', kind: 'num', var: 'x', answer: ans, show, points: 2, verify: solve },
       ],
       solution: [T`Simplify the left side: \(${L} = ${lin(lx, l0).tex}\).`, steps, T`\(${H.box(show)}\)`],
     };
@@ -103,7 +127,7 @@
           const L = T`${a}\left(${lin(b, c).tex}\right)${d ? ' ' + sg(d) : ''}`;
           return {
             prompt: T`Solve: \(${L} = ${lin(e, f).tex}\)`,
-            parts: [{ kind: 'num', var: 'x', answer: String(x0), show: 'x = ' + x0, points: 3 }],
+            parts: [{ kind: 'num', var: 'x', answer: String(x0), show: 'x = ' + x0, points: 3, verify: Vf.solves(`${a}(${lin(b, c).asc})+(${d})=${lin(e, f).asc}`) }],
             solution: [T`Distribute: \(${lin(a * b, a * c + d).tex} = ${lin(e, f).tex}\)`, T`Collect: \(${a * b - e}x = ${f - a * c - d}\)`, T`\(${H.box('x = ' + x0)}\)`],
           };
         },
@@ -115,7 +139,7 @@
           do { p = rng.int(2, 12); q = rng.nz(-12, 12); r = rng.int(1, 6); s = rng.nz(-8, 8); x0 = rng.nz(-9, 9); t = (p - r - s) * x0 + q; } while (p - r - s === 0 || p === r || Math.abs(t) > 80);
           return {
             prompt: T`Solve: \(${p}x ${sg(q)} - ${r === 1 ? '' : r}x = ${lin(s, t).tex}\)`,
-            parts: [{ kind: 'num', var: 'x', answer: String(x0), show: 'x = ' + x0, points: 3 }],
+            parts: [{ kind: 'num', var: 'x', answer: String(x0), show: 'x = ' + x0, points: 3, verify: Vf.solves(`${p}x+(${q})-${r}x=${lin(s, t).asc}`) }],
             solution: [T`Combine like terms on the left: \(${lin(p - r, q).tex} = ${lin(s, t).tex}\)`, T`Collect: \(${p - r - s}x = ${t - q}\)`, T`\(${H.box('x = ' + x0)}\)`],
           };
         },
@@ -127,7 +151,7 @@
           do { a = rng.int(5, 20); b = rng.int(1, 12); c = rng.int(2, 6); d = rng.int(1, 9); e = rng.nz(-5, 5); x0 = rng.nz(-8, 8); f = a - b + c * x0 - d - e * x0; } while (c === e || Math.abs(f) > 60);
           return {
             prompt: T`Solve: \(${a} - \left[${b} - \left(${c}x - ${d}\right)\right] = ${lin(e, f).tex}\)`,
-            parts: [{ kind: 'num', var: 'x', answer: String(x0), show: 'x = ' + x0, points: 3 }],
+            parts: [{ kind: 'num', var: 'x', answer: String(x0), show: 'x = ' + x0, points: 3, verify: Vf.solves(`${a}-(${b}-(${c}x-${d}))=${lin(e, f).asc}`) }],
             solution: [T`Work from the inside out: \(${b} - \left(${c}x - ${d}\right) = ${lin(-c, b + d).tex}\).`, T`Then \(${a} - \left(${lin(-c, b + d).tex}\right) = ${lin(c, a - b - d).tex}\).`, T`\(${lin(c, a - b - d).tex} = ${lin(e, f).tex}\) gives \(${c - e}x = ${f - a + b + d}\), so \(${H.box('x = ' + x0)}\)`],
           };
         },
@@ -149,7 +173,7 @@
           const t = (q, v) => (q.eq(1) ? v : q.tex() + v);
           return {
             prompt: T`Solve: \(${t(A, 'x')} ${r1.n < 0 ? '-' : '+'} ${r1.abs().tex()} = ${t(B, 'x')} ${r2.n < 0 ? '-' : '+'} ${r2.abs().tex()}\)`,
-            parts: [{ kind: 'num', frac: true, var: 'x', answer: x.str(), show: 'x = ' + x.tex(), points: 3 }],
+            parts: [{ kind: 'num', frac: true, var: 'x', answer: x.str(), show: 'x = ' + x.tex(), points: 3, verify: Vf.solves(`(${A.str()})x+(${r1.str()})=(${B.str()})x+(${r2.str()})`) }],
             solution: [T`Multiply every term by the LCD, ${Lc}: \(${A.mul(Lc).str()}x ${sg(r1.mul(Lc).val())} = ${B.mul(Lc).str()}x ${sg(r2.mul(Lc).val())}\)`, T`Collect: \(${A.sub(B).mul(Lc).str()}x = ${r2.sub(r1).mul(Lc).str()}\)`, T`\(${H.box('x = ' + x.tex())}\)`],
           };
         },
@@ -165,7 +189,7 @@
             prompt: money
               ? T`Solve: \(${f(a)}x ${sg(b / 100).replace(/(\d)$/, '$1')} = ${f(c)}x ${sg(d / 100)}\)`
               : T`Solve: \(${f(a)}x ${sg(b / 100)} = ${f(c)}x ${sg(d / 100)}\)`,
-            parts: [{ kind: 'num', var: 'x', answer: String(x0), show: 'x = ' + x0, points: 3 }],
+            parts: [{ kind: 'num', var: 'x', answer: String(x0), show: 'x = ' + x0, points: 3, verify: Vf.solves(`${f(a)}x+(${f(b)})=${f(c)}x+(${f(d)})`) }],
             solution: [T`Multiply every term by 100 to clear the decimals: \(${a}x ${sg(b)} = ${c}x ${sg(d)}\)`, T`Collect: \(${a - c}x = ${d - b}\)`, T`\(${H.box('x = ' + x0)}\)`],
           };
         },
@@ -198,8 +222,8 @@
             prompt: T`One number is ${Math.abs(k)} ${k > 0 ? 'more' : 'less'} than ${TIMES[m]} another. Their sum is ${S2}. Find both numbers.`,
             visual: bars([{ w: n, label: 'n' }, { w: big, label: m + 'n ' + (k > 0 ? '+ ' : '− ') + Math.abs(k), cls: 'soft2' }], 'sum ' + S2),
             parts: [
-              { label: 'a', ask: 'The smaller number', kind: 'num', answer: String(n), points: 1 },
-              { label: 'b', ask: 'The larger number', kind: 'num', answer: String(big), points: 1 },
+              { label: 'a', ask: 'The smaller number', kind: 'num', answer: String(n), points: 1, verify: sat(`x+(${m}x+(${k}))=${S2}`, 'x', (s) => (m * s + k > s ? true : 'not the smaller number')) },
+              { label: 'b', ask: 'The larger number', kind: 'num', answer: String(big), points: 1, verify: sat(`(y-(${k}))/${m}+y=${S2}`, 'y', (L) => (L > (L - k) / m ? true : 'not the larger number')) },
             ],
             solution: [T`Let \(n\) be the smaller number; the other is \(${lin(m, k, 'n').tex}\).`, T`\(n + ${lin(m, k, 'n').tex} = ${S2}\), so \(${m + 1}n ${sg(k)} = ${S2}\) and \(n = ${n}\).`, T`The numbers are \(${H.box(T`${n}\text{ and }${big}`)}\).`],
           };
@@ -215,7 +239,8 @@
           return {
             prompt: T`The sum of ${cnt === 2 ? 'two' : 'three'} consecutive ${kind} is ${S2}. Find the numbers.`,
             visual: tiles(names),
-            parts: nums.map((v, k) => ({ label: 'abc'[k], ask: ['First (smallest)', 'Second', 'Third'][k], kind: 'num', answer: String(v), points: 1 })),
+            parts: nums.map((v, k) => ({ label: 'abc'[k], ask: ['First (smallest)', 'Second', 'Third'][k], kind: 'num', answer: String(v), points: 1,
+              verify: sat(Array.from({ length: cnt }, (_, j) => `(y+(${(j - k) * step}))`).join('+') + '=' + S2, 'y', (y) => { const f0 = y - k * step; return !Number.isInteger(f0) ? 'not an integer' : kind === 'odd integers' && Math.abs(f0 % 2) !== 1 ? 'not odd' : kind === 'even integers' && f0 % 2 !== 0 ? 'not even' : true; }) })),
             solution: [T`Let the first be \(n\); the others are \(${names.slice(1).join(',\\ ')}\).`, T`\(${names.join(' + ')} = ${S2}\), so \(${cnt}n + ${cnt === 2 ? step : 3 * step} = ${S2}\) and \(n = ${n}\).`, T`\(${H.box(nums.join(',\\ '))}\)`],
           };
         },
@@ -225,15 +250,15 @@
         gen(rng) {
           const n = rng.nz(-15, 25), a = rng.pick([2, 3, 4, 5, 6]), k = rng.int(2, 20);
           const forms = [
-            { w: `${k} less than ${TIMES[a] || a + ' times'} a number is ${a * n - k}.`, eq: T`${a}n - ${k} = ${a * n - k}`, L: `${a}n − ${k}`, R: String(a * n - k) },
-            { w: `The sum of ${TIMES[a] || a + ' times'} a number and ${k} is ${a * n + k}.`, eq: T`${a}n + ${k} = ${a * n + k}`, L: `${a}n + ${k}`, R: String(a * n + k) },
-            { w: `${a} times the difference of a number and ${k} is ${a * (n - k)}.`, eq: T`${a}\left(n - ${k}\right) = ${a * (n - k)}`, L: `${a}(n − ${k})`, R: String(a * (n - k)) },
+            { w: `${k} less than ${TIMES[a] || a + ' times'} a number is ${a * n - k}.`, eq: T`${a}n - ${k} = ${a * n - k}`, asc: `${a}n-${k}=${a * n - k}`, L: `${a}n − ${k}`, R: String(a * n - k) },
+            { w: `The sum of ${TIMES[a] || a + ' times'} a number and ${k} is ${a * n + k}.`, eq: T`${a}n + ${k} = ${a * n + k}`, asc: `${a}n+${k}=${a * n + k}`, L: `${a}n + ${k}`, R: String(a * n + k) },
+            { w: `${a} times the difference of a number and ${k} is ${a * (n - k)}.`, eq: T`${a}\left(n - ${k}\right) = ${a * (n - k)}`, asc: `${a}(n-${k})=${a * (n - k)}`, L: `${a}(n − ${k})`, R: String(a * (n - k)) },
           ];
           const F = rng.pick(forms);
           return {
             prompt: T`Translate and solve: ${F.w} Find the number.`,
             visual: balance(F.L, F.R),
-            parts: [{ kind: 'num', answer: String(n), points: 2 }],
+            parts: [{ kind: 'num', answer: String(n), points: 2, verify: Vf.solves(F.asc, { v: 'n' }) }],
             solution: [T`Let \(n\) be the number: \(${F.eq}\)`, T`Solve: \(${H.box('n = ' + n)}\)`],
           };
         },
@@ -247,9 +272,9 @@
           const W = 340, Hh = 110;
           const v = S.svg(W, Hh, I.house(30, 90, 60, 40) + S.text(150, 50, ask === 'S' ? 'sale price = ?' : 'sale ' + $(sale), { cls: 'tx small', w: 700 }) + S.text(150, 74, ask === 'r' ? 'rate = ?' : 'rate ' + r + '%', { cls: 'tx small', w: 700 }) + I.coin(280, 50, 18, '$') + S.text(280, 96, ask === 'C' ? 'commission = ?' : $(C), { cls: 'tx small', w: 700 }), 'A sale and the commission on it');
           const P = {
-            C: { q: T`${who} earns ${r}% commission. What is the commission on a ${$(sale)} sale?`, part: { kind: 'num', pre: '$', answer: String(C), tol: 0.005, show: '\\$' + MX.commas(C), points: 2 }, s: [T`Commission = rate × sale = \(${r / 100}\times${MX.commas(sale)} = ${MX.commas(C)}\)`] },
-            S: { q: T`${who} earns ${r}% commission and earned ${$(C)} on one sale. What was the sale price?`, part: { kind: 'num', pre: '$', answer: String(sale), tol: 0.005, show: '\\$' + MX.commas(sale), points: 2 }, s: [T`\(${MX.commas(C)} = ${r / 100}S\)`, T`\(S = \frac{${MX.commas(C)}}{${r / 100}} = ${MX.commas(sale)}\)`] },
-            r: { q: T`${who} earned ${$(C)} in commission on a ${$(sale)} sale. What is the commission rate?`, part: { kind: 'num', answer: String(r), post: '%', show: r + '\\%', points: 2 }, s: [T`\(${MX.commas(C)} = r\cdot${MX.commas(sale)}\), so \(r = \frac{${MX.commas(C)}}{${MX.commas(sale)}} = ${r / 100}\)`, T`As a percent: ${r}%.`] },
+            C: { q: T`${who} earns ${r}% commission. What is the commission on a ${$(sale)} sale?`, part: { kind: 'num', pre: '$', answer: String(C), tol: 0.005, show: '\\$' + MX.commas(C), points: 2, verify: sat(`C=${r}/100*${sale}`, 'C') }, s: [T`Commission = rate × sale = \(${r / 100}\times${MX.commas(sale)} = ${MX.commas(C)}\)`] },
+            S: { q: T`${who} earns ${r}% commission and earned ${$(C)} on one sale. What was the sale price?`, part: { kind: 'num', pre: '$', answer: String(sale), tol: 0.005, show: '\\$' + MX.commas(sale), points: 2, verify: sat(`${C}=${r}/100*S`, 'S') }, s: [T`\(${MX.commas(C)} = ${r / 100}S\)`, T`\(S = \frac{${MX.commas(C)}}{${r / 100}} = ${MX.commas(sale)}\)`] },
+            r: { q: T`${who} earned ${$(C)} in commission on a ${$(sale)} sale. What is the commission rate?`, part: { kind: 'num', answer: String(r), post: '%', show: r + '\\%', points: 2, verify: sat(`${C}=r/100*${sale}`, 'r') }, s: [T`\(${MX.commas(C)} = r\cdot${MX.commas(sale)}\), so \(r = \frac{${MX.commas(C)}}{${MX.commas(sale)}} = ${r / 100}\)`, T`As a percent: ${r}%.`] },
           }[ask];
           return { prompt: P.q, visual: v, parts: [P.part], solution: [...P.s, T`\(${H.box(P.part.show)}\)`] };
         },
@@ -266,15 +291,15 @@
             ? {
               prompt: T`A store marks up every item ${r}% over its cost. A ${item} sells for ${money2(price)}. What did the store pay for it?`,
               visual: v,
-              parts: [{ kind: 'num', pre: '$', answer: MX.money(cost), tol: 0.005, show: '\\$' + MX.money(cost), points: 2 }],
+              parts: [{ kind: 'num', pre: '$', answer: MX.money(cost), tol: 0.005, show: '\\$' + MX.money(cost), points: 2, verify: cents(() => shown(money2(price)) / (1 + r / 100)) }],
               solution: [T`Price = cost + ${r}% of cost \(= ${1 + r / 100}c\).`, T`\(${1 + r / 100}c = ${MX.money(price)}\), so \(c = ${H.box('\\$' + MX.money(cost))}\)`],
             }
             : {
               prompt: T`A store buys a ${item} for ${money2(cost)} and marks it up ${r}%. What is the markup, and what is the selling price?`,
               visual: v,
               parts: [
-                { label: 'a', ask: 'Markup', kind: 'num', pre: '$', answer: MX.money(up), tol: 0.005, show: '\\$' + MX.money(up), points: 1 },
-                { label: 'b', ask: 'Selling price', kind: 'num', pre: '$', answer: MX.money(price), tol: 0.005, show: '\\$' + MX.money(price), points: 1 },
+                { label: 'a', ask: 'Markup', kind: 'num', pre: '$', answer: MX.money(up), tol: 0.005, show: '\\$' + MX.money(up), points: 1, verify: cents(() => (shown(money2(cost)) * r) / 100) },
+                { label: 'b', ask: 'Selling price', kind: 'num', pre: '$', answer: MX.money(price), tol: 0.005, show: '\\$' + MX.money(price), points: 1, verify: cents(() => shown(money2(cost)) * (1 + r / 100)) },
               ],
               solution: [T`Markup \(= ${r / 100}\times${MX.money(cost)} = ${MX.money(up)}\)`, T`Price \(= ${MX.money(cost)} + ${MX.money(up)} = ${H.box('\\$' + MX.money(price))}\)`],
             };
@@ -290,7 +315,7 @@
           return {
             prompt: T`A ${item} that regularly costs ${$(orig)} is on sale for ${money2(sale)}. What is the discount rate?`,
             visual: v,
-            parts: [{ kind: 'num', answer: String(r), tol: 0.051, post: '%', show: r + '\\%', points: 2 }],
+            parts: [{ kind: 'num', answer: String(r), tol: 0.051, post: '%', show: r + '\\%', points: 2, verify: sat(`${shown(money2(sale))}=${orig}-r/100*${orig}`, 'r') }],
             solution: [T`Discount \(= ${orig} - ${MX.money(sale)} = ${MX.money(orig - sale)}\).`, T`Rate \(= \frac{\text{discount}}{\text{original}} = \frac{${MX.money(orig - sale)}}{${orig}} = ${r / 100}\), which is ${r}%.`, T`\(${H.box(r + '\\%')}\)`],
           };
         },
@@ -305,7 +330,7 @@
               ? T`After a ${r}% raise, Kai earns ${money2(now)} an hour. What did Kai earn per hour before the raise?`
               : T`After a ${r}% price cut, a train pass costs ${money2(now)}. What did it cost before the cut?`,
             visual: bars([{ w: 100, label: 'original = 100%' }, { w: r, label: (up ? '+' : '−') + r + '%', cls: 'soft2' }], (up ? 'new = ' : 'new = ') + (100 + (up ? r : -r)) + '% = ' + money2(now)),
-            parts: [{ kind: 'num', pre: '$', answer: MX.money(orig), tol: 0.005, show: '\\$' + MX.money(orig), points: 2 }],
+            parts: [{ kind: 'num', pre: '$', answer: MX.money(orig), tol: 0.005, show: '\\$' + MX.money(orig), points: 2, verify: sat(`x${up ? '+' : '-'}${r}/100*x=${shown(money2(now))}`) }],
             solution: [T`The new amount is ${100 + (up ? r : -r)}% of the original: \(${(100 + (up ? r : -r)) / 100}x = ${MX.money(now)}\).`, T`\(x = \frac{${MX.money(now)}}{${(100 + (up ? r : -r)) / 100}} = ${H.box('\\$' + MX.money(orig))}\)`, T`(Not ${MX.money(now)} ${up ? '−' : '+'} ${r}% of ${MX.money(now)}: the percent is of the <em>original</em>.)`],
           };
         },
@@ -323,10 +348,10 @@
     const lab = (k, v) => (ask === k ? k + ' = ?' : v);
     const vis = S.svg(W, Hh, I.piggy(60, 60, 30) + S.text(170, 36, lab('P', 'principal ' + $(P)), { cls: 'tx small', w: 700, a: 'start' }).replace('P = ?', 'principal = ?') + S.text(170, 58, lab('r', 'rate ' + r + '% per year'), { cls: 'tx small', w: 700, a: 'start' }).replace('r = ?', 'rate = ?') + S.text(170, 80, lab('t', 'time ' + t + ' years'), { cls: 'tx small', w: 700, a: 'start' }).replace('t = ?', 'time = ?') + S.text(170, 102, lab('I', 'interest ' + money2(I2)), { cls: 'tx small', w: 700, a: 'start' }).replace('I = ?', 'interest = ?'), 'Simple interest facts');
     const Q2 = {
-      I: [T`Ana deposits ${$(P)} in an account that pays ${r}% simple interest per year. How much interest does she earn in ${t} year${t > 1 ? 's' : ''}?`, { kind: 'num', pre: '$', answer: MX.money(I2), tol: 0.005, show: '\\$' + Number(I2).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }, [T`\(I = Prt = ${P}\cdot${r / 100}\cdot${t} = ${MX.money(I2)}\)`]],
-      r: [T`A loan of ${$(P)} for ${t} year${t > 1 ? 's' : ''} costs ${money2(I2)} in simple interest. What is the annual interest rate?`, { kind: 'num', answer: String(r), post: '%', show: r + '\\%' }, [T`\(${MX.money(I2)} = ${P}\cdot r\cdot${t} = ${P * t}r\)`, T`\(r = \frac{${MX.money(I2)}}{${P * t}} = ${r / 100}\), so ${r}%.`]],
-      P: [T`An account paying ${r}% simple interest per year earned ${money2(I2)} in ${t} year${t > 1 ? 's' : ''}. How much was deposited?`, { kind: 'num', pre: '$', answer: String(P), tol: 0.005, show: '\\$' + MX.commas(P) }, [T`\(${MX.money(I2)} = P\cdot${r / 100}\cdot${t} = ${MX.num((r / 100) * t)}P\)`, T`\(P = \frac{${MX.money(I2)}}{${MX.num((r / 100) * t)}} = ${MX.commas(P)}\)`]],
-      t: [T`How many years will it take ${$(P)} to earn ${money2(I2)} at ${r}% simple interest per year?`, { kind: 'num', answer: String(t), post: 'years', show: t + '\\text{ years}' }, [T`\(${MX.money(I2)} = ${P}\cdot${r / 100}\cdot t = ${MX.num((P * r) / 100)}t\)`, T`\(t = \frac{${MX.money(I2)}}{${MX.num((P * r) / 100)}} = ${t}\)`]],
+      I: [T`Ana deposits ${$(P)} in an account that pays ${r}% simple interest per year. How much interest does she earn in ${t} year${t > 1 ? 's' : ''}?`, { kind: 'num', pre: '$', answer: MX.money(I2), tol: 0.005, show: '\\$' + Number(I2).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), verify: sat(`I=${P}*(${r}/100)*${t}`, 'I') }, [T`\(I = Prt = ${P}\cdot${r / 100}\cdot${t} = ${MX.money(I2)}\)`]],
+      r: [T`A loan of ${$(P)} for ${t} year${t > 1 ? 's' : ''} costs ${money2(I2)} in simple interest. What is the annual interest rate?`, { kind: 'num', answer: String(r), post: '%', show: r + '\\%', verify: sat(`${shown(money2(I2))}=${P}*(r/100)*${t}`, 'r') }, [T`\(${MX.money(I2)} = ${P}\cdot r\cdot${t} = ${P * t}r\)`, T`\(r = \frac{${MX.money(I2)}}{${P * t}} = ${r / 100}\), so ${r}%.`]],
+      P: [T`An account paying ${r}% simple interest per year earned ${money2(I2)} in ${t} year${t > 1 ? 's' : ''}. How much was deposited?`, { kind: 'num', pre: '$', answer: String(P), tol: 0.005, show: '\\$' + MX.commas(P), verify: sat(`${shown(money2(I2))}=P*(${r}/100)*${t}`, 'P') }, [T`\(${MX.money(I2)} = P\cdot${r / 100}\cdot${t} = ${MX.num((r / 100) * t)}P\)`, T`\(P = \frac{${MX.money(I2)}}{${MX.num((r / 100) * t)}} = ${MX.commas(P)}\)`]],
+      t: [T`How many years will it take ${$(P)} to earn ${money2(I2)} at ${r}% simple interest per year?`, { kind: 'num', answer: String(t), post: 'years', show: t + '\\text{ years}', verify: sat(`${shown(money2(I2))}=${P}*(${r}/100)*t`, 't') }, [T`\(${MX.money(I2)} = ${P}\cdot${r / 100}\cdot t = ${MX.num((P * r) / 100)}t\)`, T`\(t = \frac{${MX.money(I2)}}{${MX.num((P * r) / 100)}} = ${t}\)`]],
     }[ask];
     return { prompt: Q2[0], visual: vis, parts: [Object.assign(Q2[1], { points: 2 })], solution: [T`Simple interest: \(I = Prt\) with \(r\) as a decimal.`, ...Q2[2], T`\(${H.box(Q2[1].show)}\)`] };
   }
@@ -335,14 +360,14 @@
   // 2.3 formulas and geometry
   // ======================================================================
   const FORMULAS = [
-    { f: T`d = rt`, v: 't', vars: ['d', 'r'], a: 'd/r', t: T`\frac{d}{r}`, s: [T`Divide both sides by \(r\).`] },
-    { f: T`A = \frac{1}{2}bh`, v: 'b', vars: ['A', 'h'], a: '2A/h', t: T`\frac{2A}{h}`, s: [T`Multiply both sides by 2: \(2A = bh\).`, T`Divide by \(h\).`] },
-    { f: T`V = LWH`, v: 'W', vars: ['V', 'L', 'H'], a: 'V/(LH)', t: T`\frac{V}{LH}`, s: [T`Divide both sides by \(LH\).`] },
-    { f: T`I = Prt`, v: 'P', vars: ['I', 'r', 't'], a: 'I/(rt)', t: T`\frac{I}{rt}`, s: [T`Divide both sides by \(rt\).`] },
-    { f: T`F = \frac{9}{5}C + 32`, v: 'C', vars: ['F'], a: '5(F-32)/9', t: T`\frac{5}{9}\left(F - 32\right)`, s: [T`Subtract 32: \(F - 32 = \frac{9}{5}C\).`, T`Multiply by \(\frac{5}{9}\).`] },
-    { f: T`y = mx + b`, v: 'm', vars: ['y', 'x', 'b'], a: '(y-b)/x', t: T`\frac{y - b}{x}`, s: [T`Subtract \(b\): \(y - b = mx\).`, T`Divide by \(x\).`] },
-    { f: T`A = \frac{1}{2}h\left(a + c\right)`, v: 'h', vars: ['A', 'a', 'c'], a: '2A/(a+c)', t: T`\frac{2A}{a + c}`, s: [T`Multiply by 2: \(2A = h\left(a + c\right)\).`, T`Divide by \(\left(a + c\right)\).`] },
-    { f: T`P = a + b + c`, v: 'c', vars: ['P', 'a', 'b'], a: 'P-a-b', t: T`P - a - b`, s: [T`Subtract \(a\) and \(b\) from both sides.`] },
+    { f: T`d = rt`, v: 't', e: 'd=r*t', vars: ['d', 'r'], a: 'd/r', t: T`\frac{d}{r}`, s: [T`Divide both sides by \(r\).`] },
+    { f: T`A = \frac{1}{2}bh`, v: 'b', e: 'A=(1/2)*b*h', vars: ['A', 'h'], a: '2A/h', t: T`\frac{2A}{h}`, s: [T`Multiply both sides by 2: \(2A = bh\).`, T`Divide by \(h\).`] },
+    { f: T`V = LWH`, v: 'W', e: 'V=L*W*H', vars: ['V', 'L', 'H'], a: 'V/(LH)', t: T`\frac{V}{LH}`, s: [T`Divide both sides by \(LH\).`] },
+    { f: T`I = Prt`, v: 'P', e: 'I=P*r*t', vars: ['I', 'r', 't'], a: 'I/(rt)', t: T`\frac{I}{rt}`, s: [T`Divide both sides by \(rt\).`] },
+    { f: T`F = \frac{9}{5}C + 32`, v: 'C', e: 'F=(9/5)*C+32', vars: ['F'], a: '5(F-32)/9', t: T`\frac{5}{9}\left(F - 32\right)`, s: [T`Subtract 32: \(F - 32 = \frac{9}{5}C\).`, T`Multiply by \(\frac{5}{9}\).`] },
+    { f: T`y = mx + b`, v: 'm', e: 'y=m*x+b', vars: ['y', 'x', 'b'], a: '(y-b)/x', t: T`\frac{y - b}{x}`, s: [T`Subtract \(b\): \(y - b = mx\).`, T`Divide by \(x\).`] },
+    { f: T`A = \frac{1}{2}h\left(a + c\right)`, v: 'h', e: 'A=(1/2)*h*(a+c)', vars: ['A', 'a', 'c'], a: '2A/(a+c)', t: T`\frac{2A}{a + c}`, s: [T`Multiply by 2: \(2A = h\left(a + c\right)\).`, T`Divide by \(\left(a + c\right)\).`] },
+    { f: T`P = a + b + c`, v: 'c', e: 'P=a+b+c', vars: ['P', 'a', 'b'], a: 'P-a-b', t: T`P - a - b`, s: [T`Subtract \(a\) and \(b\) from both sides.`] },
   ];
   MX.register({
     id: 'lq-formulas', section: SEC, part: 3, title: 'Formulas and geometry applications', kind: 'skill', sources: [ADD],
@@ -362,7 +387,7 @@
           const ans = `(${c}-(${a})x)/(${b})`, show = T`y = \frac{${c} ${sg(-a)}x}{${b}}`;
           return {
             prompt: T`Solve for \(y\): \(${MX.poly([[a, { x: 1 }], [b, { y: 1 }]], ['x', 'y']).tex} = ${c}\)`,
-            parts: [{ kind: 'expr', lhs: 'y', vars: ['x'], pre: 'y =', answer: ans, show, points: 2 }],
+            parts: [{ kind: 'expr', lhs: 'y', vars: ['x'], pre: 'y =', answer: ans, show, points: 2, verify: Vf.solvesFor(MX.poly([[a, { x: 1 }], [b, { y: 1 }]], ['x', 'y']).asc + '=' + c, 'y') }],
             solution: [T`Move the \(x\)-term: \(${b}y = ${c} ${sg(-a)}x\).`, T`Divide by ${b}: \(${H.box(show)}\) (equivalently \(y = ${new Q(-a, b).tex()}x ${sg(new Q(c, b).val()) === '+ 0' ? '' : (c * b < 0 ? '- ' : '+ ') + new Q(Math.abs(c), Math.abs(b)).tex()}\)).`],
           };
         },
@@ -373,7 +398,7 @@
           const F = rng.pick(FORMULAS);
           return {
             prompt: T`Solve \(${F.f}\) for \(${F.v}\).`,
-            parts: [{ kind: 'expr', lhs: F.v, vars: F.vars, pre: F.v + ' =', answer: F.a, show: F.v + ' = ' + F.t, points: 2 }],
+            parts: [{ kind: 'expr', lhs: F.v, vars: F.vars, pre: F.v + ' =', answer: F.a, show: F.v + ' = ' + F.t, points: 2, verify: Vf.solvesFor(F.e, F.v) }],
             solution: [...F.s, T`\(${H.box(F.v + ' = ' + F.t)}\)`],
           };
         },
@@ -388,7 +413,9 @@
           return {
             prompt: T`In a triangle, the second angle is ${d}° more than the first, and the third angle is ${TIMES[m]} the first. Find all three angles.`,
             visual: triangle(['x°', '(x + ' + d + ')°', m + 'x°']),
-            parts: A.map((v, k) => ({ label: 'abc'[k], ask: ['First angle', 'Second angle', 'Third angle'][k], kind: 'num', answer: String(v), post: 'degrees', points: 1 })),
+            parts: A.map((v, k) => ({ label: 'abc'[k], ask: ['First angle', 'Second angle', 'Third angle'][k], kind: 'num', answer: String(v), post: 'degrees', points: 1,
+              // the angle in terms of the first angle f: f, f + d, m f; the three add to 180
+              verify: sat(['(y)+(y+' + d + ')+' + m + '(y)=180', '(y-' + d + ')+(y)+' + m + '(y-' + d + ')=180', '(y/' + m + ')+(y/' + m + '+' + d + ')+(y)=180'][k], 'y') })),
             solution: [T`\(x + \left(x + ${d}\right) + ${m}x = 180\)`, T`\(${m + 2}x + ${d} = 180\), so \(x = ${x}\).`, T`Angles: \(${H.box(A.map((v) => v + '^{\\circ}').join(',\\ '))}\) (they add to 180°).`],
           };
         },
@@ -407,8 +434,8 @@
             prompt: T`Two angles are ${sup ? 'supplementary' : 'complementary'}. The larger one is ${Math.abs(k)}° ${k > 0 ? 'more' : 'less'} than ${TIMES[m]} the smaller. Find both angles.`,
             visual: S.svg(W, Hh, v, sup ? 'Two angles on a straight line' : 'Two angles that make a right angle'),
             parts: [
-              { label: 'a', ask: 'Smaller angle', kind: 'num', answer: String(x), post: 'degrees', points: 1 },
-              { label: 'b', ask: 'Larger angle', kind: 'num', answer: String(big), post: 'degrees', points: 1 },
+              { label: 'a', ask: 'Smaller angle', kind: 'num', answer: String(x), post: 'degrees', points: 1, verify: sat(`x+(${m}x+(${k}))=${total}`, 'x', (y) => (m * y + k > y ? true : 'not the smaller angle')) },
+              { label: 'b', ask: 'Larger angle', kind: 'num', answer: String(big), post: 'degrees', points: 1, verify: sat(`(y-(${k}))/${m}+y=${total}`, 'y', (y) => (y > (y - k) / m ? true : 'not the larger angle')) },
             ],
             solution: [T`${sup ? 'Supplementary' : 'Complementary'} angles add to ${total}°: \(x + \left(${m}x ${sg(k)}\right) = ${total}\).`, T`\(${m + 1}x = ${total - k}\), so \(x = ${x}\) and the other is \(${big}\).`, T`\(${H.box(x + '^{\\circ}\\text{ and }' + big + '^{\\circ}')}\)`],
           };
@@ -424,7 +451,7 @@
           return {
             prompt: findH ? T`A triangular sail has an area of ${MX.num(A)} square feet and a base of ${b} feet. How tall is it?` : T`A triangular sail is ${h} feet tall and has an area of ${MX.num(A)} square feet. How long is its base?`,
             visual: S.svg(W, Hh, v, 'A triangular sail with its base and height'),
-            parts: [{ kind: 'num', answer: String(findH ? h : b), post: 'feet', show: (findH ? h : b) + '\\text{ ft}', points: 2 }],
+            parts: [{ kind: 'num', answer: String(findH ? h : b), post: 'feet', show: (findH ? h : b) + '\\text{ ft}', points: 2, verify: findH ? sat(`${MX.num(A)}=(1/2)*${b}*y`, 'y') : sat(`${MX.num(A)}=(1/2)*y*${h}`, 'y') }],
             solution: [T`\(A = \frac{1}{2}bh\): \(${MX.num(A)} = \frac{1}{2}\cdot${findH ? b + '\\cdot h' : 'b\\cdot' + h}\)`, T`Multiply by 2: \(${MX.num(2 * A)} = ${findH ? b + 'h' : h + 'b'}\).`, T`\(${H.box((findH ? 'h = ' + h : 'b = ' + b) + '\\text{ ft}')}\)`],
           };
         },
@@ -439,7 +466,7 @@
           return {
             prompt: T`A garden bed is shaped like a trapezoid with area ${MX.num(A)} m². Its height is ${h} m and one base is ${b1} m. How long is the other base?`,
             visual: S.svg(W, Hh, v, 'A trapezoid with one base unknown'),
-            parts: [{ kind: 'num', answer: String(b2), post: 'meters', show: b2 + '\\text{ m}', points: 2 }],
+            parts: [{ kind: 'num', answer: String(b2), post: 'meters', show: b2 + '\\text{ m}', points: 2, verify: sat(`${MX.num(A)}=(1/2)*${h}*(${b1}+y)`, 'y') }],
             solution: [T`\(A = \frac{1}{2}h\left(b_{1} + b_{2}\right)\): \(${MX.num(A)} = \frac{1}{2}\cdot${h}\left(${b1} + b\right)\)`, T`\(${MX.num(2 * A)} = ${h}\left(${b1} + b\right)\), so \(${b1} + b = ${b1 + b2}\) and \(b = ${b2}\).`, T`\(${H.box(b2 + '\\text{ m}')}\)`],
           };
         },
@@ -483,8 +510,8 @@
             prompt: T`A jar holds ${A2[0]} and ${B2[0]} worth ${money2(V / 100)} in all. There are ${relTxt}. How many of each coin are there?`,
             visual: S.svg(W, Hh, v, 'Two kinds of coins with a total value'),
             parts: [
-              { label: 'a', ask: `Number of ${A2[0]}`, kind: 'num', answer: String(x), points: 1 },
-              { label: 'b', ask: `Number of ${B2[0]}`, kind: 'num', answer: String(other), points: 1 },
+              { label: 'a', ask: `Number of ${A2[0]}`, kind: 'num', answer: String(x), points: 1, verify: sat(`${A2[1]}x+${B2[1]}(${oT})=${Math.round(shown(money2(V / 100)) * 100)}`) },
+              { label: 'b', ask: `Number of ${B2[0]}`, kind: 'num', answer: String(other), points: 1, verify: sat(`${A2[1]}(${rel === 'more' ? 'y-' + k : rel === 'fewer' ? 'y+' + k : rel === 'twice' ? 'y/2' : 'y/3'})+${B2[1]}y=${Math.round(shown(money2(V / 100)) * 100)}`, 'y') },
             ],
             solution: [
               T`Let \(x\) = number of ${A2[0]}; then there are \(${oT}\) ${B2[0]}.`,
@@ -506,8 +533,8 @@
             prompt: T`Tickets to ${ev} cost \$${pa} for adults and \$${ps} for students. ${rel === 'more' ? `There were ${k} more student tickets sold than adult tickets` : 'Twice as many student tickets as adult tickets were sold'}, and ticket sales totaled ${$(R)}. How many of each were sold?`,
             visual: S.svg(W, Hh, v, 'Adult and student tickets'),
             parts: [
-              { label: 'a', ask: 'Adult tickets', kind: 'num', answer: String(x), points: 1 },
-              { label: 'b', ask: 'Student tickets', kind: 'num', answer: String(s), points: 1 },
+              { label: 'a', ask: 'Adult tickets', kind: 'num', answer: String(x), points: 1, verify: sat(`${pa}x+${ps}(${rel === 'more' ? 'x+' + k : '2x'})=${R}`) },
+              { label: 'b', ask: 'Student tickets', kind: 'num', answer: String(s), points: 1, verify: sat(`${pa}(${rel === 'more' ? 'y-' + k : 'y/2'})+${ps}y=${R}`, 'y') },
             ],
             solution: [T`Let \(a\) = adult tickets; student tickets \(= ${rel === 'more' ? 'a + ' + k : '2a'}\).`, T`\(${pa}a + ${ps}\left(${rel === 'more' ? 'a + ' + k : '2a'}\right) = ${R}\), so \(${pa + (rel === 'more' ? ps : 2 * ps)}a${rel === 'more' ? ' + ' + ps * k : ''} = ${R}\) and \(a = ${x}\).`, T`\(${H.box(T`${x}\text{ adult},\ ${s}\text{ student}`)}\)`],
           };
@@ -525,8 +552,8 @@
             prompt: T`Priya bought some ${pa}-cent stamps and some ${pb}-cent stamps for ${money2(V / 100)}. She bought ${k} ${rel} ${pb}-cent stamps than ${pa}-cent stamps. How many of each did she buy?`,
             visual: S.svg(340, 110, v, 'Two kinds of stamps'),
             parts: [
-              { label: 'a', ask: `${pa}-cent stamps`, kind: 'num', answer: String(x), points: 1 },
-              { label: 'b', ask: `${pb}-cent stamps`, kind: 'num', answer: String(y), points: 1 },
+              { label: 'a', ask: `${pa}-cent stamps`, kind: 'num', answer: String(x), points: 1, verify: sat(`${pa}x+${pb}(x${rel === 'fewer' ? '-' : '+'}${k})=${Math.round(shown(money2(V / 100)) * 100)}`) },
+              { label: 'b', ask: `${pb}-cent stamps`, kind: 'num', answer: String(y), points: 1, verify: sat(`${pa}(y${rel === 'fewer' ? '+' : '-'}${k})+${pb}y=${Math.round(shown(money2(V / 100)) * 100)}`, 'y') },
             ],
             solution: [T`Let \(x\) = number of ${pa}-cent stamps; then \(x ${rel === 'fewer' ? '-' : '+'} ${k}\) are ${pb}-cent stamps.`, T`\(${pa}x + ${pb}\left(x ${rel === 'fewer' ? '-' : '+'} ${k}\right) = ${V}\), so \(${pa + pb}x ${rel === 'fewer' ? '-' : '+'} ${pb * k} = ${V}\) and \(x = ${x}\).`, T`\(${H.box(T`${x}\text{ and }${y}`)}\)`],
           };
@@ -542,7 +569,7 @@
           return {
             prompt: T`A shop mixes ${thing} worth \$${a} per ${unit} with ${Wt} ${unit}s of ${thing} worth \$${b} per ${unit} to make a blend worth \$${c} per ${unit}. How many ${unit}s of the \$${a} ${thing} should it use?`,
             visual: S.svg(340, 140, v, 'Two prices mixed into a blend'),
-            parts: [{ kind: 'num', answer: String(x), post: unit + 's', show: x + '\\text{ ' + unit + 's}', points: 3 }],
+            parts: [{ kind: 'num', answer: String(x), post: unit + 's', show: x + '\\text{ ' + unit + 's}', points: 3, verify: sat(`${a}x+${b}*${Wt}=${c}(x+${Wt})`) }],
             solution: [T`Let \(x\) = ${unit}s of the \$${a} kind. The blend has \(x + ${Wt}\) ${unit}s.`, T`Value: \(${a}x + ${b}\cdot${Wt} = ${c}\left(x + ${Wt}\right)\)`, T`\(${a}x + ${b * Wt} = ${c}x + ${c * Wt}\), so \(${b * Wt - c * Wt} = ${c - a}x\) and \(${H.box('x = ' + x)}\)`],
           };
         },
@@ -557,7 +584,7 @@
           return {
             prompt: T`How many ${unit} of a ${p2}% cleaning solution must be added to ${V} ${unit} of a ${p1}% solution to make a ${p3}% solution?`,
             visual: S.svg(360, 150, v, 'Two solutions of different strengths mixed'),
-            parts: [{ kind: 'num', answer: String(x), post: unit, show: x + '\\text{ ' + unit + '}', points: 3 }],
+            parts: [{ kind: 'num', answer: String(x), post: unit, show: x + '\\text{ ' + unit + '}', points: 3, verify: sat(`(${p1}/100)*${V}+(${p2}/100)x=(${p3}/100)(${V}+x)`) }],
             solution: [T`Pure cleaner in each part: \(${p1 / 100}\cdot${V} + ${p2 / 100}x = ${p3 / 100}\left(${V} + x\right)\)`, T`\(${MX.num((p1 * V) / 100)} + ${p2 / 100}x = ${MX.num((p3 * V) / 100)} + ${p3 / 100}x\), so \(${MX.num((p2 - p3) / 100)}x = ${MX.num(((p3 - p1) * V) / 100)}\)`, T`\(${H.box('x = ' + x)}\) ${unit}`],
           };
         },
@@ -573,7 +600,7 @@
           return {
             prompt: T`Lena and Omar are ${MX.num(D)} miles apart on a trail and start toward each other at the same time. Lena walks at ${r1} mph and Omar bikes at ${r2} mph. How long until they meet? Give the answer in hours.`,
             visual: S.svg(W, Hh, v, 'A walker and a cyclist approaching each other'),
-            parts: [{ kind: 'num', answer: MX.num(t), post: 'hours', show: MX.num(t) + '\\text{ h}', points: 3 }],
+            parts: [{ kind: 'num', answer: MX.num(t), post: 'hours', show: MX.num(t) + '\\text{ h}', points: 3, verify: sat(`${r1}t+${r2}t=${MX.num(D)}`, 't') }],
             solution: [T`In \(t\) hours they cover \(${r1}t\) and \(${r2}t\) miles; together that's the ${MX.num(D)} miles between them.`, T`\(${r1}t + ${r2}t = ${MX.num(D)}\), so \(${r1 + r2}t = ${MX.num(D)}\).`, T`\(t = ${H.box(MX.num(t) + '\\text{ hours}')}\) (${tMin} minutes)`],
           };
         },
@@ -588,7 +615,7 @@
           return {
             prompt: T`Mateo covered a ${MX.num(D)}-mile route in ${MX.num(Tt)} hours. He jogged part of the way at ${r1} mph and walked the rest at ${r2} mph. How long did he jog?`,
             visual: S.svg(W, Hh, v, 'A route with a jogging part and a walking part'),
-            parts: [{ kind: 'num', answer: MX.num(t1), post: 'hours', show: MX.num(t1) + '\\text{ h}', points: 3 }],
+            parts: [{ kind: 'num', answer: MX.num(t1), post: 'hours', show: MX.num(t1) + '\\text{ h}', points: 3, verify: sat(`${r1}t+${r2}(${MX.num(Tt)}-t)=${MX.num(D)}`, 't', (u) => (u > 0 && u < Tt ? true : 'the jogging time must be between 0 and the total time')) }],
             solution: [T`Let \(t\) = hours jogging; walking time is \(${MX.num(Tt)} - t\).`, T`Distances add: \(${r1}t + ${r2}\left(${MX.num(Tt)} - t\right) = ${MX.num(D)}\)`, T`\(${r1 - r2}t + ${MX.num(r2 * Tt)} = ${MX.num(D)}\), so \(t = ${H.box(MX.num(t1) + '\\text{ h}')}\)`],
           };
         },
@@ -604,7 +631,7 @@
           return {
             prompt: T`A bus leaves a station at ${r1} mph. ${gapMin} minutes later, a car leaves the same station on the same road at ${r2} mph. How many minutes after the car leaves does it catch up to the bus?`,
             visual: S.svg(W, Hh, v, 'A bus with a head start and a faster car'),
-            parts: [{ kind: 'num', answer: String(t * 60), post: 'minutes', show: t * 60 + '\\text{ min}', points: 3 }],
+            parts: [{ kind: 'num', answer: String(t * 60), post: 'minutes', show: t * 60 + '\\text{ min}', points: 3, verify: sat(`${r2}(u/60)=${r1}(u/60+${gapMin}/60)`, 'u') }],
             solution: [T`Work in hours: the head start is \(${MX.num(g)}\) h. Let \(t\) = the car's time; the bus has driven \(t + ${MX.num(g)}\) h.`, T`Equal distances: \(${r2}t = ${r1}\left(t + ${MX.num(g)}\right)\), so \(${r2 - r1}t = ${MX.num(r1 * g)}\) and \(t = ${MX.num(t)}\) h.`, T`\(${H.box(t * 60 + '\\text{ minutes}')}\)`],
           };
         },
@@ -642,12 +669,12 @@
         name: 'Inequality to interval notation',
         gen(rng) {
           const kind = rng.pick(['ray', 'ray', 'between']);
-          let reg, tex;
-          if (kind === 'ray') { const v = rng.int(-9, 9), op = rng.pick(OPS); reg = ray(v, op); tex = rng.chance(0.3) ? T`${v} ${OPT[FLIP[op]]} x` : T`x ${OPT[op]} ${v}`; }
-          else { const lo = rng.int(-9, 4), hi = rng.int(lo + 1, 10), lc = rng.chance(0.5), hc = rng.chance(0.5); reg = [H.iv(lo, hi, lc, hc)]; tex = T`${lo} ${lc ? '\\le' : '\\lt'} x ${hc ? '\\le' : '\\lt'} ${hi}`; }
+          let reg, tex, spec;
+          if (kind === 'ray') { const v = rng.int(-9, 9), op = rng.pick(OPS); reg = ray(v, op); const fl = rng.chance(0.3); tex = fl ? T`${v} ${OPT[FLIP[op]]} x` : T`x ${OPT[op]} ${v}`; spec = fl ? `${v}${FLIP[op]}x` : `x${op}${v}`; }
+          else { const lo = rng.int(-9, 4), hi = rng.int(lo + 1, 10), lc = rng.chance(0.5), hc = rng.chance(0.5); reg = [H.iv(lo, hi, lc, hc)]; tex = T`${lo} ${lc ? '\\le' : '\\lt'} x ${hc ? '\\le' : '\\lt'} ${hi}`; spec = `${lo}${lc ? '<=' : '<'}x${hc ? '<=' : '<'}${hi}`; }
           return {
             prompt: T`Graph \(${tex}\) on the number line and write it in interval notation.`,
-            parts: [ivPart(reg, 1, { label: 'a', ask: 'Interval notation' }), graphPart(rng, reg, 'b')],
+            parts: [ivPart(reg, 1, { label: 'a', ask: 'Interval notation' }, spec), graphPart(rng, reg, 'b', undefined, spec)],
             solution: [T`${kind === 'ray' ? 'One endpoint; the other side goes on forever (∞ with a parenthesis).' : 'Two endpoints: brackets where the endpoint is included (≤), parentheses where it is not (<).'}`, T`\(${H.box(H.regionTex(reg))}\)`],
           };
         },
@@ -656,13 +683,13 @@
         name: 'Graph to interval notation',
         gen(rng) {
           const kind = rng.pick(['ray', 'between']);
-          let reg;
-          if (kind === 'ray') reg = ray(rng.int(-8, 8), rng.pick(OPS));
-          else { const lo = rng.int(-8, 3), hi = rng.int(lo + 2, 9); reg = [H.iv(lo, hi, rng.chance(0.5), rng.chance(0.5))]; }
+          let reg, spec;
+          if (kind === 'ray') { const v = rng.int(-8, 8), op = rng.pick(OPS); reg = ray(v, op); spec = `x${op}${v}`; }
+          else { const lo = rng.int(-8, 3), hi = rng.int(lo + 2, 9), lc = rng.chance(0.5), hc = rng.chance(0.5); reg = [H.iv(lo, hi, lc, hc)]; spec = `${lo}${lc ? '<=' : '<'}x${hc ? '<=' : '<'}${hi}`; }
           return {
             prompt: T`Write the set shown on the number line in interval notation.`,
             visual: H.regionSvg(reg, null, { w: 300 }),
-            parts: [ivPart(reg, 2)],
+            parts: [ivPart(reg, 2, null, spec)],
             solution: [T`Filled dot ● → bracket; open dot ○ → parenthesis; an arrow → \(\infty\) or \(-\infty\).`, T`\(${H.box(H.regionTex(reg))}\)`],
           };
         },
@@ -672,9 +699,10 @@
         gen(rng) {
           const s = solveLin(rng);
           const Lt = MX.lin(s.a, s.b).tex, Rt = s.c ? MX.lin(s.c, s.d).tex : String(s.d);
+          const spec = MX.lin(s.a, s.b).asc + s.op + (s.c ? MX.lin(s.c, s.d).asc : String(s.d));
           return {
             prompt: T`Solve \(${Lt} ${OPT[s.op]} ${Rt}\). Graph the solution and write it in interval notation.`,
-            parts: [ivPart(s.reg, 2, { label: 'a', ask: 'Solution (interval notation)' }), graphPart(rng, s.reg, 'b')],
+            parts: [ivPart(s.reg, 2, { label: 'a', ask: 'Solution (interval notation)' }, spec), graphPart(rng, s.reg, 'b', undefined, spec)],
             solution: [
               T`Collect terms: \(${s.k}x ${OPT[s.op]} ${s.d - s.b}\)`,
               T`Divide by ${s.k}${s.k < 0 ? ' — a negative, so reverse the sign' : ''}: \(x ${OPT[s.fop]} ${s.v.tex()}\)`,
@@ -690,7 +718,7 @@
           const c = new Q(p * v, q).add(b), op = rng.pick(OPS), fop = p < 0 ? FLIP[op] : op, reg = ray(v, fop);
           return {
             prompt: T`Solve \(${p < 0 ? '-' : ''}\frac{${Math.abs(p)}}{${q}}x ${sg(b)} ${OPT[op]} ${c.tex()}\) and write the solution in interval notation.`,
-            parts: [ivPart(reg, 3)],
+            parts: [ivPart(reg, 3, null, `${p}x+(${b * q})${op}${c.mul(q).str()}`)],
             solution: [T`${b > 0 ? 'Subtract ' + b : 'Add ' + -b}: \(${p < 0 ? '-' : ''}\frac{${Math.abs(p)}}{${q}}x ${OPT[op]} ${c.sub(b).tex()}\)`, T`Multiply by \(${new Q(q, p).tex()}\)${p < 0 ? ' (negative: reverse the sign)' : ''}: \(x ${OPT[fop]} ${v}\)`, T`\(${H.box(H.regionTex(reg))}\)`],
           };
         },
@@ -701,14 +729,14 @@
           const n = rng.int(2, 9), k = rng.int(2, 25), m = rng.int(-10, 40), op = rng.pick(OPS);
           const words = { '<': 'is less than', '<=': 'is at most', '>': 'is more than', '>=': 'is at least' }[op];
           const forms = [
-            { w: `${k} more than a number ${words} ${m}.`, a: 1, b: k },
-            { w: `${TIMES[n] || n + ' times'} a number, decreased by ${k}, ${words} ${m}.`, a: n, b: -k },
-            { w: `The sum of ${TIMES[n] || n + ' times'} a number and ${k} ${words} ${m}.`, a: n, b: k },
+            { w: `${k} more than a number ${words} ${m}.`, a: 1, b: k, s: `x+${k}${op}${m}` },
+            { w: `${TIMES[n] || n + ' times'} a number, decreased by ${k}, ${words} ${m}.`, a: n, b: -k, s: `${n}x-${k}${op}${m}` },
+            { w: `The sum of ${TIMES[n] || n + ' times'} a number and ${k} ${words} ${m}.`, a: n, b: k, s: `${n}x+${k}${op}${m}` },
           ];
           const F = rng.pick(forms), v = new Q(m - F.b, F.a), reg = ray(v.d === 1 ? v.n : v, op);
           return {
             prompt: T`Translate into an inequality and solve (let \(x\) be the number): ${F.w} Write the solution in interval notation.`,
-            parts: [ivPart(reg, 2)],
+            parts: [ivPart(reg, 2, null, F.s)],
             solution: [T`“${words}” means \(${OPT[op]}\): \(${MX.lin(F.a, F.b).tex} ${OPT[op]} ${m}\)`, T`\(x ${OPT[op]} ${v.tex()}\)`, T`\(${H.box(H.regionTex(reg))}\)`],
           };
         },
@@ -722,7 +750,7 @@
           return {
             prompt: T`A small business making ${item} has fixed costs of ${$(F)} a month, plus ${$(c)} to make each one. It sells them for ${$(p)} each. How many must it sell in a month to make a profit (revenue greater than cost)?`,
             visual: S.svg(340, 130, v, 'Costs and price of a product'),
-            parts: [{ kind: 'num', answer: String(need), ask: `The smallest number of ${item}`, points: 3 }],
+            parts: [{ kind: 'num', answer: String(need), ask: `The smallest number of ${item}`, points: 3, verify: minInt((x) => p * x > F + c * x) }],
             solution: [T`Revenue \(${p}x\), cost \(${F} + ${c}x\). Profit means \(${p}x \gt ${F} + ${c}x\).`, T`\(${p - c}x \gt ${F}\), so \(x \gt ${MX.num(F / (p - c), 3)}\).`, T`${Number.isInteger(F / (p - c)) ? 'Selling exactly ' + F / (p - c) + ' only breaks even, so' : 'Rounding up,'} the smallest whole number is \(${H.box(String(need))}\).`],
           };
         },
@@ -735,7 +763,7 @@
           return {
             prompt: T`A one-day truck rental costs ${$(a)} plus ${money2(b)} per mile. Dev can spend at most ${money2(B)}. What is the greatest whole number of miles he can drive?`,
             visual: v,
-            parts: [{ kind: 'num', answer: String(mx), post: 'miles', points: 3 }],
+            parts: [{ kind: 'num', answer: String(mx), post: 'miles', points: 3, verify: maxInt((m) => Math.round(a * 100) + Math.round(b * 100) * m <= Math.round(shown(money2(B)) * 100)) }],
             solution: [T`\(${a} + ${b}m \le ${MX.money(B)}\)`, T`\(${b}m \le ${MX.money(B - a)}\), so \(m \le ${MX.num((B - a) / b, 3)}\).`, T`Round down: \(${H.box(mx + '\\text{ miles}')}\)`],
           };
         },
@@ -748,7 +776,7 @@
           return {
             prompt: T`A club sells raffle tickets for ${$(p)} each. The prizes cost ${$(cost)}. The club wants a profit of at least ${$(goal)}. What is the fewest tickets it must sell?`,
             visual: v,
-            parts: [{ kind: 'num', answer: String(need), post: 'tickets', points: 3 }],
+            parts: [{ kind: 'num', answer: String(need), post: 'tickets', points: 3, verify: minInt((n) => p * n - cost >= goal) }],
             solution: [T`Profit \(= ${p}t - ${cost} \ge ${goal}\)`, T`\(${p}t \ge ${goal + cost}\), so \(t \ge ${MX.num((goal + cost) / p, 3)}\).`, T`Round up: \(${H.box(need + '\\text{ tickets}')}\)`],
           };
         },
@@ -779,7 +807,7 @@
   }
   function simpleIneq(rng) { // a x + b op c with integer solution
     const a = rng.nz(-6, 6), v = rng.int(-9, 9), b = rng.int(-12, 12), op = rng.pick(OPS), c = a * v + b, fop = a < 0 ? FLIP[op] : op;
-    return { tex: T`${MX.lin(a, b).tex} ${OPT[op]} ${c}`, a, b, c, op, fop, v, r: ray(v, fop)[0], step: T`\(${MX.lin(a, b).tex} ${OPT[op]} ${c}\) → \(${a}x ${OPT[op]} ${c - b}\) → \(x ${OPT[fop]} ${v}\)${a < 0 ? ' (divided by a negative, so the sign reversed)' : ''}` };
+    return { tex: T`${MX.lin(a, b).tex} ${OPT[op]} ${c}`, asc: MX.lin(a, b).asc + op + c, a, b, c, op, fop, v, r: ray(v, fop)[0], step: T`\(${MX.lin(a, b).tex} ${OPT[op]} ${c}\) → \(${a}x ${OPT[op]} ${c - b}\) → \(x ${OPT[fop]} ${v}\)${a < 0 ? ' (divided by a negative, so the sign reversed)' : ''}` };
   }
   MX.register({
     id: 'lq-compound', section: SEC, part: 3, title: 'Compound inequalities', kind: 'skill', sources: [ADD],
@@ -801,9 +829,10 @@
           const L = a * lo + b, U = a * hi + b;
           const reg = [H.iv(lo, hi, lc, hc)];
           const left = a > 0 ? L : U, right = a > 0 ? U : L, lsgn = a > 0 ? lc : hc, rsgn = a > 0 ? hc : lc;
+          const spec = `${left}${lsgn ? '<=' : '<'}${MX.lin(a, b).asc}${rsgn ? '<=' : '<'}${right}`;
           return {
             prompt: T`Solve \(${left} ${lsgn ? '\\le' : '\\lt'} ${MX.lin(a, b).tex} ${rsgn ? '\\le' : '\\lt'} ${right}\). Graph the solution and write it in interval notation.`,
-            parts: [ivPart(reg, 2, { label: 'a', ask: 'Solution (interval notation)' }), graphPart(rng, reg, 'b')],
+            parts: [ivPart(reg, 2, { label: 'a', ask: 'Solution (interval notation)' }, spec), graphPart(rng, reg, 'b', undefined, spec)],
             solution: [T`Subtract ${b} from all three parts: \(${left - b} ${lsgn ? '\\le' : '\\lt'} ${a}x ${rsgn ? '\\le' : '\\lt'} ${right - b}\)`, T`Divide all three parts by ${a}${a < 0 ? ', reversing both signs (and then rewrite it smallest to largest)' : ''}: \(${lo} ${lc ? '\\le' : '\\lt'} x ${hc ? '\\le' : '\\lt'} ${hi}\)`, T`\(${H.box(H.regionTex(reg))}\)`],
           };
         },
@@ -814,7 +843,7 @@
           let p1, p2, reg; do { p1 = simpleIneq(rng); p2 = simpleIneq(rng); reg = interReg(p1.r, p2.r); } while (reg === null || (!reg.length && rng.chance(0.7)) || H.regionAsc(reg) === H.regionAsc([p1.r]) && rng.chance(0.6));
           return {
             prompt: T`Solve: \(${p1.tex}\) and \(${p2.tex}\). Write the solution in interval notation (or “no solution”).`,
-            parts: [ivPart(reg, 3)],
+            parts: [ivPart(reg, 3, null, p1.asc + ' and ' + p2.asc)],
             solution: [p1.step, p2.step, reg.length ? T`Both must hold: the overlap is \(${H.box(H.regionTex(reg))}\)` : T`The two pieces don't overlap: \(${H.box('\\text{no solution}')}\)`],
           };
         },
@@ -826,7 +855,7 @@
           const reg = unionReg(p1.r, p2.r);
           return {
             prompt: T`Solve: \(${p1.tex}\) or \(${p2.tex}\). Write the solution in interval notation.`,
-            parts: [ivPart(reg, 3)],
+            parts: [ivPart(reg, 3, null, p1.asc + ' or ' + p2.asc)],
             solution: [p1.step, p2.step, T`Either one may hold: combine them. \(${H.box(H.regionTex(reg))}\)`],
           };
         },
@@ -840,7 +869,7 @@
           return {
             prompt: T`A greenhouse must stay between ${f1}°F and ${f2}°F, inclusive. Using \(F = \frac{9}{5}C + 32\), what is the allowed range in degrees Celsius? Write it in interval notation.`,
             visual: v,
-            parts: [ivPart(reg, 3)],
+            parts: [ivPart(reg, 3, null, ({ x: C }) => f1 <= (9 * C) / 5 + 32 && (9 * C) / 5 + 32 <= f2)],
             solution: [T`\(${f1} \le \frac{9}{5}C + 32 \le ${f2}\)`, T`Subtract 32: \(${f1 - 32} \le \frac{9}{5}C \le ${f2 - 32}\). Multiply by \(\frac{5}{9}\): \(${c1} \le C \le ${c2}\).`, T`\(${H.box(H.regionTex(reg))}\)`],
           };
         },
@@ -854,7 +883,7 @@
           return {
             prompt: T`A phone plan costs ${$(base)} a month plus ${money2(rate)} per minute of calls. Jo wants her bill to be at least ${money2(lo)} and at most ${money2(hi)}. How many minutes can she use? Write the answer in interval notation.`,
             visual: v,
-            parts: [ivPart(reg, 3)],
+            parts: [ivPart(reg, 3, null, ((B0, R0, L0, U0) => ({ x: m }) => { const bill = B0 + R0 * m; return L0 <= bill && bill <= U0; })(Math.round(base * 100), Math.round(rate * 100), Math.round(shown(money2(lo)) * 100), Math.round(shown(money2(hi)) * 100)), { lo: -100, hi: 600 })],
             solution: [T`\(${MX.money(lo)} \le ${base} + ${rate}m \le ${MX.money(hi)}\)`, T`Subtract ${base}: \(${MX.money(lo - base)} \le ${rate}m \le ${MX.money(hi - base)}\). Divide by ${rate}: \(${m1} \le m \le ${m2}\).`, T`\(${H.box(H.regionTex(reg))}\)`],
           };
         },
@@ -870,7 +899,8 @@
     const e1 = new Q(-c - b, a), e2 = new Q(c - b, a), lo = e1.val() < e2.val() ? e1 : e2, hi = e1.val() < e2.val() ? e2 : e1;
     const toV = (q) => (q.d === 1 ? q.n : q);
     const reg = big ? [H.iv(-INF, toV(lo), false, !strict), H.iv(toV(hi), INF, !strict, false)] : [H.iv(toV(lo), toV(hi), !strict, !strict)];
-    return { a, b, c, strict, lo, hi, reg, e: MX.lin(a, b), op: big ? (strict ? '>' : '>=') : strict ? '<' : '<=' };
+    const op = big ? (strict ? '>' : '>=') : strict ? '<' : '<=';
+    return { a, b, c, strict, lo, hi, reg, e: MX.lin(a, b), op, spec: `|${MX.lin(a, b).asc}|${op}${c}` };
   }
   const A_ = (t) => T`\left|${t}\right|`;
   MX.register({
@@ -893,7 +923,7 @@
           const q = absIneq(rng, false);
           return {
             prompt: T`Solve \(${A_(q.e.tex)} ${OPT[q.op]} ${q.c}\). Graph the solution and write it in interval notation.`,
-            parts: [ivPart(q.reg, 2, { label: 'a', ask: 'Solution (interval notation)' }), graphPart(rng, q.reg, 'b')],
+            parts: [ivPart(q.reg, 2, { label: 'a', ask: 'Solution (interval notation)' }, q.spec), graphPart(rng, q.reg, 'b', undefined, q.spec)],
             solution: [T`Rewrite as one “between” statement: \(-${q.c} ${OPT[q.op]} ${q.e.tex} ${OPT[q.op]} ${q.c}\)`, T`Subtract ${q.b} and divide by ${q.a}${q.a < 0 ? ' (reverse the signs)' : ''}: the solutions are between \(${q.lo.tex()}\) and \(${q.hi.tex()}\).`, T`\(${H.box(H.regionTex(q.reg))}\)`],
           };
         },
@@ -906,14 +936,14 @@
             const n = m - k * rng.int(1, 5);
             return {
               prompt: T`Solve \(${k}${A_(q.e.tex)} ${sg(m)} ${OPT[q.op]} ${n}\). Write the solution in interval notation (or “no solution”).`,
-              parts: [ivPart([], 3)],
+              parts: [ivPart([], 3, null, `${k}|${q.e.asc}|+(${m})${q.op}${n}`)],
               solution: [T`Isolate: \(${A_(q.e.tex)} ${OPT[q.op]} ${new Q(n - m, k).tex()}\)`, T`An absolute value can't be less than a negative number.`, T`\(${H.box('\\text{no solution}')}\)`],
             };
           }
           const n = k * q.c + m;
           return {
             prompt: T`Solve \(${k}${A_(q.e.tex)} ${sg(m)} ${OPT[q.op]} ${n}\). Write the solution in interval notation.`,
-            parts: [ivPart(q.reg, 3)],
+            parts: [ivPart(q.reg, 3, null, `${k}|${q.e.asc}|+(${m})${q.op}${n}`)],
             solution: [T`${m > 0 ? 'Subtract ' + m : 'Add ' + -m}, then divide by ${k}: \(${A_(q.e.tex)} ${OPT[q.op]} ${q.c}\)`, T`\(-${q.c} ${OPT[q.op]} ${q.e.tex} ${OPT[q.op]} ${q.c}\), so \(x\) is between \(${q.lo.tex()}\) and \(${q.hi.tex()}\).`, T`\(${H.box(H.regionTex(q.reg))}\)`],
           };
         },
@@ -924,7 +954,7 @@
           const q = absIneq(rng, true);
           return {
             prompt: T`Solve \(${A_(q.e.tex)} ${OPT[q.op]} ${q.c}\). Graph the solution and write it in interval notation.`,
-            parts: [ivPart(q.reg, 2, { label: 'a', ask: 'Solution (interval notation)' }), graphPart(rng, q.reg, 'b')],
+            parts: [ivPart(q.reg, 2, { label: 'a', ask: 'Solution (interval notation)' }, q.spec), graphPart(rng, q.reg, 'b', undefined, q.spec)],
             solution: [T`Split into two: \(${q.e.tex} ${OPT[q.op === '>' ? '<' : '<=']} -${q.c}\) or \(${q.e.tex} ${OPT[q.op]} ${q.c}\)`, T`Solve each: \(x\) is outside the interval from \(${q.lo.tex()}\) to \(${q.hi.tex()}\).`, T`\(${H.box(H.regionTex(q.reg))}\)`],
           };
         },
@@ -937,14 +967,14 @@
             const n = m - k * rng.int(1, 5);
             return {
               prompt: T`Solve \(${k}${A_(q.e.tex)} ${sg(m)} ${OPT[q.op]} ${n}\). Write the solution in interval notation.`,
-              parts: [ivPart(H.ALLREAL, 3)],
+              parts: [ivPart(H.ALLREAL, 3, null, `${k}|${q.e.asc}|+(${m})${q.op}${n}`)],
               solution: [T`Isolate: \(${A_(q.e.tex)} ${OPT[q.op]} ${new Q(n - m, k).tex()}\)`, T`An absolute value is always \(\ge 0\), so it is always greater than a negative number.`, T`\(${H.box('(-\\infty, \\infty)')}\) (all real numbers)`],
             };
           }
           const n = k * q.c + m;
           return {
             prompt: T`Solve \(${k}${A_(q.e.tex)} ${sg(m)} ${OPT[q.op]} ${n}\). Write the solution in interval notation.`,
-            parts: [ivPart(q.reg, 3)],
+            parts: [ivPart(q.reg, 3, null, `${k}|${q.e.asc}|+(${m})${q.op}${n}`)],
             solution: [T`Isolate: \(${A_(q.e.tex)} ${OPT[q.op]} ${q.c}\)`, T`Two pieces: \(${q.e.tex} ${OPT[q.op === '>' ? '<' : '<=']} -${q.c}\) or \(${q.e.tex} ${OPT[q.op]} ${q.c}\).`, T`\(${H.box(H.regionTex(q.reg))}\)`],
           };
         },
@@ -954,14 +984,17 @@
         gen(rng) {
           const L = rng.int(20, 90) / 10, t = rng.pick([0.02, 0.05, 0.1, 0.15, 0.2]), lo = Math.round((L - t) * 1000) / 1000, hi = Math.round((L + t) * 1000) / 1000;
           const reg = [H.iv(lo, hi, true, true)];
-          const ch = H.choices(rng, T`\(\left|x - ${L}\right| \le ${t}\)`, [T`\(\left|x + ${L}\right| \le ${t}\)`, T`\(\left|x - ${t}\right| \le ${L}\)`, T`\(\left|x - ${L}\right| \ge ${t}\)`]);
+          const ch = H.choices(rng, T`\(\left|x - ${L}\right| \le ${t}\)`, [T`\(\left|x + ${L}\right| \le ${t}\)`, T`\(\left|x - ${t}\right| \le ${L}\)`, T`\(\left|x - ${L}\right| \ge ${t}\)`],
+            [`|x-${L}|<=${t}`, `|x+${L}|<=${t}`, `|x-${t}|<=${L}`, `|x-${L}|>=${t}`]);
+          // "within t cm of L": the distance from L is at most t
+          const within = ({ x }) => Math.abs(x - L) <= t + 1e-12;
           const v = S.svg(340, 110, S.rect(40, 40, 200, 26, 'ln soft2', 4) + S.rect(240, 44, 24, 18, 'ln soft', 2) + S.dim(40, 86, 240, 86, L + ' cm ± ' + t) + S.text(290, 58, 'bolt', { cls: 'tx small' }), 'A bolt with a target length and tolerance');
           return {
             prompt: T`A bolt is supposed to be ${L} cm long, and a bolt is accepted if its length \(x\) is within ${t} cm of that.`,
             visual: v,
             parts: [
-              { label: 'a', ask: 'Which inequality describes an acceptable length?', kind: 'choice', options: ch.options, answer: ch.answer, points: 1 },
-              ivPart(reg, 2, { label: 'b', ask: 'The acceptable lengths (interval notation)' }),
+              { label: 'a', ask: 'Which inequality describes an acceptable length?', kind: 'choice', options: ch.options, answer: ch.answer, data: ch.data, points: 1, verify: Vf.choiceData((d) => Vf.region(d, RO())([{ lo: L - t, hi: L + t, lc: true, hc: true }])) },
+              ivPart(reg, 2, { label: 'b', ask: 'The acceptable lengths (interval notation)' }, within),
             ],
             solution: [T`“Within ${t} of ${L}”: the distance \(|x - ${L}|\) is at most ${t}.`, T`\(-${t} \le x - ${L} \le ${t}\), so \(${lo} \le x \le ${hi}\).`, T`\(${H.box(H.regionTex(reg))}\)`],
           };
@@ -976,7 +1009,7 @@
           return {
             prompt: T`A cereal box is labeled ${L} ounces. A quality check rejects a box whose weight \(w\) differs from ${L} oz by more than ${t} oz, that is, \(\left|w - ${L}\right| \gt ${t}\). Which weights are rejected? Write the answer in interval notation.`,
             visual: v,
-            parts: [ivPart(reg, 3)],
+            parts: [ivPart(reg, 3, null, `|x-${L}|>${t}`)],
             solution: [T`\(\left|w - ${L}\right| \gt ${t}\) means \(w - ${L} \lt -${t}\) or \(w - ${L} \gt ${t}\).`, T`\(w \lt ${lo}\) or \(w \gt ${hi}\).`, T`\(${H.box(H.regionTex(reg))}\)`],
           };
         },

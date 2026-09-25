@@ -283,7 +283,8 @@
     if (a && a.prime) return 'the answer says prime';
     return result(MX.equivalent(a, parse(s)), 'the answer is not equal to ' + s);
   };
-  // the region answer is exactly the set of x where spec holds (interval, ineq). o: {v, lo, hi, n, env}
+  // the region answer is exactly the set of x where spec holds (interval, ineq). spec: a relation string, or a
+  // function of env (`(env) => env.x < 3`). o: {v, lo, hi, n (uniform sample count), env}
   V.region = (spec, o = {}) => (a) => {
     const v = o.v || 'x', t = V.truth(spec);
     const truth = (x) => t(Object.assign({}, o.env, { [v]: x }));
