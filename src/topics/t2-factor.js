@@ -9,13 +9,36 @@
   MX.register({
     id: 'factor-trinomial', section: SEC, title: 'Factoring trinomials', kind: 'skill',
     sources: ['Exam 1 #11a', 'Exam 2 #11', 'Exam 3 #12'],
-    lesson: T`<p>Always start by pulling out the greatest common factor (GCF). Then factor what is left.</p>
-<p><strong>When the leading coefficient is 1</strong>, \(x^{2} + bx + c\): find two numbers that multiply to \(c\) and add to \(b\).</p>
-<p><strong>When it isn't</strong>, \(ax^{2} + bx + c\) (the AC method):</p>
-<ol><li>Multiply \(a \cdot c\).</li><li>Find two numbers that multiply to \(ac\) and add to \(b\).</li>
-<li>Split the middle term into those two pieces.</li><li>Factor by grouping.</li></ol>
-<p>Check by multiplying your factors back out.</p>
-<p class="warn">"Factor completely" means no factor can be factored further, including a GCF hiding inside a binomial like \(3x + 9\).</p>`,
+    lesson: T`<p>Factoring undoes multiplication. When you multiply \((x + 3)(x + 4)\) you get the trinomial \(x^{2} + 7x + 12\). Factoring goes the other way: you start with the trinomial and find the two binomials that multiply to give it.</p>
+<div class="box def"><h4>Definition <b>Trinomial</b></h4><p>A <strong>trinomial</strong> is a polynomial with three terms, such as \(x^{2} + 7x + 12\). In \(ax^{2} + bx + c\), the number \(a\) is the <strong>leading coefficient</strong> and \(c\) is the <strong>constant term</strong>.</p></div>
+<h3>Always look for a common factor first</h3>
+<p>Before anything else, check whether every term shares a factor. If it does, factor it out. The trinomial that is left has smaller numbers and is easier to work with.</p>
+<div class="box rule"><h4>Rule <b>Factor out the GCF first</b></h4><p>\(4x^{2} - 28x + 24 = 4\left(x^{2} - 7x + 6\right)\). Now factor only what is inside the parentheses, and keep the 4 in front.</p></div>
+<h3>When the leading coefficient is 1</h3>
+<p>For \(x^{2} + bx + c\), you need two numbers that <strong>multiply to \(c\)</strong> and <strong>add to \(b\)</strong>. Those two numbers go into the binomials.</p>
+<div class="ex"><h4>Example</h4><p>Factor \(x^{2} + 7x + 12\).</p><table class="st">
+<tr><td>We need two numbers that multiply to 12 and add to 7.</td><td>\(1 \cdot 12,\ 2 \cdot 6,\ 3 \cdot 4\)</td></tr>
+<tr><td>Only 3 and 4 add to 7.</td><td>\(3 + 4 = 7\)</td></tr>
+<tr><td>Write the factors.</td><td>\(\left(x + 3\right)\left(x + 4\right)\)</td></tr>
+<tr><td>Check by multiplying.</td><td>\(x^{2} + 4x + 3x + 12 = x^{2} + 7x + 12\) ✓</td></tr></table></div>
+<p>Signs help you search. If \(c\) is positive, both numbers have the same sign as \(b\). If \(c\) is negative, the numbers have opposite signs.</p>
+<h3>When the leading coefficient is not 1</h3>
+<p>For \(ax^{2} + bx + c\) with \(a \ne 1\), use the <em>ac method</em>. It turns the problem into one you can factor by grouping.</p>
+<div class="box how"><h4>How to <b>factor \(ax^{2} + bx + c\) with the ac method</b></h4><ol>
+<li>Factor out the GCF, if there is one.</li>
+<li>Multiply \(a \cdot c\).</li>
+<li>Find two numbers that multiply to \(ac\) and add to \(b\).</li>
+<li>Split the middle term \(bx\) into two terms using those numbers.</li>
+<li>Factor by grouping: take the GCF of the first two terms and of the last two terms.</li>
+<li>Check by multiplying the factors.</li></ol></div>
+<div class="ex"><h4>Example</h4><p>Factor \(6x^{2} + 7x - 3\).</p><table class="st">
+<tr><td>Multiply \(a \cdot c\).</td><td>\(6 \cdot (-3) = -18\)</td></tr>
+<tr><td>Find two numbers that multiply to \(-18\) and add to 7.</td><td>\(9\) and \(-2\)</td></tr>
+<tr><td>Split the middle term.</td><td>\(6x^{2} + 9x - 2x - 3\)</td></tr>
+<tr><td>Group and factor each pair.</td><td>\(3x\left(2x + 3\right) - 1\left(2x + 3\right)\)</td></tr>
+<tr><td>Factor out the common binomial.</td><td>\(\left(3x - 1\right)\left(2x + 3\right)\)</td></tr></table></div>
+<div class="box warn"><h4>Watch out</h4><p>"Factor completely" means no factor can be factored any further. A common factor can hide inside a binomial: \(\left(3x + 9\right)\) is not finished, because it equals \(3\left(x + 3\right)\).</p></div>`,
+
     variants: {
       ac: {
         name: 'Leading coefficient not 1',

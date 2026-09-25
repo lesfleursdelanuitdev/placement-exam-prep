@@ -16,6 +16,8 @@
   --warn: #875800;
   --warn-soft: #fbeed2;
   --hl: #fff0a0;
+  --how: #6a3fb5;
+  --how-soft: #efe8fb;
   --sv-ink: #2a3441;
   --sv-soft: #d9e4f6;
   --sv-soft2: #f1e0ca;
@@ -38,7 +40,7 @@
     color-scheme: dark;
     --desk: #0c1116; --paper: #141b23; --ink: #e4e9ef; --muted: #9aa6b4; --faint: #6b7686; --rule: #26303b; --grid: #19212a;
     --accent: #8aa8ff; --accent-2: #b6c8ff; --accent-soft: #1b2845; --ok: #5bd294; --ok-soft: #12301e; --bad: #ff8a7a; --bad-soft: #3a1a17;
-    --warn: #efbf5a; --warn-soft: #36290e; --hl: #4a4213;
+    --warn: #efbf5a; --warn-soft: #36290e; --hl: #4a4213; --how: #c3a6ff; --how-soft: #2a1f45;
     --sv-ink: #d3dbe5; --sv-soft: #23344f; --sv-soft2: #45362a; --sv-road: #3a434f; --sv-ground: #7c8795; --sv-wood: #9a6f47;
     --sv-leaf: #4ea36c; --sv-leaf2: #69bd86; --sv-sun: #e6ae38; --sv-water: #2c547b; --sv-shadow: #4b5461;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.35);
@@ -48,7 +50,7 @@
   color-scheme: dark;
   --desk: #0c1116; --paper: #141b23; --ink: #e4e9ef; --muted: #9aa6b4; --faint: #6b7686; --rule: #26303b; --grid: #19212a;
   --accent: #8aa8ff; --accent-2: #b6c8ff; --accent-soft: #1b2845; --ok: #5bd294; --ok-soft: #12301e; --bad: #ff8a7a; --bad-soft: #3a1a17;
-  --warn: #efbf5a; --warn-soft: #36290e; --hl: #4a4213;
+  --warn: #efbf5a; --warn-soft: #36290e; --hl: #4a4213; --how: #c3a6ff; --how-soft: #2a1f45;
   --sv-ink: #d3dbe5; --sv-soft: #23344f; --sv-soft2: #45362a; --sv-road: #3a434f; --sv-ground: #7c8795; --sv-wood: #9a6f47;
   --sv-leaf: #4ea36c; --sv-leaf2: #69bd86; --sv-sun: #e6ae38; --sv-water: #2c547b; --sv-shadow: #4b5461;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.35);
@@ -322,11 +324,35 @@ select.units { max-width: 100%; height: 36px; border: 1px solid var(--rule); bor
 .tut-src { color: var(--muted); margin: 0 0 8px; font-size: 14px; }
 .vchips { display: flex; flex-wrap: wrap; gap: 6px; }
 .vchip { font-size: 12.5px; border: 1px solid var(--rule); border-radius: 12px; padding: 2px 10px; color: var(--muted); }
-.lesson { font-family: var(--f-math); font-size: 17.5px; line-height: 1.65; margin: 20px 0 8px; padding: 18px 22px; background: var(--accent-soft); background: color-mix(in srgb, var(--accent-soft) 60%, transparent); border-radius: 8px; }
-.lesson p, .lesson ul, .lesson ol { margin: 0.5em 0; max-width: 68ch; }
-.lesson .warn { background: var(--bad-soft); color: var(--ink); padding: 6px 12px; border-radius: 6px; font-family: var(--f-ui); font-size: 15px; }
-.lesson .warn::before { content: 'Watch out: '; font-weight: 700; color: var(--bad); }
+.lesson { font-family: var(--f-math); font-size: 17.5px; line-height: 1.65; margin: 20px 0 8px; padding: 6px 0; }
+.lesson p, .lesson ul, .lesson ol { margin: 0.6em 0; max-width: 68ch; }
+.lesson h3 { font-family: var(--f-cond); font-weight: 700; font-size: 19px; letter-spacing: 0.01em; margin: 1.4em 0 0.3em; }
+.lesson h3:first-child { margin-top: 0.2em; }
+.lesson .warn { background: var(--warn-soft); color: var(--ink); padding: 8px 14px; border-radius: 6px; border-left: 4px solid var(--warn); font-family: var(--f-ui); font-size: 15px; max-width: 68ch; }
+.lesson .warn::before { content: 'Watch out: '; font-weight: 700; color: var(--warn); }
 .lesson .key { background: var(--hl); padding: 6px 12px; border-radius: 6px; }
+/* lesson boxes: a colored box marks a major idea. def = a definition, rule = a rule/property/formula,
+   how = the steps of a method, warn = a common mistake. The h4 is the box's title. */
+.lesson .box { margin: 16px 0; padding: 10px 16px 10px 14px; border-radius: 8px; border-left: 5px solid var(--accent); background: var(--accent-soft); max-width: 70ch; }
+.lesson .box > h4 { margin: 0 0 4px; font-family: var(--f-ui); font-size: 12.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-2); }
+.lesson .box > h4 b { text-transform: none; letter-spacing: 0; font-size: 15px; margin-left: 4px; color: var(--ink); }
+.lesson .box > :last-child { margin-bottom: 2px; }
+.lesson .box.rule { border-color: var(--ok); background: var(--ok-soft); }
+.lesson .box.rule > h4 { color: var(--ok); }
+.lesson .box.how { border-color: var(--how); background: var(--how-soft); }
+.lesson .box.how > h4 { color: var(--how); }
+.lesson .box.how ol { padding-left: 1.4em; }
+.lesson .box.how li { margin: 0.25em 0; }
+.lesson .box.warn { border-color: var(--warn); background: var(--warn-soft); font-family: var(--f-math); font-size: inherit; }
+.lesson .box.warn::before { content: none; }
+.lesson .box.warn > h4 { color: var(--warn); }
+/* an example worked inside the lesson: what you do | the math */
+.lesson .ex { margin: 16px 0; border: 1px solid var(--rule); border-radius: 8px; padding: 10px 16px; max-width: 70ch; background: var(--paper); }
+.lesson .ex > h4 { margin: 0 0 4px; font-family: var(--f-ui); font-size: 12.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lesson table.st { border-collapse: collapse; margin: 6px 0; width: 100%; }
+.lesson table.st td { padding: 6px 10px 6px 0; vertical-align: top; border-top: 1px solid var(--rule); }
+.lesson table.st tr:first-child td { border-top: 0; }
+.lesson table.st td:first-child { font-family: var(--f-ui); font-size: 14.5px; color: var(--muted); width: 42%; }
 .sub-h { font-family: var(--f-cond); font-weight: 700; font-size: 19px; letter-spacing: 0.02em; margin: 30px 0 4px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .sub-h .skip { margin-left: auto; height: 32px; font-family: var(--f-ui); font-size: 13.5px; letter-spacing: 0; }
 .worked .eyebrow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
@@ -680,7 +706,11 @@ select.units { max-width: 100%; height: 36px; border: 1px solid var(--rule); bor
   .page, .paper { border-radius: 0; border-left: 0; border-right: 0; box-shadow: none; }
   .page { margin-top: 0; border-top: 0; }
   .sheet { border-radius: 0; border-left: 0; border-right: 0; border-top: 0; box-shadow: 0 1px 0 var(--rule); padding: 8px 16px; }
-  .lesson { padding: 12px 14px; margin-inline: -4px; font-size: 17px; }
+  .lesson { padding: 4px 0; font-size: 17px; }
+  .lesson .box, .lesson .ex { padding-left: 12px; padding-right: 12px; }
+  .lesson table.st, .lesson table.st tbody, .lesson table.st tr, .lesson table.st td { display: block; width: auto; }
+  .lesson table.st td:first-child { padding-bottom: 0; width: auto; }
+  .lesson table.st td + td { border-top: 0; padding-top: 2px; }
   .stats { grid-template-columns: 1fr 1fr; }
   .stat { padding: 10px 12px; }
   .summary .sum-l { font-size: 11px; letter-spacing: 0.08em; }
