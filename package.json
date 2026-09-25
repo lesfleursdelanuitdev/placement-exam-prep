@@ -1,0 +1,12 @@
+{
+  "name": "math098-exam-prep",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Practice-exam generator with tutorials for a Math 098 intermediate algebra final",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node test/selftest.mjs 60"
+  },
+  "license": "UNLICENSED"
+}

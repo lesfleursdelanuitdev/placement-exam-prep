@@ -1,0 +1,481 @@
+/* Word problems: Pythagorean theorem, triangles & similar triangles, perimeter & dimensions */
+(function (G) {
+  'use strict';
+  const MX = G.MX;
+  const { Q, T, H, S } = MX;
+  const I = S.I;
+  const SEC = 'Word problems';
+  const r1 = (x) => Math.round(x * 10) / 10;
+  const TRIPLES = [[3, 4, 5], [5, 12, 13], [8, 15, 17], [7, 24, 25], [20, 21, 29], [9, 40, 41]];
+  // a right triangle drawing with the right angle at bottom-left
+  function rightTri(x0, y0, w, h, labels, o = {}) {
+    let b = S.poly([[x0, y0], [x0 + w, y0], [x0, y0 - h]], 'ln ' + (o.fill || 'soft')) + S.rightAngle(x0, y0, 10, 1, -1);
+    b += S.label(x0 - 10, y0 - h / 2 + 4, labels[0], { cls: 'lbl', a: 'end' });
+    b += S.label(x0 + w / 2, y0 + 18, labels[1], { cls: 'lbl' });
+    b += S.label(x0 + w / 2 + 12, y0 - h / 2 - 6, labels[2], { cls: 'lbl', a: 'start' });
+    return b;
+  }
+  const pyStep = (a, b, c) => T`\(a^{2} + b^{2} = c^{2}\), where \(c\) is the hypotenuse (the side across from the right angle).`;
+
+  // ================= PYTHAGOREAN =================
+  const pyth = {
+    ladder: {
+      name: 'Ladder against a wall',
+      gen(rng) {
+        const findLadder = rng.chance(0.55);
+        let h, d, L;
+        if (findLadder) { h = rng.int(8, 24); d = rng.int(3, Math.min(12, h - 2)); L = Math.sqrt(h * h + d * d); }
+        else { [d, h, L] = rng.pick([[5, 12, 13], [6, 8, 10], [9, 12, 15], [7, 24, 25], [8, 15, 17], [10, 24, 26], [12, 16, 20]]); if (rng.chance(0.5)) { L = L + rng.int(1, 3); h = Math.sqrt(L * L - d * d); } }
+        const W = 300, Hh = 170;
+        let b = I.house(40, 150, 110, 90) + I.ground(10, 290, 150);
+        b += S.line(150, 150, 150, 60, 'ln thick') + S.rightAngle(150, 150, 9, 1, -1);
+        { // ladder: two rails and rungs
+          const x1 = 222, y1 = 150, x2 = 154, y2 = 62, len = Math.hypot(x2 - x1, y2 - y1), nx = ((y2 - y1) / len) * 4, ny = (-(x2 - x1) / len) * 4;
+          b += S.line(x1 + nx, y1 + ny, x2 + nx, y2 + ny, 'acc thick') + S.line(x1 - nx, y1 - ny, x2 - nx, y2 - ny, 'acc thick');
+          for (let k = 1; k < 7; k++) { const t = k / 7, x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t; b += S.line(x + nx, y + ny, x - nx, y - ny, 'acc'); }
+        }
+        b += S.label(142, 108, findLadder ? h + ' ft' : '?', { cls: findLadder ? 'lbl' : 'qm', a: 'end' });
+        b += S.label(186, 168, d + ' ft', { cls: 'lbl' });
+        b += S.label(200, 96, findLadder ? '?' : L + ' ft', { cls: findLadder ? 'qm' : 'lbl', a: 'start' });
+        const exact = Number.isInteger(findLadder ? L : h);
+        const ans = r1(findLadder ? L : h);
+        return {
+          prompt: findLadder
+            ? T`A ladder leans against the side of a house. The top of the ladder is ${h} feet from the ground. The bottom of the ladder is ${d} feet from the side of the house. Find the length of the ladder. If necessary, round your answer to the nearest tenth.`
+            : T`A ${L}-foot ladder leans against a wall with its base ${d} feet from the wall. How high up the wall does the ladder reach? If necessary, round to the nearest tenth.`,
+          visual: S.svg(W, Hh, b, 'A ladder leaning against a house forming a right triangle'),
+          parts: [{ kind: 'num', answer: String(ans), tol: exact ? undefined : 0.051, show: ans + '\\text{ feet}', post: 'feet', points: 4 }],
+          solution: findLadder
+            ? [pyStep(), T`The wall and the ground are the legs: \(${h}^{2} + ${d}^{2} = c^{2}\)`, T`\(${h * h} + ${d * d} = ${h * h + d * d} = c^{2}\), so \(c = \sqrt{${h * h + d * d}}${exact ? '' : ' \\approx ' + MX.num(L, 3)}\)`, T`\(${H.box(ans + '\\text{ ft}')}\)`]
+            : [pyStep(), T`The ladder is the hypotenuse: \(h^{2} + ${d}^{2} = ${L}^{2}\)`, T`\(h^{2} = ${L * L} - ${d * d} = ${L * L - d * d}\), so \(h = \sqrt{${L * L - d * d}}${exact ? '' : ' \\approx ' + MX.num(h, 3)}\)`, T`\(${H.box(ans + '\\text{ ft}')}\)`],
+        };
+      },
+    },
+    wire: {
+      name: 'Guy wire',
+      gen(rng) {
+        const h = rng.int(12, 40), d = rng.int(5, 20), L = Math.sqrt(h * h + d * d), ans = r1(L), exact = Number.isInteger(L);
+        const W = 300, Hh = 180;
+        let b = I.ground(10, 290, 160) + S.rect(96, 30, 8, 130, 'wood nostroke') + S.line(100, 34, 230, 160, 'acc thick') + S.circle(230, 160, 3, 'fillink nostroke');
+        b += S.rightAngle(104, 160, 9, 1, -1) + S.label(88, 100, h + ' ft', { cls: 'lbl', a: 'end' }) + S.label(167, 176, d + ' ft', { cls: 'lbl' }) + S.label(176, 88, '?', { cls: 'qm', a: 'start' });
+        return {
+          prompt: T`A guy wire runs from the top of a ${h}-foot pole to a stake in the ground ${d} feet from the base of the pole. How long is the wire? Round to the nearest tenth if necessary.`,
+          visual: S.svg(W, Hh, b, 'A wire from the top of a pole to the ground'),
+          parts: [{ kind: 'num', answer: String(ans), tol: exact ? undefined : 0.051, show: ans + '\\text{ feet}', post: 'feet', points: 4 }],
+          solution: [pyStep(), T`\(${h}^{2} + ${d}^{2} = c^{2}\), so \(c^{2} = ${h * h + d * d}\)`, T`\(c = \sqrt{${h * h + d * d}}${exact ? '' : ' \\approx ' + MX.num(L, 3)}\)`, T`\(${H.box(ans + '\\text{ ft}')}\)`],
+        };
+      },
+    },
+    kite: {
+      name: 'Kite string',
+      gen(rng) {
+        let L, d, h;
+        do { L = rng.int(6, 20) * 10; d = rng.int(3, L / 10 - 1) * 10; h = Math.sqrt(L * L - d * d); } while (h < 20);
+        const ans = r1(h), exact = Number.isInteger(h);
+        const W = 300, Hh = 180;
+        let b = I.ground(10, 290, 160) + I.person(40, 160, 34) + S.line(52, 132, 250, 40, 'acc') + S.line(250, 40, 250, 160, 'ln dash');
+        b += S.poly([[250, 20], [262, 40], [250, 60], [238, 40]], 'accf ln') + S.rightAngle(250, 160, 9, -1, -1);
+        b += S.label(140, 72, L + ' ft of string', { cls: 'lbl', rot: -25 }) + S.label(150, 176, d + ' ft', { cls: 'lbl' }) + S.label(260, 110, '?', { cls: 'qm', a: 'start' });
+        return {
+          prompt: T`Maya lets out ${L} feet of kite string. The kite is directly above a spot on the ground ${d} feet away from her. Ignoring her height, how high is the kite? Round to the nearest tenth if necessary.`,
+          visual: S.svg(W, Hh, b, 'A kite on a string forming a right triangle with the ground'),
+          parts: [{ kind: 'num', answer: String(ans), tol: exact ? undefined : 0.051, show: ans + '\\text{ feet}', post: 'feet', points: 4 }],
+          solution: [pyStep(), T`The string is the hypotenuse: \(h^{2} + ${d}^{2} = ${L}^{2}\)`, T`\(h^{2} = ${L * L} - ${d * d} = ${L * L - d * d}\)`, T`\(h = \sqrt{${L * L - d * d}}${exact ? '' : ' \\approx ' + MX.num(h, 3)}\). \(${H.box(ans + '\\text{ ft}')}\)`],
+        };
+      },
+    },
+    walk: {
+      name: 'Walking at right angles',
+      gen(rng) {
+        const [dir1, dir2] = rng.pick([['north', 'east'], ['south', 'west'], ['east', 'north'], ['west', 'south']]);
+        const a = rng.int(2, 12), b2 = rng.int(2, 12), c = Math.sqrt(a * a + b2 * b2), ans = r1(c), exact = Number.isInteger(c);
+        const V = { north: [0, -1], south: [0, 1], east: [1, 0], west: [-1, 0] };
+        const W = 320, Hh = 180, HL = 120, VL = 90;
+        const leg = (v) => [v[0] * HL, v[1] * VL];
+        const v1 = V[dir1], v2 = V[dir2], d1 = leg(v1), d2 = leg(v2);
+        const raw = [[0, 0], d1, [d1[0] + d2[0], d1[1] + d2[1]]];
+        const minx = Math.min(...raw.map((p) => p[0])), miny = Math.min(...raw.map((p) => p[1]));
+        const ox = (W - HL) / 2 - minx, oy = 45 - miny;
+        const [A0, A1, A2] = raw.map((p) => [p[0] + ox, p[1] + oy]);
+        const C = [(A0[0] + A1[0] + A2[0]) / 3, (A0[1] + A1[1] + A2[1]) / 3];
+        const legLabel = (P, Q, txt) => {
+          const M = [(P[0] + Q[0]) / 2, (P[1] + Q[1]) / 2];
+          if (P[0] === Q[0]) { const out = M[0] >= C[0] ? 1 : -1; return S.label(M[0] + out * 10, M[1] + 4, txt, { cls: 'lbl', a: out > 0 ? 'start' : 'end' }); }
+          const out = M[1] >= C[1] ? 1 : -1; return S.label(M[0], M[1] + (out > 0 ? 18 : -8), txt, { cls: 'lbl' });
+        };
+        let b = S.arrow(A0[0], A0[1], A1[0], A1[1], 'acc thick', 9) + S.arrow(A1[0], A1[1], A2[0], A2[1], 'acc thick', 9) + S.line(A0[0], A0[1], A2[0], A2[1], 'ln dash');
+        b += S.circle(A0[0], A0[1], 4, 'fillink nostroke') + S.text(A0[0] + (A0[0] > C[0] ? 14 : -14), A0[1] + (A0[1] > C[1] ? 16 : -8), 'start', { cls: 'tx small', a: A0[0] > C[0] ? 'start' : 'end' });
+        b += S.rightAngle(A1[0], A1[1], 10, v1[0] ? -v1[0] : v2[0], v1[1] ? -v1[1] : v2[1]);
+        b += legLabel(A0, A1, a + ' mi ' + dir1) + legLabel(A1, A2, b2 + ' mi ' + dir2);
+        const M3 = [(A0[0] + A2[0]) / 2, (A0[1] + A2[1]) / 2];
+        b += S.label(M3[0] + (C[0] - M3[0]) * 0.5, M3[1] + (C[1] - M3[1]) * 0.5 + 5, '?', { cls: 'qm' });
+        b += S.text(306, 18, 'N', { cls: 'tx small', w: 700 }) + S.arrow(306, 48, 306, 24, 'ln', 6);
+        return {
+          prompt: T`A hiker walks ${a} miles ${dir1}, then turns and walks ${b2} miles ${dir2}. How far is she from her starting point, in a straight line? Round to the nearest tenth if necessary.`,
+          visual: S.svg(W, Hh, b, 'Two legs of a walk at right angles with the straight-line distance'),
+          parts: [{ kind: 'num', answer: String(ans), tol: exact ? undefined : 0.051, show: ans + '\\text{ miles}', post: 'miles', points: 4 }],
+          solution: [T`The two directions are perpendicular, so the path forms a right triangle.`, T`\(${a}^{2} + ${b2}^{2} = c^{2} = ${a * a + b2 * b2}\)`, T`\(c = \sqrt{${a * a + b2 * b2}}${exact ? '' : ' \\approx ' + MX.num(c, 3)}\). \(${H.box(ans + '\\text{ mi}')}\)`],
+        };
+      },
+    },
+    rect: {
+      name: 'Diagonal of a rectangle',
+      gen(rng) {
+        const ctx = rng.pick([['A rectangular field', 'meters', 'm'], ['A rectangular garden', 'feet', 'ft'], ['A rectangular park', 'yards', 'yd'], ['A rectangle', 'meters', 'm']]);
+        let w, l;
+        if (rng.chance(0.6)) { const [p, q] = rng.pick(TRIPLES.slice(0, 3)); const k = rng.int(2, 14); w = p * k; l = q * k; } else { w = rng.int(10, 60); l = rng.int(w + 5, 90); }
+        const c = Math.sqrt(w * w + l * l), ans = r1(c), exact = Number.isInteger(c);
+        const W = 300, Hh = 150;
+        let b = S.rect(50, 30, 200, 90, 'ln soft') + S.line(50, 30, 250, 120, 'acc thick') + S.rightAngle(250, 120, 9, -1, -1);
+        b += S.label(150, 140, l + ' ' + ctx[2], { cls: 'lbl' }) + S.label(262, 80, w + ' ' + ctx[2], { cls: 'lbl', a: 'start' }) + S.label(140, 66, '?', { cls: 'qm' });
+        return {
+          prompt: T`${ctx[0]} is ${w} ${ctx[1]} wide and ${l} ${ctx[1]} long. What is the length of the diagonal? Round to the nearest tenth if necessary.`,
+          visual: S.svg(W, Hh, b, 'A rectangle with its diagonal drawn'),
+          parts: [{ kind: 'num', answer: String(ans), tol: exact ? undefined : 0.051, show: ans + '\\text{ ' + ctx[1] + '}', post: ctx[1], points: 4 }],
+          solution: [T`The diagonal splits the rectangle into two right triangles; the sides are the legs.`, T`\(${w}^{2} + ${l}^{2} = c^{2} = ${w * w} + ${l * l} = ${w * w + l * l}\)`, T`\(c = \sqrt{${w * w + l * l}}${exact ? ' = ' + c : ' \\approx ' + MX.num(c, 3)}\). \(${H.box(ans + '\\text{ ' + ctx[2] + '}')}\)`],
+        };
+      },
+    },
+    tv: {
+      name: 'Side from the diagonal',
+      gen(rng) {
+        const [p, q, r] = rng.pick([[3, 4, 5], [3, 4, 5], [5, 12, 13], [8, 15, 17]]);
+        const k = r === 5 ? rng.int(4, 16) : rng.int(2, 5);
+        const diag = r * k, h = p * k, w = q * k;
+        const W = 300, Hh = 160;
+        let b = S.rect(50, 24, 200, 110, 'ln soft', 4) + S.rect(56, 30, 188, 98, 'paperf nostroke') + S.line(56, 128, 244, 30, 'acc thick') + S.rect(130, 134, 40, 8, 'fillink nostroke');
+        b += S.label(150, 156, '? in', { cls: 'qm' }) + S.label(262, 82, h + ' in', { cls: 'lbl', a: 'start' }) + S.label(170, 70, diag + ' in', { cls: 'lbl' });
+        return {
+          prompt: T`A screen is advertised as ${diag} inches, which is the length of its diagonal. The screen is ${h} inches tall. How wide is it?`,
+          visual: S.svg(W, Hh, b, 'A screen with its diagonal and height labeled'),
+          parts: [{ kind: 'num', answer: String(w), show: w + '\\text{ inches}', post: 'inches', points: 4 }],
+          solution: [T`The diagonal is the hypotenuse; the height and width are the legs.`, T`\(${h}^{2} + w^{2} = ${diag}^{2}\), so \(w^{2} = ${diag * diag} - ${h * h} = ${w * w}\)`, T`\(w = \sqrt{${w * w}} = ${w}\). \(${H.box(w + '\\text{ in}')}\)`],
+        };
+      },
+    },
+    xd: {
+      name: 'Legs x and x + d',
+      gen(rng) {
+        const [a, b, c] = rng.pick(TRIPLES.concat([[6, 8, 10], [9, 12, 15], [12, 16, 20], [10, 24, 26], [12, 35, 37], [15, 20, 25]]));
+        const d = b - a;
+        const W = 300, Hh = 160;
+        const v = rightTri(70, 130, 170, 100, ['x', 'x + ' + d, String(c)]);
+        return {
+          prompt: T`Find the value of \(x\). The legs of the right triangle are \(x\) and \(x + ${d}\), and the hypotenuse is ${c}.`,
+          visual: S.svg(W, Hh, v, 'A right triangle with legs x and x plus ' + d),
+          parts: [{ kind: 'num', var: 'x', answer: String(a), show: 'x = ' + a, points: 4 }],
+          solution: [
+            T`\(x^{2} + \left(x + ${d}\right)^{2} = ${c}^{2}\)`,
+            T`\(x^{2} + x^{2} + ${2 * d}x + ${d * d} = ${c * c}\), so \(2x^{2} + ${2 * d}x - ${c * c - d * d} = 0\)`,
+            T`Divide by 2: \(x^{2} + ${d}x - ${(c * c - d * d) / 2} = 0\), which factors as \(\left(x - ${a}\right)\left(x + ${b}\right) = 0\)`,
+            T`A length can't be negative, so \(${H.box('x = ' + a)}\). (Check: \(${a}^{2} + ${b}^{2} = ${c}^{2}\).)`,
+          ],
+        };
+      },
+    },
+    consec: {
+      name: 'Consecutive integer sides',
+      gen(rng) {
+        const even = rng.chance(0.5);
+        const [a, s] = even ? [6, 2] : [3, 1];
+        const W = 300, Hh = 160;
+        const v = rightTri(70, 130, 160, 120, ['x', 'x + ' + s, 'x + ' + 2 * s]);
+        return {
+          prompt: T`The side lengths of a right triangle are consecutive ${even ? 'even ' : ''}integers. Find the length of the shortest side, then the hypotenuse.`,
+          visual: S.svg(W, Hh, v, 'A right triangle with consecutive side lengths'),
+          parts: [
+            { label: 'a', ask: 'Shortest side', kind: 'num', var: 'x', answer: String(a), show: 'x = ' + a, points: 3 },
+            { label: 'b', ask: 'Hypotenuse', kind: 'num', answer: String(a + 2 * s), show: String(a + 2 * s), points: 1 },
+          ],
+          solution: [
+            T`Let the sides be \(x\), \(x + ${s}\), \(x + ${2 * s}\); the longest is the hypotenuse.`,
+            T`\(x^{2} + \left(x + ${s}\right)^{2} = \left(x + ${2 * s}\right)^{2}\) gives \(x^{2} - ${2 * s}x - ${3 * s * s} = 0\)`,
+            T`\(\left(x - ${3 * s}\right)\left(x + ${s}\right) = 0\), so \(x = ${3 * s}\) (the negative answer is impossible).`,
+            T`Sides ${a}, ${a + s}, ${a + 2 * s}: \(${H.box(T`${a}\text{ and }${a + 2 * s}`)}\)`,
+          ],
+        };
+      },
+    },
+    twox: {
+      name: 'Legs x and 2x + b',
+      gen(rng) {
+        const [a, b, c, k] = rng.pick([[5, 12, 13, 2], [8, 15, 17, -1], [7, 24, 25, 10], [3, 4, 5, -2], [6, 8, 10, -4], [9, 40, 41, 22], [12, 35, 37, 11], [20, 21, 29, -19]].filter((t) => Math.abs(t[3]) < 15));
+        const W = 300, Hh = 160;
+        const v = rightTri(70, 130, 170, 100, ['x', '2x ' + (k < 0 ? '− ' + -k : '+ ' + k), String(c)]);
+        const qa = 5, qb = 4 * k, qc = k * k - c * c;
+        return {
+          prompt: T`One leg of a right triangle is \(x\). The other leg is ${Math.abs(k)} ${k < 0 ? 'less' : 'more'} than twice the first leg. The hypotenuse is ${c}. Find both legs.`,
+          visual: S.svg(W, Hh, v, 'A right triangle with legs x and 2x plus a constant'),
+          parts: [
+            { label: 'a', ask: 'Shorter leg', kind: 'num', var: 'x', answer: String(a), show: 'x = ' + a, points: 3 },
+            { label: 'b', ask: 'Longer leg', kind: 'num', answer: String(b), show: String(b), points: 1 },
+          ],
+          solution: [
+            T`\(x^{2} + \left(2x ${MX.sgnTerm(k)}\right)^{2} = ${c}^{2}\)`,
+            T`\(x^{2} + 4x^{2} ${MX.sgnTerm(4 * k)}x + ${k * k} = ${c * c}\), so \(${MX.quad(qa, qb, qc).tex} = 0\)`,
+            T`Factor or use the quadratic formula: \(x = ${a}\) (the other solution is negative or makes a side negative).`,
+            T`Other leg: \(2\cdot${a} ${MX.sgnTerm(k)} = ${b}\). \(${H.box(T`${a}\text{ and }${b}`)}\)`,
+          ],
+        };
+      },
+    },
+  };
+  MX.register({
+    id: 'w-pyth', kind: 'word', section: SEC, title: 'Pythagorean theorem', sources: ['Exam 1 #27', 'Exam 2 #21', 'Exam 3 #21'],
+    slots: [
+      { label: 'Find a side', source: 'Exam 1 #27', pool: ['ladder', 'wire', 'kite', 'walk'] },
+      { label: 'Rectangles and diagonals', source: 'Exam 2 #21', pool: ['rect', 'tv'] },
+      { label: 'Algebraic side lengths', source: 'Exam 3 #21', pool: ['xd', 'consec', 'twox'] },
+    ],
+    lesson: T`<p>In a right triangle with legs \(a\), \(b\) and hypotenuse \(c\) (the longest side, across from the right angle):</p>
+\[a^{2} + b^{2} = c^{2}\]
+<ul><li><strong>Find the hypotenuse</strong>: add the squares of the legs, then take the square root.</li>
+<li><strong>Find a leg</strong>: subtract: \(b^{2} = c^{2} - a^{2}\).</li>
+<li><strong>Sides written with \(x\)</strong>: substitute, expand \((x + 7)^{2} = x^{2} + 14x + 49\), and solve the quadratic. Throw out negative lengths.</li></ul>
+<p>Look for the right angle in the story: a wall and the ground, north and east, the sides of a rectangle.</p>`,
+    variants: pyth,
+  });
+
+  // ================= TRIANGLES & SIMILAR TRIANGLES =================
+  const SHADOW = [
+    ['tree', 'lamp post', (x, y, h) => I.tree(x, y, h), (x, y, h) => I.lamp(x, y, h)],
+    ['person', 'flagpole', (x, y, h) => I.person(x, y, h), (x, y, h) => I.flag(x, y, h)],
+    ['fence post', 'building', (x, y, h) => S.rect(x - 3, y - h, 6, h, 'wood nostroke'), (x, y, h) => I.building(x - h * 0.3, y, h * 0.6, h)],
+    ['person', 'tree', (x, y, h) => I.person(x, y, h), (x, y, h) => I.tree(x, y, h)],
+  ];
+  const tri = {
+    shadow: {
+      name: 'Shadows',
+      gen(rng) {
+        const [n1, n2, d1, d2] = rng.pick(SHADOW);
+        let h1, s1, s2, h2;
+        do { h1 = n1 === 'person' ? rng.int(5, 6) : rng.int(4, 12); s1 = rng.int(2, 12); s2 = s1 * rng.int(2, 9); h2 = (h1 * s2) / s1; } while (h1 === s1 || !Number.isInteger(h2 * 2) || h2 > 120);
+        const W = 380, Hh = 170, gy = 150;
+        const ratio = s1 / h1, hh2 = Math.min(110, 165 / ratio), hh1 = Math.max(18, (hh2 * h1) / h2), sw1 = hh1 * ratio, sw2 = hh2 * ratio;
+        let b = I.sun(24, 24, 10) + I.ground(8, 372, gy);
+        b += d1(50, gy, hh1) + S.line(50, gy, 50 + sw1, gy, 'shadow') + S.line(50, gy - hh1, 50 + sw1, gy, 'ln dash');
+        const x2 = 190;
+        b += d2(x2, gy, hh2) + S.line(x2, gy, x2 + sw2, gy, 'shadow') + S.line(x2, gy - hh2, x2 + sw2, gy, 'ln dash');
+        b += S.label(42, gy - hh1 / 2, h1 + ' ft', { cls: 'lbl', a: 'end' }) + S.label(50 + sw1 / 2, gy + 16, s1 + ' ft', { cls: 'lbl' });
+        b += S.label(x2 - 10, gy - hh2 / 2, '?', { cls: 'qm', a: 'end' }) + S.label(x2 + sw2 / 2, gy + 16, s2 + ' ft', { cls: 'lbl' });
+        return {
+          prompt: T`A ${h1}-foot ${n1} casts a ${s1}-foot shadow. At the same time, a ${n2} casts a ${s2}-foot shadow. What is the height of the ${n2}?`,
+          visual: S.svg(W, Math.max(Hh, 170), b, 'Two objects and their shadows forming similar triangles'),
+          parts: [{ kind: 'num', answer: String(h2), show: h2 + '\\text{ feet}', post: 'feet', points: 3 }],
+          solution: [
+            T`The sun's rays hit both objects at the same angle, so the triangles (object, shadow, ray) are similar: their sides are proportional.`,
+            T`\(\dfrac{\text{height}}{\text{shadow}}:\ \dfrac{${h1}}{${s1}} = \dfrac{h}{${s2}}\)`,
+            T`Cross-multiply: \(${s1}h = ${h1 * s2}\), so \(h = ${h2}\)`,
+            T`\(${H.box(h2 + '\\text{ ft}')}\)`,
+          ],
+        };
+      },
+    },
+    mirror: {
+      name: 'Mirror on the ground',
+      gen(rng) {
+        let e, d1, d2, h;
+        do { e = rng.int(10, 13) / 2; d1 = rng.int(3, 8); d2 = rng.int(10, 60); h = (e * d2) / d1; } while (!Number.isInteger(h * 2) || h > 80);
+        const W = 380, Hh = 170, gy = 150;
+        let b = I.ground(8, 372, gy) + I.person(40, gy, 44) + I.tree(330, gy, 120);
+        const mx = 110;
+        b += S.rect(mx - 10, gy - 3, 20, 4, 'water ln thin') + S.line(40, gy - 40, mx, gy - 1, 'acc') + S.line(mx, gy - 1, 330, gy - 120, 'acc');
+        b += S.dim(40, gy + 12, mx, gy + 12, d1 + ' ft') + S.dim(mx, gy + 12, 330, gy + 12, d2 + ' ft');
+        b += S.label(30, gy - 20, e + ' ft', { cls: 'lbl', a: 'end' }) + S.label(348, gy - 60, '?', { cls: 'qm', a: 'start' }) + S.text(mx, gy - 10, 'mirror', { cls: 'tx small' });
+        return {
+          prompt: T`To measure a tree, Sam places a mirror flat on the ground ${d2} feet from the base of the tree. He stands ${d1} feet from the mirror, on the other side, and sees the top of the tree in it. His eyes are ${e} feet above the ground. How tall is the tree?`,
+          visual: S.svg(W, 180, b, 'Using a mirror on the ground to measure a tree'),
+          parts: [{ kind: 'num', answer: String(h), show: h + '\\text{ feet}', post: 'feet', points: 3 }],
+          solution: [
+            T`Light reflects at equal angles, so the triangle (Sam, mirror) and the triangle (tree, mirror) are similar.`,
+            T`\(\dfrac{${e}}{${d1}} = \dfrac{h}{${d2}}\)`,
+            T`\(h = \dfrac{${e}\cdot${d2}}{${d1}} = ${h}\)`,
+            T`\(${H.box(h + '\\text{ ft}')}\)`,
+          ],
+        };
+      },
+    },
+    nested: {
+      name: 'Nested triangles (ramp)',
+      gen(rng) {
+        let a, b2, h1, H2;
+        do { a = rng.int(2, 10); b2 = rng.int(3, 16); h1 = rng.int(1, 6); H2 = (h1 * (a + b2)) / a; } while (!Number.isInteger(H2 * 2) || H2 > 15);
+        const W = 340, Hh = 170, gy = 140;
+        const X0 = 30, X1 = 310, Y1 = gy - 110, xb = X0 + ((X1 - X0) * a) / (a + b2), yb = gy - (110 * a) / (a + b2);
+        let v = S.poly([[X0, gy], [X1, gy], [X1, Y1]], 'ln soft') + S.line(xb, gy, xb, yb, 'acc thick') + S.rightAngle(X1, gy, 9, -1, -1) + S.rightAngle(xb, gy, 8, -1, -1);
+        v += S.dim(X0, gy + 14, xb, gy + 14, a + ' ft') + S.dim(xb, gy + 14, X1, gy + 14, b2 + ' ft');
+        v += S.label(xb + 6, (gy + yb) / 2 + 4, h1 + ' ft', { cls: 'lbl', a: 'start' }) + S.label(X1 + 8, (gy + Y1) / 2, '?', { cls: 'qm', a: 'start' });
+        return {
+          prompt: T`A wheelchair ramp rises steadily from the ground. A support post ${a} feet from the bottom of the ramp is ${h1} feet tall. The top of the ramp is ${b2} feet farther along. How high is the top of the ramp?`,
+          visual: S.svg(W, Hh, v, 'A ramp with a shorter support post forming nested similar triangles'),
+          parts: [{ kind: 'num', answer: String(H2), show: H2 + '\\text{ feet}', post: 'feet', points: 3 }],
+          solution: [
+            T`The small triangle (post) and the whole ramp share the same angle at the bottom, so they're similar.`,
+            T`The whole ramp's base is \(${a} + ${b2} = ${a + b2}\) ft: \(\dfrac{${h1}}{${a}} = \dfrac{h}{${a + b2}}\)`,
+            T`\(h = \dfrac{${h1}\cdot${a + b2}}{${a}} = ${H2}\)`,
+            T`\(${H.box(H2 + '\\text{ ft}')}\)`,
+          ],
+        };
+      },
+    },
+    angles: {
+      name: 'Angle sum',
+      gen(rng) {
+        let c, x;
+        do {
+          c = [[1, rng.int(-20, 30)], [rng.int(2, 3), rng.int(-20, 20)], [1, rng.int(-10, 40)]];
+          const s = c[0][0] + c[1][0] + c[2][0], k = c[0][1] + c[1][1] + c[2][1];
+          x = (180 - k) / s;
+        } while (!Number.isInteger(x) || c.some(([m, k]) => m * x + k <= 5));
+        const vals = c.map(([m, k]) => m * x + k), big = Math.max(...vals);
+        const lab = c.map(([m, k]) => MX.poly([[m, { x: 1 }], [k, {}]]));
+        const W = 320, Hh = 170;
+        let v = S.poly([[40, 140], [290, 140], [120, 30]], 'ln soft');
+        v += S.label(70, 132, lab[0].asc.replace(/-/g, ' − ').replace(/\+/g, ' + ') + '°', { cls: 'lbl', a: 'start' }) + S.label(258, 132, lab[1].asc.replace(/-/g, ' − ').replace(/\+/g, ' + ') + '°', { cls: 'lbl', a: 'end' }) + S.label(122, 56, lab[2].asc.replace(/-/g, ' − ').replace(/\+/g, ' + ') + '°', { cls: 'lbl' });
+        return {
+          prompt: T`The angles of a triangle measure \((${lab[0].tex})^{\circ}\), \((${lab[1].tex})^{\circ}\) and \((${lab[2].tex})^{\circ}\). Find \(x\) and the measure of the largest angle.`,
+          visual: S.svg(W, Hh, v, 'A triangle with its angles written in terms of x'),
+          parts: [
+            { label: 'a', ask: 'Value of x', kind: 'num', var: 'x', answer: String(x), show: 'x = ' + x, points: 2 },
+            { label: 'b', ask: 'Largest angle', kind: 'num', answer: String(big), show: big + '^{\\circ}', post: 'degrees', points: 2 },
+          ],
+          solution: [
+            T`The angles of any triangle add to \(180^{\circ}\).`,
+            T`\(\left(${lab[0].tex}\right) + \left(${lab[1].tex}\right) + \left(${lab[2].tex}\right) = 180\)`,
+            T`\(${MX.poly([[c[0][0] + c[1][0] + c[2][0], { x: 1 }], [c[0][1] + c[1][1] + c[2][1], {}]]).tex} = 180\), so \(x = ${x}\)`,
+            T`The angles are ${vals.join('°, ')}°. \(${H.box(T`x = ${x},\ ${big}^{\circ}`)}\)`,
+          ],
+        };
+      },
+    },
+    perimeter: {
+      name: 'Triangle perimeter',
+      gen(rng) {
+        let leg, k, base, P;
+        do { leg = rng.int(5, 30); k = rng.int(1, 9); base = leg - k; P = 2 * leg + base; } while (base < 3);
+        const unit = rng.pick(['inches', 'centimeters', 'feet']);
+        const W = 320, Hh = 170;
+        let v = S.poly([[60, 140], [260, 140], [160, 30]], 'ln soft') + S.label(160, 158, 'x − ' + k, { cls: 'lbl' }) + S.label(98, 80, 'x', { cls: 'lbl', a: 'end' }) + S.label(222, 80, 'x', { cls: 'lbl', a: 'start' });
+        v += S.line(106, 86, 114, 80, 'ln') + S.line(206, 80, 214, 86, 'ln') + S.text(160, 96, 'P = ' + P, { cls: 'tx small' });
+        return {
+          prompt: T`An isosceles triangle has two equal sides. The third side (the base) is ${k} ${unit} shorter than each of the equal sides. The perimeter is ${P} ${unit}. Find the length of the equal sides and of the base.`,
+          visual: S.svg(W, Hh, v, 'An isosceles triangle with sides x, x and x minus ' + k),
+          parts: [
+            { label: 'a', ask: 'Each equal side', kind: 'num', answer: String(leg), show: leg + '\\text{ ' + unit + '}', post: unit, points: 2 },
+            { label: 'b', ask: 'Base', kind: 'num', answer: String(base), show: base + '\\text{ ' + unit + '}', post: unit, points: 2 },
+          ],
+          solution: [T`Let \(x\) be an equal side; the base is \(x - ${k}\).`, T`Perimeter: \(x + x + \left(x - ${k}\right) = ${P}\), so \(3x - ${k} = ${P}\)`, T`\(3x = ${P + k}\), \(x = ${leg}\); base \(= ${leg} - ${k} = ${base}\)`, T`\(${H.box(T`${leg},\ ${leg},\ ${base}`)}\)`],
+        };
+      },
+    },
+    area: {
+      name: 'Triangle area (quadratic)',
+      gen(rng) {
+        let h, k, A;
+        do { h = rng.int(3, 14); k = rng.int(1, 8); A = (h * (h + k)) / 2; } while (!Number.isInteger(A));
+        const unit = rng.pick(['cm', 'in', 'ft']);
+        const W = 320, Hh = 170;
+        let v = S.poly([[50, 140], [270, 140], [200, 36]], 'ln soft') + S.line(200, 36, 200, 140, 'ln dash') + S.rightAngle(200, 140, 8, -1, -1);
+        v += S.label(160, 158, 'h + ' + k, { cls: 'lbl' }) + S.label(208, 96, 'h', { cls: 'lbl', a: 'start' }) + S.text(130, 116, 'Area = ' + A + ' ' + unit + '²', { cls: 'tx small' });
+        return {
+          prompt: T`The base of a triangle is ${k} ${unit} longer than its height. The area is ${A} square ${unit}. Find the height and the base.`,
+          visual: S.svg(W, Hh, v, 'A triangle with height h and base h plus ' + k),
+          parts: [
+            { label: 'a', ask: 'Height', kind: 'num', answer: String(h), show: h + '\\text{ ' + unit + '}', post: unit, points: 2 },
+            { label: 'b', ask: 'Base', kind: 'num', answer: String(h + k), show: h + k + '\\text{ ' + unit + '}', post: unit, points: 2 },
+          ],
+          solution: [
+            T`Area of a triangle: \(A = \frac{1}{2}bh\), so \(\frac{1}{2}\left(h + ${k}\right)h = ${A}\)`,
+            T`Multiply by 2: \(h^{2} + ${k}h = ${2 * A}\), so \(h^{2} + ${k}h - ${2 * A} = 0\)`,
+            T`Factor: \(\left(h - ${h}\right)\left(h + ${h + k}\right) = 0\), so \(h = ${h}\) (a height can't be negative).`,
+            T`Base \(= ${h} + ${k} = ${h + k}\). \(${H.box(T`h = ${h},\ b = ${h + k}`)}\)`,
+          ],
+        };
+      },
+    },
+  };
+  MX.register({
+    id: 'w-triangles', kind: 'word', section: SEC, title: 'Similar triangles & triangles', sources: ['Exam 3 #22'],
+    slots: [{ label: 'Triangles', source: 'Exam 3 #22', pool: ['shadow', 'mirror', 'nested', 'angles', 'perimeter', 'area'] }],
+    lesson: T`<p><strong>Similar triangles</strong> have the same angles, so their sides are proportional. Set up matching ratios and cross-multiply:</p>
+\[\frac{\text{tree height}}{\text{tree shadow}} = \frac{\text{post height}}{\text{post shadow}}\]
+<p>Similar triangles show up with shadows (same sun angle), mirrors (equal reflection angles) and shapes inside shapes (a post under a ramp).</p>
+<p><strong>Other triangle facts</strong> you'll need:</p>
+<ul><li>The three angles add to \(180^{\circ}\).</li><li>Perimeter = sum of the three sides; an isosceles triangle has two equal sides.</li>
+<li>Area = \(\frac{1}{2}\times\text{base}\times\text{height}\).</li></ul>`,
+    variants: tri,
+  });
+
+  // ================= PERIMETER & DIMENSIONS =================
+  const RCTX = [['A rectangular picture frame', 'inches', 'square inches'], ['A rectangular garden', 'feet', 'square feet'], ['A rectangular soccer field', 'yards', 'square yards'], ['A rectangular rug', 'feet', 'square feet'], ['A rectangular poster', 'centimeters', 'square centimeters']];
+  const unitOpts = (u, u2) => ({ answer: u, options: [u, u2, u === 'feet' ? 'inches' : 'feet'] });
+  const perim = {
+    rect: {
+      name: 'Rectangle perimeter',
+      gen(rng) {
+        const [ctx, u, u2] = rng.pick(RCTX);
+        let a, k, w, l;
+        do { a = rng.int(2, 4); k = rng.nz(-9, 9); w = rng.int(3, 40); l = a * w + k; } while (l <= w);
+        const P = 2 * (l + w);
+        const phr = `The length is ${Math.abs(k)} ${u} ${k < 0 ? 'less' : 'more'} than ${a === 2 ? 'twice' : a === 3 ? 'three times' : a + ' times'} the width.`;
+        const W = 320, Hh = 150;
+        let v = S.rect(60, 30, 200, 90, 'ln soft') + S.label(160, 140, a + 'w ' + (k < 0 ? '− ' + -k : '+ ' + k), { cls: 'lbl' }) + S.label(270, 80, 'w', { cls: 'lbl', a: 'start' }) + S.text(160, 80, 'P = ' + P + ' ' + u, { cls: 'tx small' });
+        return {
+          prompt: T`${ctx} has a perimeter of ${P} ${u}. ${phr} Find the length and the width. Include units in your answers.`,
+          visual: S.svg(W, Hh, v, 'A rectangle with width w and length in terms of w'),
+          parts: [
+            { label: 'a', ask: 'Length', kind: 'num', answer: String(l), units: unitOpts(u, u2), show: l + '\\text{ ' + u + '}', points: 2 },
+            { label: 'b', ask: 'Width', kind: 'num', answer: String(w), units: unitOpts(u, u2), show: w + '\\text{ ' + u + '}', points: 2 },
+          ],
+          solution: [T`Let \(w\) be the width; the length is \(${a}w ${MX.sgnTerm(k)}\).`, T`\(P = 2l + 2w\): \(2\left(${a}w ${MX.sgnTerm(k)}\right) + 2w = ${P}\)`, T`\(${2 * a + 2}w ${MX.sgnTerm(2 * k)} = ${P}\), so \(w = ${w}\) and \(l = ${a}\cdot${w} ${MX.sgnTerm(k)} = ${l}\)`, T`\(${H.box(T`l = ${l}\text{ ${u}},\ w = ${w}\text{ ${u}}`)}\)`],
+        };
+      },
+    },
+    fence: {
+      name: 'Three-sided fence',
+      gen(rng) {
+        let w, k, l, F;
+        do { w = rng.int(5, 40); k = rng.int(-10, 20); l = 2 * w + k; F = 2 * w + l; } while (l <= 0 || l === w);
+        const W = 340, Hh = 170;
+        let v = S.rect(40, 20, 260, 34, 'wood ln', 2) + S.text(170, 42, 'barn', { cls: 'tx small', w: 700 }) + S.pline([[70, 54], [70, 140], [270, 140], [270, 54]], 'acc thick');
+        v += S.line(70, 54, 270, 54, 'ln dash') + S.label(170, 158, 'l = 2w ' + (k < 0 ? '− ' + -k : '+ ' + k), { cls: 'lbl' }) + S.label(62, 100, 'w', { cls: 'lbl', a: 'end' }) + S.label(278, 100, 'w', { cls: 'lbl', a: 'start' });
+        return {
+          prompt: T`A farmer has ${F} feet of fencing to make a rectangular pen along the side of a barn. The barn wall forms one side, so only three sides need fencing. The side parallel to the barn is ${k === 0 ? 'twice' : Math.abs(k) + ' feet ' + (k < 0 ? 'less' : 'more') + ' than twice'} the width. Find the width and the length of the pen.`,
+          visual: S.svg(W, Hh, v, 'A pen fenced on three sides against a barn'),
+          parts: [
+            { label: 'a', ask: 'Width (each side touching the barn)', kind: 'num', answer: String(w), show: w + '\\text{ ft}', post: 'feet', points: 2 },
+            { label: 'b', ask: 'Length (side parallel to the barn)', kind: 'num', answer: String(l), show: l + '\\text{ ft}', post: 'feet', points: 2 },
+          ],
+          solution: [T`Fencing covers two widths and one length: \(w + w + l = ${F}\), with \(l = 2w ${MX.sgnTerm(k)}\).`, T`\(2w + 2w ${MX.sgnTerm(k)} = ${F}\), so \(4w = ${F - k}\) and \(w = ${w}\)`, T`\(l = 2\cdot${w} ${MX.sgnTerm(k)} = ${l}\). \(${H.box(T`w = ${w}\text{ ft},\ l = ${l}\text{ ft}`)}\)`],
+        };
+      },
+    },
+    area: {
+      name: 'Rectangle area (quadratic)',
+      gen(rng) {
+        const [ctx, u, u2] = rng.pick(RCTX);
+        const w = rng.int(3, 15), k = rng.int(1, 9), A = w * (w + k);
+        const W = 320, Hh = 150;
+        let v = S.rect(60, 30, 200, 90, 'ln soft') + S.label(160, 140, 'w + ' + k, { cls: 'lbl' }) + S.label(270, 80, 'w', { cls: 'lbl', a: 'start' }) + S.text(160, 80, 'Area = ' + A + ' ' + u2, { cls: 'tx small' });
+        return {
+          prompt: T`${ctx} is ${k} ${u} longer than it is wide. Its area is ${A} ${u2}. Find its width and length.`,
+          visual: S.svg(W, Hh, v, 'A rectangle with width w and length w plus ' + k),
+          parts: [
+            { label: 'a', ask: 'Width', kind: 'num', answer: String(w), units: unitOpts(u, u2), show: w + '\\text{ ' + u + '}', points: 2 },
+            { label: 'b', ask: 'Length', kind: 'num', answer: String(w + k), units: unitOpts(u, u2), show: w + k + '\\text{ ' + u + '}', points: 2 },
+          ],
+          solution: [T`Area = length × width: \(w\left(w + ${k}\right) = ${A}\)`, T`\(w^{2} + ${k}w - ${A} = 0\), which factors as \(\left(w - ${w}\right)\left(w + ${w + k}\right) = 0\)`, T`A width can't be negative, so \(w = ${w}\) and the length is ${w + k}.`, T`\(${H.box(T`${w}\text{ ${u}} \times ${w + k}\text{ ${u}}`)}\)`],
+        };
+      },
+    },
+  };
+  MX.register({
+    id: 'w-perimeter', kind: 'word', section: SEC, title: 'Perimeter & dimensions', sources: ['Exam 2 #20'],
+    slots: [{ label: 'Perimeter & dimensions', source: 'Exam 2 #20', pool: ['rect', 'fence', 'area'] }],
+    lesson: T`<ol><li>Draw the shape and label it. Let \(w\) be the width and write the length in terms of \(w\): "5 less than three times the width" is \(3w - 5\).</li>
+<li>Use the right formula: perimeter of a rectangle \(P = 2l + 2w\); area \(A = lw\). If only some sides are fenced, add only those sides.</li>
+<li>Substitute and solve for \(w\), then find the length.</li><li>Answer with units. Perimeter uses plain units (inches); area uses square units.</li></ol>
+<p>Area problems lead to quadratics: \(w\left(w + 3\right) = 40\). Set them equal to 0, factor, and keep the positive answer.</p>`,
+    variants: perim,
+  });
+})(typeof window !== 'undefined' ? window : globalThis);
