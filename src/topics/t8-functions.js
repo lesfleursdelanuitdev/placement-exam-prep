@@ -54,7 +54,73 @@
   const sample = (f, a, b, n = 80) => Array.from({ length: n + 1 }, (_, k) => { const x = a + ((b - a) * k) / n; return [x, f(x)]; });
   const sampleT = (f, a, b, n = 120) => Array.from({ length: n + 1 }, (_, k) => f(a + ((b - a) * k) / n));
   const YES = 'Yes, it is a function', NO = 'No, it is not a function';
-  const fnChoice = (isFn) => ({ kind: 'choice', options: [YES, NO], answer: isFn ? 0 : 1, points: 2 });
+  const fnChoice = (isFn, verify) => ({ kind: 'choice', options: [YES, NO], answer: isFn ? 0 : 1, points: 2, verify });
+
+  // ---------- verifier helpers (built from the data shown or drawn, never from the answer) ----------
+  const V = MX.V;
+  // "Yes" (option 0) is right exactly when the relation passes the test
+  const yesIff = (test) => { let r = null; return V.choice((i) => (i === 0) === (r === null ? (r = test()) : r)); };
+  // pairs: no input appears with two different outputs
+  const pairsAreFn = (ps) => () => ps.every(([x, y]) => ps.every(([x2, y2]) => x2 !== x || y2 === y));
+  // vertical line test on the polylines exactly as relGraph draws them (window-clipped): no vertical line
+  // meets the drawing at two different heights (a vertical segment meets it everywhere)
+  const passesVLT = (curves, R = 8) => () => {
+    const inWin = (p) => Math.abs(p[0]) <= R + 1e-9 && Math.abs(p[1]) <= R + 1e-9;
+    const segs = [];
+    curves.forEach((c) => { const pts = c.pts.filter(inWin); for (let i = 1; i < pts.length; i++) segs.push([pts[i - 1], pts[i]]); });
+    for (let k = 0; k <= 800; k++) {
+      const x = -R + (2 * R * k) / 800 + 1e-4 * Math.sin(k); // off-grid probes
+      const ys = [];
+      for (const [[ax, ay], [bx, by]] of segs) {
+        if (Math.abs(bx - ax) < 1e-12) { if (Math.abs(x - ax) < 0.02) return false; continue; }
+        if ((x - ax) * (x - bx) > 0) continue;
+        const y = ay + ((by - ay) * (x - ax)) / (bx - ax);
+        if (!ys.some((z) => Math.abs(z - y) < 1e-6)) ys.push(y);
+      }
+      if (ys.length > 1) return false;
+    }
+    return true;
+  };
+  // a set answer lists exactly the distinct values in vals, each once
+  const setIs = (vals) => V.custom((a) => {
+    const want = [...new Set(vals)];
+    if (a.length !== new Set(a.map(Number)).size) return 'a value is listed twice';
+    return V.sameSet(a.map(Number), want) || 'the set should be {' + want.sort((p, q) => p - q).join(', ') + '}';
+  });
+  // domain and range of the graph of f drawn on [a, b], read numerically from f. Each end is 'arrow' (the
+  // curve continues forever), true (closed dot) or false (open dot).
+  // Returns {dom, rng}: region specs (env => bool) for V.region.
+  function cover(f, a, b, ea, eb) {
+    const EPS = 1e-9;
+    const A = ea === 'arrow' ? -Infinity : a, B = eb === 'arrow' ? Infinity : b;
+    const dom = (x) => (x > A + EPS || (Math.abs(x - A) <= EPS && ea === true)) && (x < B - EPS || (Math.abs(x - B) <= EPS && eb === true));
+    const sa = ea === 'arrow' ? a - 40 : a, sb = eb === 'arrow' ? b + 40 : b, N = 4000;
+    const xs = Array.from({ length: N + 1 }, (_, k) => sa + ((sb - sa) * k) / N), ys = xs.map(f);
+    const gr = (Math.sqrt(5) - 1) / 2;
+    const extreme = (sg) => { // sg = 1 for the minimum, -1 for the maximum; returns [value, closed]
+      let i = 0;
+      ys.forEach((y, k) => { if (sg * y < sg * ys[i]) i = k; });
+      if (i === 0 && ea !== 'arrow') return [ys[0], ea === true];
+      if (i === N && eb !== 'arrow') return [ys[N], eb === true];
+      if (i === 0 || i === N) return [null, false]; // runs off along an arrow: settled by the limit below
+      let p = xs[i - 1], q = xs[i + 1];
+      for (let t = 0; t < 120; t++) { const m1 = q - gr * (q - p), m2 = p + gr * (q - p); if (sg * f(m1) < sg * f(m2)) q = m2; else p = m1; }
+      return [Math.min(sg * ys[i], sg * f((p + q) / 2)) * sg, true];
+    };
+    let [lo, lc] = extreme(1), [hi, hc] = extreme(-1);
+    [[ea, a - 1e8], [eb, b + 1e8]].forEach(([e, x]) => {
+      if (e !== 'arrow') return;
+      const y = f(x);
+      if (y < -1e3) { lo = -Infinity; lc = false; }
+      if (y > 1e3) { hi = Infinity; hc = false; }
+    });
+    if (lo === null || hi === null) throw new Error('cover: the curve runs off along an arrow without a limit');
+    const rng = (y) => (y > lo + EPS || (Math.abs(y - lo) <= EPS && lc)) && (y < hi - EPS || (Math.abs(y - hi) <= EPS && hc));
+    return { dom: (env) => dom(env.x), rng: (env) => rng(env.x) };
+  }
+  // interval parts for a drawn/stated function: domain and range checked against cover()
+  const coverParts = (D, Rg, cv) => drParts(D, Rg).map((p, i) => Object.assign(p, { verify: V.region(i === 0 ? cv.dom : cv.rng, { n: 4000 }) }));
+  const rangeVerify = (fs, a, b, ea, eb) => V.region(cover(V.fn(fs, 'x'), a, b, ea, eb).rng, { n: 4000 });
 
   function randomPairs(rng, n, isFn) {
     let xs = rng.sample([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6], n);
@@ -84,21 +150,21 @@
         name: 'Ordered pairs',
         gen(rng) {
           const isFn = rng.chance(0.5), ps = randomPairs(rng, rng.int(4, 6), isFn);
-          return { prompt: T`Is the relation \(${pairsTex(ps)}\) a function?`, parts: [fnChoice(isFn)], solution: [repeatExplain(ps)] };
+          return { prompt: T`Is the relation \(${pairsTex(ps)}\) a function?`, parts: [fnChoice(isFn, yesIff(pairsAreFn(ps)))], solution: [repeatExplain(ps)] };
         },
       },
       table: {
         name: 'Table',
         gen(rng) {
           const isFn = rng.chance(0.5), ps = randomPairs(rng, rng.int(4, 6), isFn);
-          return { prompt: T`Does the table describe \(y\) as a function of \(x\)? ${tableHTML(ps)}`, parts: [fnChoice(isFn)], solution: [repeatExplain(ps)] };
+          return { prompt: T`Does the table describe \(y\) as a function of \(x\)? ${tableHTML(ps)}`, parts: [fnChoice(isFn, yesIff(pairsAreFn(ps)))], solution: [repeatExplain(ps)] };
         },
       },
       mapping: {
         name: 'Mapping diagram',
         gen(rng) {
           const isFn = rng.chance(0.5), ps = randomPairs(rng, rng.int(3, 5), isFn);
-          return { prompt: T`Is the relation shown in the mapping diagram a function?`, visual: mapping(ps), parts: [fnChoice(isFn)], solution: [T`Each arrow is one pair (input → output).`, repeatExplain(ps)] };
+          return { prompt: T`Is the relation shown in the mapping diagram a function?`, visual: mapping(ps), parts: [fnChoice(isFn, yesIff(pairsAreFn(ps)))], solution: [T`Each arrow is one pair (input → output).`, repeatExplain(ps)] };
         },
       },
       graph: {
@@ -112,14 +178,15 @@
             { fn: true, name: 'curve', c: () => [{ pts: sample((x) => Math.pow(x - h, 3) / 6 + k, -9, 9, 160), a0: true, a1: true }] },
             { fn: false, name: 'circle', c: () => { const r = rng.int(2, 4); return [{ pts: sampleT((t) => [h + r * Math.cos(t), k + r * Math.sin(t)], 0, 2 * Math.PI) }]; } },
             { fn: false, name: 'sideways parabola', c: () => { const a = rng.pick([1, -1, 0.5]); return [{ pts: sampleT((t) => [a * (t - k) * (t - k) + h, t], -9, 9, 180), a0: true, a1: true }]; } },
-            { fn: false, name: 'vertical line', c: () => [{ pts: [[h, -9], [h, 9]], a0: true, a1: true }] },
+            { fn: false, name: 'vertical line', c: () => [{ pts: [[h, -8], [h, 8]], a0: true, a1: true }] }, // inside relGraph's ±8 window (±9 was clipped away, leaving a blank plane)
           ];
           const want = rng.chance(0.5);
           const sh = rng.pick(shapes.filter((s) => s.fn === want));
+          const curves = sh.c();
           return {
             prompt: T`Is the relation graphed below a function?`,
-            visual: relGraph(sh.c(), []),
-            parts: [fnChoice(sh.fn)],
+            visual: relGraph(curves, []),
+            parts: [fnChoice(sh.fn, yesIff(passesVLT(curves)))],
             solution: [
               T`Use the vertical line test: imagine vertical lines sweeping across the graph.`,
               sh.fn ? T`Every vertical line crosses this ${sh.name} at most once, so it <strong>is</strong> a function.` : T`Some vertical line crosses this ${sh.name} ${sh.name === 'vertical line' ? 'infinitely many times' : 'twice'}, so it is <strong>not</strong> a function.`,
@@ -142,8 +209,8 @@
     return {
       prompt, visual,
       parts: [
-        { label: 'a', ask: 'Domain (list each value once)', kind: 'set', answers: D.list, answer: D.asc, show: D.tex, points: 2 },
-        { label: 'b', ask: 'Range (list each value once)', kind: 'set', answers: Rg.list, answer: Rg.asc, show: Rg.tex, points: 2 },
+        { label: 'a', ask: 'Domain (list each value once)', kind: 'set', answers: D.list, answer: D.asc, show: D.tex, points: 2, verify: setIs(ps.map((p) => p[0])) },
+        { label: 'b', ask: 'Range (list each value once)', kind: 'set', answers: Rg.list, answer: Rg.asc, show: Rg.tex, points: 2, verify: setIs(ps.map((p) => p[1])) },
       ],
       solution: [
         form === 'points' ? T`Read each point: \(${pairsTex(ps.slice().sort((a, b) => a[0] - b[0]))}\)` : T`List the pairs: \(${pairsTex(ps)}\)`,
@@ -194,7 +261,7 @@
           return {
             prompt: T`Find the domain and range of the graph below.`,
             visual: relGraph([{ pts: [[x1, y1], [x2, y2]] }], [[x1, y1, c1], [x2, y2, c2]]),
-            parts: drParts(D, Rg),
+            parts: coverParts(D, Rg, cover((x) => y1 + ((y2 - y1) * (x - x1)) / (x2 - x1), x1, x2, c1, c2)),
             solution: [
               T`Endpoints: \((${x1}, ${y1})\) (${c1 ? 'closed, included' : 'open, not included'}) and \((${x2}, ${y2})\) (${c2 ? 'closed, included' : 'open, not included'}).`,
               T`The \(x\)-values run from ${x1} to ${x2}: domain \(${H.box(D.tex)}\)`,
@@ -208,10 +275,11 @@
         gen(rng) {
           const h = rng.int(-4, 4), k = rng.int(-5, 5), up = rng.chance(0.5), a = up ? 1 : -1;
           const Rg = up ? iv(k, Infinity, true, false) : iv(-Infinity, k, false, true);
+          const fp = (x) => a * (x - h) * (x - h) + k;
           return {
             prompt: T`Find the domain and range of the parabola graphed below.`,
-            visual: relGraph([{ pts: sample((x) => a * (x - h) * (x - h) + k, -9, 9, 200), a0: true, a1: true }], []),
-            parts: drParts(ALL, Rg),
+            visual: relGraph([{ pts: sample(fp, -9, 9, 200), a0: true, a1: true }], []),
+            parts: coverParts(ALL, Rg, cover(fp, -9, 9, 'arrow', 'arrow')),
             solution: [
               T`The arrows show the parabola keeps spreading left and right forever: domain \(${H.box(ALL.tex)}\)`,
               T`Its vertex \((${h}, ${k})\) is the ${up ? 'lowest' : 'highest'} point, and it opens ${up ? 'up' : 'down'}.`,
@@ -228,11 +296,13 @@
           const D = right ? iv(x1, Infinity, closed, false) : iv(-Infinity, x1, false, closed);
           const goesUp = (right && m > 0) || (!right && m < 0);
           const Rg = goesUp ? iv(y1, Infinity, closed, false) : iv(-Infinity, y1, false, closed);
-          const pts = sample((x) => y1 + m * (x - x1), x1, end, 40);
+          const fr = (x) => y1 + m * (x - x1);
+          const pts = sample(fr, x1, end, 40);
           return {
             prompt: T`Find the domain and range of the graph below.`,
             visual: relGraph([{ pts, a1: true }], [[x1, y1, closed]]),
-            parts: drParts(D, Rg),
+            // drawn from the dot at x1 to an arrow at `end`
+            parts: coverParts(D, Rg, right ? cover(fr, x1, end, closed, 'arrow') : cover(fr, end, x1, 'arrow', closed)),
             solution: [
               T`The graph starts at \((${x1}, ${y1})\) with a ${closed ? 'closed dot (included)' : 'open dot (not included)'} and continues forever to the ${right ? 'right' : 'left'} and ${goesUp ? 'up' : 'down'}.`,
               T`Domain: \(${H.box(D.tex)}\)`,
@@ -246,10 +316,11 @@
         gen(rng) {
           const h = rng.int(-6, 2), k = rng.int(-5, 4), down = rng.chance(0.4), sgn = down ? -1 : 1;
           const D = iv(h, Infinity, true, false), Rg = down ? iv(-Infinity, k, false, true) : iv(k, Infinity, true, false);
+          const fs = (x) => k + sgn * 1.5 * Math.sqrt(Math.max(0, x - h));
           return {
             prompt: T`Find the domain and range of the graph below.`,
-            visual: relGraph([{ pts: sample((x) => k + sgn * 1.5 * Math.sqrt(Math.max(0, x - h)), h, 9, 120), a1: true }], [[h, k, true]]),
-            parts: drParts(D, Rg),
+            visual: relGraph([{ pts: sample(fs, h, 9, 120), a1: true }], [[h, k, true]]),
+            parts: coverParts(D, Rg, cover(fs, h, 9, true, 'arrow')),
             solution: [T`The curve starts at \((${h}, ${k})\) (closed dot) and goes right forever.`, T`Domain: \(${H.box(D.tex)}\)`, T`It ${down ? 'falls' : 'rises'} forever from \(y = ${k}\): range \(${H.box(Rg.tex)}\)`],
           };
         },
@@ -258,6 +329,33 @@
   });
 
   // ================= domain from a formula =================
+  // the domain is where the displayed formula evaluates to a real number, with `rules` restating the exact
+  // conditions (denominator ≠ 0, radicand ≥ 0). Each rule's boundary is found by root finding; right at a
+  // boundary r the rule is judged at r itself, and a point a hair away from r is judged by which side it is on,
+  // so floating-point noise in f near r can't flip the answer.
+  const domainVerify = (fs, rules) => {
+    const f = V.fn(fs, 'x');
+    let rs = null; // found on first use, so generating the question stays cheap
+    const find = () => rs || (rs = rules.map((s) => { const r = V.rel(s)[0]; return { t: V.truth(s), roots: V.roots({ lhs: r.lhs, op: '=', rhs: r.rhs }, { n: 2000 }) }; }));
+    const ok = (env) => {
+      const x = env.x;
+      for (const { t, roots } of find()) {
+        const r = roots === 'all' ? null : roots.find((z) => Math.abs(x - z) <= 1e-6);
+        if (r === undefined || r === null) { if (!t({ x })) return false; continue; }
+        if (!t({ x: x === r ? r : r + (x - r) * 1e5 })) return false;
+        if (x === r) continue; // on a boundary the rule decides (√0 is fine, 1/0 is caught by the rule)
+      }
+      return find().some(({ roots }) => roots !== 'all' && roots.some((z) => Math.abs(x - z) <= 1e-6)) || isFinite(f(x));
+    };
+    // a coarse scan finds the interval ends; single excluded points (holes) are probed explicitly
+    const inside = (a, x) => a.some((r) => (x > r.lo || (x === r.lo && r.lc)) && (x < r.hi || (x === r.hi && r.hc)));
+    return V.all(
+      (a) => { find(); return V.region(ok, { n: 2000 })(a); },
+      (a) => {
+        for (const { roots } of find()) for (const z of roots === 'all' ? [] : roots) if (inside(a, z) !== ok({ x: z })) return 'x = ' + MX.num(z, 6) + (ok({ x: z }) ? ' is' : ' is not') + ' in the domain';
+        return true;
+      });
+  };
   MX.register({
     id: 'fn-domain', section: SEC, title: 'Domain of a function from its formula', kind: 'skill', sources: [],
     slots: [{ label: 'Domain from a formula', source: ADDED, pool: ['rational', 'twoHoles', 'sqrt', 'poly', 'sqrtDen'] }],
@@ -275,7 +373,7 @@
           const D = union([iv(-Infinity, b, false, false), iv(b, Infinity, false, false)]);
           return {
             prompt: T`Find the domain of \(f(x) = ${f}\). Write it in interval notation.`,
-            parts: [{ kind: 'interval', answer: D.asc, show: D.tex, points: 3 }],
+            parts: [{ kind: 'interval', answer: D.asc, show: D.tex, points: 3, verify: domainVerify(`(${MX.lin(1, a).asc})/(${MX.lin(1, -b).asc})`, [`${MX.lin(1, -b).asc} != 0`]) }],
             solution: [T`The denominator can't be 0: \(${MX.lin(1, -b).tex} = 0\) when \(x = ${b}\).`, T`All real numbers except ${b}: \(${H.box(D.tex)}\)`],
           };
         },
@@ -288,7 +386,7 @@
           const D = union([iv(-Infinity, r, false, false), iv(r, s, false, false), iv(s, Infinity, false, false)]);
           return {
             prompt: T`Find the domain of \(g(x) = \dfrac{${k}}{${den.tex}}\) in interval notation.`,
-            parts: [{ kind: 'interval', answer: D.asc, show: D.tex, points: 3 }],
+            parts: [{ kind: 'interval', answer: D.asc, show: D.tex, points: 3, verify: domainVerify(`${k}/(${den.asc})`, [`${den.asc} != 0`]) }],
             solution: [T`Set the denominator equal to 0 and factor: \(${den.tex} = \left(x ${MX.sgnTerm(-r)}\right)\left(x ${MX.sgnTerm(-s)}\right) = 0\)`, T`\(x = ${r}\) or \(x = ${s}\) must be removed.`, T`\(${H.box(D.tex)}\)`],
           };
         },
@@ -302,7 +400,7 @@
           const In = MX.lin(a, b);
           return {
             prompt: T`Find the domain of \(f(x) = \sqrt{${In.tex}}\) in interval notation.`,
-            parts: [{ kind: 'interval', answer: D.asc, show: D.tex, points: 3 }],
+            parts: [{ kind: 'interval', answer: D.asc, show: D.tex, points: 3, verify: domainVerify(`sqrt(${In.asc})`, [`${In.asc} >= 0`]) }],
             solution: [T`The inside of a square root can't be negative: \(${In.tex} \ge 0\)`, T`\(${MX.coef(a)}x \ge ${-b}\)${a < 0 ? ', and dividing by a negative flips the sign' : ''}: \(x ${a > 0 ? '\\ge' : '\\le'} ${cut.tex()}\)`, T`\(${H.box(D.tex)}\)`],
           };
         },
@@ -313,7 +411,7 @@
           const P = MX.poly([[rng.nz(-4, 4), { x: rng.int(2, 3) }], [rng.nz(-9, 9), { x: 1 }], [rng.int(-9, 9), {}]]);
           return {
             prompt: T`Find the domain of \(h(x) = ${P.tex}\) in interval notation.`,
-            parts: [{ kind: 'interval', answer: ALL.asc, show: ALL.tex, points: 3 }],
+            parts: [{ kind: 'interval', answer: ALL.asc, show: ALL.tex, points: 3, verify: domainVerify(P.asc, []) }],
             solution: [T`A polynomial has no denominators and no square roots, so any real number works.`, T`\(${H.box(ALL.tex)}\) (all real numbers)`],
           };
         },
@@ -325,7 +423,7 @@
           const D = iv(h, Infinity, false, false);
           return {
             prompt: T`Find the domain of \(f(x) = \dfrac{${c}}{\sqrt{${MX.lin(1, -h).tex}}}\) in interval notation.`,
-            parts: [{ kind: 'interval', answer: D.asc, show: D.tex, points: 3 }],
+            parts: [{ kind: 'interval', answer: D.asc, show: D.tex, points: 3, verify: domainVerify(`${c}/sqrt(${MX.lin(1, -h).asc})`, [`${MX.lin(1, -h).asc} > 0`]) }],
             solution: [T`The inside of the root can't be negative, and the denominator can't be 0, so the inside must be <em>positive</em>: \(${MX.lin(1, -h).tex} \gt 0\).`, T`\(x \gt ${h}\), which excludes the endpoint.`, T`\(${H.box(D.tex)}\)`],
           };
         },
@@ -351,7 +449,7 @@
           const f = T`${MX.coef(a)}\left(x ${MX.sgnTerm(-h)}\right)^{2} ${MX.sgnTerm(k)}`.replace(/\\left\(x \+ 0\\right\)|\\left\(x - 0\\right\)/, 'x');
           return {
             prompt: T`Find the range of \(f(x) = ${f}\) in interval notation.`,
-            parts: [{ kind: 'interval', answer: Rg.asc, show: Rg.tex, points: 3 }],
+            parts: [{ kind: 'interval', answer: Rg.asc, show: Rg.tex, points: 3, verify: rangeVerify(`${a}(x-(${h}))^2+(${k})`, -9, 9, 'arrow', 'arrow') }],
             solution: [T`Vertex form \(a\left(x - h\right)^{2} + k\): the vertex is \((${h}, ${k})\) and \(a = ${a}\).`, T`\(a ${a > 0 ? '\\gt' : '\\lt'} 0\), so the parabola opens ${a > 0 ? 'up and ' + k + ' is the smallest output' : 'down and ' + k + ' is the largest output'}.`, T`\(${H.box(Rg.tex)}\)`],
           };
         },
@@ -364,7 +462,7 @@
           const Rg = a > 0 ? iv(k, Infinity, true, false) : iv(-Infinity, k, false, true);
           return {
             prompt: T`Find the range of \(f(x) = ${MX.quad(a, b, c).tex}\) in interval notation.`,
-            parts: [{ kind: 'interval', answer: Rg.asc, show: Rg.tex, points: 3 }],
+            parts: [{ kind: 'interval', answer: Rg.asc, show: Rg.tex, points: 3, verify: rangeVerify(MX.quad(a, b, c).asc, -9, 9, 'arrow', 'arrow') }],
             solution: [T`Vertex: \(x = -\frac{b}{2a} = -\frac{${b}}{2\left(${a}\right)} = ${h}\), and \(f(${h}) = ${k}\).`, T`\(a = ${a}\) is ${a > 0 ? 'positive (opens up)' : 'negative (opens down)'}, so ${k} is the ${a > 0 ? 'minimum' : 'maximum'}.`, T`\(${H.box(Rg.tex)}\)`],
           };
         },
@@ -376,7 +474,8 @@
           const Rg = a > 0 ? iv(k, Infinity, true, false) : iv(-Infinity, k, false, true);
           return {
             prompt: T`Find the range of \(f(x) = ${MX.coef(a)}\sqrt{${MX.lin(1, -h).tex}} ${MX.sgnTerm(k)}\) in interval notation.`,
-            parts: [{ kind: 'interval', answer: Rg.asc, show: Rg.tex, points: 3 }],
+            // domain from the radicand: x - h >= 0
+            parts: [{ kind: 'interval', answer: Rg.asc, show: Rg.tex, points: 3, verify: rangeVerify(`${a}*sqrt(${MX.lin(1, -h).asc})+(${k})`, h, h + 9, true, 'arrow') }],
             solution: [T`\(\sqrt{${MX.lin(1, -h).tex}}\) takes every value from 0 up.`, T`Multiplying by ${a} ${a > 0 ? 'keeps it going up' : 'flips it downward'}, and adding ${k} shifts the start to \(y = ${k}\).`, T`\(${H.box(Rg.tex)}\)`],
           };
         },
@@ -388,7 +487,7 @@
           const Rg = a > 0 ? iv(k, Infinity, true, false) : iv(-Infinity, k, false, true);
           return {
             prompt: T`Find the range of \(f(x) = ${MX.coef(a)}\left|${MX.lin(1, -h).tex}\right| ${MX.sgnTerm(k)}\) in interval notation.`,
-            parts: [{ kind: 'interval', answer: Rg.asc, show: Rg.tex, points: 3 }],
+            parts: [{ kind: 'interval', answer: Rg.asc, show: Rg.tex, points: 3, verify: rangeVerify(`${a}*|${MX.lin(1, -h).asc}|+(${k})`, -9, 9, 'arrow', 'arrow') }],
             solution: [T`\(\left|${MX.lin(1, -h).tex}\right| \ge 0\), with its smallest value 0 at \(x = ${h}\).`, T`The graph is a V with its point at \((${h}, ${k})\), opening ${a > 0 ? 'up' : 'down'}.`, T`\(${H.box(Rg.tex)}\)`],
           };
         },
@@ -399,7 +498,7 @@
           const m = rng.nz(-6, 6), b = rng.int(-9, 9);
           return {
             prompt: T`Find the range of \(f(x) = ${MX.lin(m, b).tex}\) in interval notation.`,
-            parts: [{ kind: 'interval', answer: ALL.asc, show: ALL.tex, points: 3 }],
+            parts: [{ kind: 'interval', answer: ALL.asc, show: ALL.tex, points: 3, verify: rangeVerify(MX.lin(m, b).asc, -9, 9, 'arrow', 'arrow') }],
             solution: [T`The graph is a slanted line (slope ${m}), which rises or falls forever and hits every height.`, T`\(${H.box(ALL.tex)}\)`],
           };
         },

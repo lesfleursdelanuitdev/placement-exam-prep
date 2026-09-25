@@ -40,8 +40,9 @@
     for (let k = 0; k + 2 < bits.length; k += 2) out.push({ lhs: MX.parse(bits[k]), op: bits[k + 1], rhs: MX.parse(bits[k + 2]) });
     return out;
   };
-  // does env satisfy the relation? equality is judged with a relative tolerance so 1/3 works in floating point
-  function holds(r, env, tol = 1e-9) {
+  // does env satisfy the relation? equality allows a relative tolerance so 1/3 works in floating point, but a
+  // tight one, so a point just off a double root (x^2 - 8x + 16 at x = 4.00001) is not taken as "equal"
+  function holds(r, env, tol = 1e-12) {
     if (!r.fl) Object.defineProperties(r, { fl: { value: compile(r.lhs) }, fr: { value: compile(r.rhs) } });
     const L = r.fl(env), R = r.fr(env);
     if (!isFinite(L) || !isFinite(R)) return false;

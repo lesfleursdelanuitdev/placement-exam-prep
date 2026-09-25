@@ -18,6 +18,21 @@
   };
   MX.slopeInt = slopeInt;
 
+  // ---------- verifier helpers ----------
+  const V = MX.V;
+  const SAMPLE_X = [-7.3, -4, -2.5, -1, 0, 0.7, 1.5, 3, 4.2, 6.9];
+  // an intercept or point answer lies on the stated equation (and on the stated axis, if any)
+  const onEq = (eq, axis) => V.point((x, y) => {
+    if (axis === 'x' && !V.close(y, 0)) return 'an x-intercept has y = 0';
+    if (axis === 'y' && !V.close(x, 0)) return 'a y-intercept has x = 0';
+    return V.satisfies(eq, { x, y }) || 'the point is not on ' + eq;
+  });
+  // a graph option (data {f, dots}) draws the stated relation: its curve and every marked dot satisfy it
+  const drawsRel = (eq) => (d) => {
+    const t = V.truth(eq);
+    return SAMPLE_X.every((x) => t({ x, y: d.f(x) })) && (d.dots || []).every(([x, y]) => t({ x, y }));
+  };
+
   // ---------- intercepts and graphing lines ----------
   function lineGraph(m, b, o = {}) { return H.graphSvg((x) => m * x + b, o); }
   MX.register({
@@ -38,12 +53,13 @@
           const xi = new Q(C, A), yi = new Q(C, B), m = new Q(-A, B);
           const px = H.pt(xi, 0), py = H.pt(0, yi), si = slopeInt(m, yi);
           const E = poly([[A, { x: 1 }], [B, { y: 1 }]], ['x', 'y']).tex + ' = ' + C;
+          const Eq = poly([[A, { x: 1 }], [B, { y: 1 }]], ['x', 'y']).asc + '=' + C;
           return {
             prompt: T`Use the equation \(${E}\) to answer the questions below.`,
             parts: [
-              { label: 'a', ask: 'Find the coordinates of the x-intercept.', kind: 'point', answer: px.asc, show: px.tex, points: 2 },
-              { label: 'b', ask: 'Find the coordinates of the y-intercept.', kind: 'point', answer: py.asc, show: py.tex, points: 2 },
-              { label: 'c', ask: 'Write the equation of the line in slope-intercept form.', kind: 'eq', form: 'slope', answer: si.asc, show: si.tex, points: 2 },
+              { label: 'a', ask: 'Find the coordinates of the x-intercept.', kind: 'point', answer: px.asc, show: px.tex, points: 2, verify: onEq(Eq, 'x') },
+              { label: 'b', ask: 'Find the coordinates of the y-intercept.', kind: 'point', answer: py.asc, show: py.tex, points: 2, verify: onEq(Eq, 'y') },
+              { label: 'c', ask: 'Write the equation of the line in slope-intercept form.', kind: 'eq', form: 'slope', answer: si.asc, show: si.tex, points: 2, verify: V.explicit(Eq) },
             ],
             solution: [
               T`x-intercept: let \(y = 0\): \(${A}x = ${C}\), \(x = ${xi.tex()}\), so \(${px.tex}\)`,
@@ -62,19 +78,19 @@
           const g = MX.gcdAll([A, B, C]) * (A < 0 ? -1 : 1);
           A /= g; B /= g; C /= g;
           const E = poly([[A, { x: 1 }], [B, { y: 1 }]], ['x', 'y']).tex + ' = ' + C;
+          const Eq = poly([[A, { x: 1 }], [B, { y: 1 }]], ['x', 'y']).asc + '=' + C;
           const m = -yi / xi;
-          const opts = H.choices(rng, lineGraph(m, yi, { dots: [[xi, 0], [0, yi]] }), [
-            lineGraph(yi / xi, -yi, { dots: [[xi, 0], [0, -yi]] }),
-            lineGraph(yi / xi, yi, { dots: [[-xi, 0], [0, yi]] }),
-            lineGraph(-xi / yi, xi, { dots: [[yi, 0], [0, xi]] }),
-          ]);
+          // each option carries the line and dots it draws
+          const L = (mm, bb, dots) => ({ svg: lineGraph(mm, bb, { dots }), d: { f: (x) => mm * x + bb, dots } });
+          const cands = [L(m, yi, [[xi, 0], [0, yi]]), L(yi / xi, -yi, [[xi, 0], [0, -yi]]), L(yi / xi, yi, [[-xi, 0], [0, yi]]), L(-xi / yi, xi, [[yi, 0], [0, xi]])];
+          const opts = H.choices(rng, cands[0].svg, cands.slice(1).map((c) => c.svg), cands.map((c) => c.d));
           const px = H.pt(xi, 0), py = H.pt(0, yi);
           return {
             prompt: T`Graph the equation \(${E}\).`,
             parts: [
-              { label: 'a', ask: 'x-intercept', kind: 'point', answer: px.asc, show: px.tex, points: 1 },
-              { label: 'b', ask: 'y-intercept', kind: 'point', answer: py.asc, show: py.tex, points: 1 },
-              { label: 'c', ask: 'Which graph is the line?', kind: 'choice', graph: true, options: opts.options, answer: opts.answer, points: 2 },
+              { label: 'a', ask: 'x-intercept', kind: 'point', answer: px.asc, show: px.tex, points: 1, verify: onEq(Eq, 'x') },
+              { label: 'b', ask: 'y-intercept', kind: 'point', answer: py.asc, show: py.tex, points: 1, verify: onEq(Eq, 'y') },
+              { label: 'c', ask: 'Which graph is the line?', kind: 'choice', graph: true, options: opts.options, answer: opts.answer, data: opts.data, points: 2, verify: V.choiceData(drawsRel(Eq)) },
             ],
             solution: [
               T`\(y = 0\): \(${A}x = ${C}\), so the x-intercept is \(${px.tex}\)`,
@@ -116,14 +132,18 @@
   });
   function twoPoints(rng, P1, P2, m, b, kind) {
     const si = slopeInt(m, b);
+    // checks built from the two stated points only
+    const [x1, y1] = P1, [x2, y2] = P2, slope = () => (y2 - y1) / (x2 - x1);
+    const through = `(y-(${y1}))*((${x2})-(${x1}))=((${y2})-(${y1}))*(x-(${x1}))`;
+    const vOther = V.custom((a) => (typeof a === 'number' && (kind === 'perp' ? V.close(a * slope(), -1) : V.close(a, slope()))) || 'wrong ' + (kind === 'perp' ? 'perpendicular' : 'parallel') + ' slope');
     const other = kind === 'perp' ? m.inv().neg() : m;
     const dy = P2[1] - P1[1], dx = P2[0] - P1[0];
     return {
       prompt: T`A line passes through the points \(${H.pt(...P1).tex}\) and \(${H.pt(...P2).tex}\).`,
       parts: [
-        { label: 'a', ask: 'Find the slope of the line.', kind: 'num', frac: true, answer: m.str(), show: T`m = ${m.tex()}`, pre: 'm =', points: 2 },
-        { label: 'b', ask: 'Find the equation of the line in slope-intercept form.', kind: 'eq', form: 'slope', answer: si.asc, show: si.tex, points: 3 },
-        { label: 'c', ask: `Find the slope of a line that is ${kind === 'perp' ? 'perpendicular' : 'parallel'} to this line.`, kind: 'num', frac: true, answer: other.str(), show: other.tex(), points: 1 },
+        { label: 'a', ask: 'Find the slope of the line.', kind: 'num', frac: true, answer: m.str(), show: T`m = ${m.tex()}`, pre: 'm =', points: 2, verify: V.value(slope) },
+        { label: 'b', ask: 'Find the equation of the line in slope-intercept form.', kind: 'eq', form: 'slope', answer: si.asc, show: si.tex, points: 3, verify: V.explicit(through) },
+        { label: 'c', ask: `Find the slope of a line that is ${kind === 'perp' ? 'perpendicular' : 'parallel'} to this line.`, kind: 'num', frac: true, answer: other.str(), show: other.tex(), points: 1, verify: vOther },
       ],
       solution: [
         T`\(m = \dfrac{${P2[1]} - ${MX.par(P1[1])}}{${P2[0]} - ${MX.par(P1[0])}} = \dfrac{${dy}}{${dx}} = ${m.tex()}\)`,
@@ -147,20 +167,22 @@
     const shift = k > 0 ? -3 : 3;
     const d2 = h !== 0 ? (x) => f(x + 2 * h) : (x) => f(x - 2);
     const opt = (g, dots) => H.graphSvg(g, { dots });
-    const opts = H.choices(rng, opt(f, []), [
-      opt((x) => -f(x), []),
-      opt(d2, []),
-      opt((x) => f(x) + shift, []),
-    ]);
+    const gs = [f, (x) => -f(x), d2, (x) => f(x) + shift]; // each option's data is the function it plots
+    const opts = H.choices(rng, opt(gs[0], []), gs.slice(1).map((g) => opt(g, [])), gs.map((g) => ({ f: g })));
+    // checks built from the displayed equation y = E
+    const Ey = V.fn(E.asc, 'x');
+    let xr = null; // roots of E = 0, found on first use
     const xs = [H.pt(r1, 0), H.pt(r2, 0)], yi = H.pt(0, c), vx = H.pt(h, k);
     const F1 = poly([[1, { x: 1 }], [-r1, {}]]), F2 = poly([[1, { x: 1 }], [-r2, {}]]);
     return {
       prompt: T`Use the equation \(y = ${E.tex}\) to answer the questions below.`,
       parts: [
-        { label: 'a', ask: 'Find the x-intercepts. Write them as ordered pairs.', kind: 'points', answers: [xs[0].asc, xs[1].asc], show: xs[0].tex + '\\text{ and }' + xs[1].tex, joiner: 'and', points: 3 },
-        { label: 'b', ask: 'Find the y-intercept. Write it as an ordered pair.', kind: 'point', answer: yi.asc, show: yi.tex, points: 2 },
-        { label: 'c', ask: 'Find the vertex. Write it as an ordered pair.', kind: 'point', answer: vx.asc, show: vx.tex, points: 2 },
-        { label: 'd', ask: 'Which graph shows the parabola?', kind: 'choice', graph: true, options: opts.options, answer: opts.answer, points: 2 },
+        { label: 'a', ask: 'Find the x-intercepts. Write them as ordered pairs.', kind: 'points', answers: [xs[0].asc, xs[1].asc], show: xs[0].tex + '\\text{ and }' + xs[1].tex, joiner: 'and', points: 3, verify: V.pointSet(() => (xr = xr || V.roots(E.asc + '=0')).map((x) => [x, 0])) },
+        { label: 'b', ask: 'Find the y-intercept. Write it as an ordered pair.', kind: 'point', answer: yi.asc, show: yi.tex, points: 2, verify: onEq('y=' + E.asc, 'y') },
+        { label: 'c', ask: 'Find the vertex. Write it as an ordered pair.', kind: 'point', answer: vx.asc, show: vx.tex, points: 2,
+          // on the parabola, and on its axis of symmetry: equal heights at equal distances either side
+          verify: V.point((x, y) => (V.close(y, Ey(x)) && [0.5, 1, 2.3, 4].every((t) => V.close(Ey(x - t), Ey(x + t)))) || 'not the turning point of y = ' + E.asc) },
+        { label: 'd', ask: 'Which graph shows the parabola?', kind: 'choice', graph: true, options: opts.options, answer: opts.answer, data: opts.data, points: 2, verify: V.choiceData(drawsRel('y=' + E.asc)) },
       ],
       solution: [
         T`x-intercepts: set \(y = 0\) and factor: \(${a < 0 ? '-' : ''}\left(${F1.tex}\right)\left(${F2.tex}\right) = 0\), so \(x = ${r1}\) or \(x = ${r2}\): \(${xs[0].tex}\) and \(${xs[1].tex}\)`,
@@ -219,7 +241,7 @@
           let a1, b1, a2, b2, x0, y0;
           do { a1 = rng.nz(-8, 8); b1 = rng.nz(-6, 6); a2 = rng.nz(-8, 8); b2 = rng.nz(-6, 6); x0 = rng.nz(-6, 6); y0 = rng.nz(-6, 6); } while (a1 * b2 - a2 * b1 === 0 || Math.abs(b1) === Math.abs(b2) || MX.gcd(a1, b1) !== 1 || MX.gcd(a2, b2) !== 1);
           const c1 = a1 * x0 + b1 * y0, c2 = a2 * x0 + b2 * y0;
-          return sys(eqTex(a1, b1, c1), eqTex(a2, b2, c2), elimSteps(a1, b1, c1, a2, b2, c2, x0, y0), x0, y0);
+          return sys(eqTex(a1, b1, c1), eqTex(a2, b2, c2), elimSteps(a1, b1, c1, a2, b2, c2, x0, y0), x0, y0, [[a1, b1, c1], [a2, b2, c2]]);
         },
       },
       scale: {
@@ -228,7 +250,7 @@
           let a1, b1, a2, k, x0, y0;
           do { a1 = rng.nz(-8, 8); b1 = rng.nz(-6, 6); a2 = rng.nz(-9, 9); k = rng.pick([-3, -2, 2, 3]); x0 = rng.nz(-8, 8); y0 = rng.nz(-8, 8); } while (a1 * k * b1 - a2 * b1 === 0 || MX.gcd(a1, b1) !== 1);
           const b2 = k * b1, c1 = a1 * x0 + b1 * y0, c2 = a2 * x0 + b2 * y0;
-          return sys(eqTex(a1, b1, c1), eqTex(a2, b2, c2), elimSteps(a1, b1, c1, a2, b2, c2, x0, y0), x0, y0);
+          return sys(eqTex(a1, b1, c1), eqTex(a2, b2, c2), elimSteps(a1, b1, c1, a2, b2, c2, x0, y0), x0, y0, [[a1, b1, c1], [a2, b2, c2]]);
         },
       },
       decimal: {
@@ -238,16 +260,20 @@
           do { a1 = rng.int(1, 9); b1 = rng.nz(-9, 9); a2 = rng.nz(-9, 9); b2 = rng.nz(-9, 9); x0 = rng.nz(-5, 5); y0 = rng.nz(-5, 5); c1 = a1 * x0 + b1 * y0; } while (a1 * b2 - a2 * b1 === 0 || Math.abs(c1) > 9 || c1 === 0 || Math.abs(b1) === Math.abs(b2) || MX.gcd(a1, b1) !== 1);
           const c2 = a2 * x0 + b2 * y0;
           const steps = [T`Multiply the first equation by 10 to clear the decimals: \(${eqTex(a1, b1, c1)}\)`, ...elimSteps(a1, b1, c1, a2, b2, c2, x0, y0)];
-          return sys(eqTexDec(a1, b1, c1), eqTex(a2, b2, c2), steps, x0, y0);
+          return sys(eqTexDec(a1, b1, c1), eqTex(a2, b2, c2), steps, x0, y0, [[a1 / 10, b1 / 10, c1 / 10], [a2, b2, c2]]);
         },
       },
     },
   });
-  function sys(e1, e2, steps, x0, y0) {
+  // co: the displayed coefficients [a, b, c] of ax + by = c for each equation; the answer must satisfy both,
+  // and the system must have exactly one solution (otherwise a single point is the wrong answer)
+  function sys(e1, e2, steps, x0, y0, co) {
     const p = H.pt(x0, y0);
+    const eqs = co.map(([a, b, c]) => `${a}x+(${b})y=${c}`);
+    const one = !V.close(co[0][0] * co[1][1] - co[1][0] * co[0][1], 0, 1e-12);
     return {
       prompt: T`Solve the system of linear equations algebraically. Write your solution as an ordered pair. \[${e1}\] \[${e2}\]`,
-      parts: [{ kind: 'point', answer: p.asc, show: p.tex, points: 3 }],
+      parts: [{ kind: 'point', answer: p.asc, show: p.tex, points: 3, verify: V.point((x, y) => (one ? V.satisfies(eqs, { x, y }) || 'the point does not satisfy both equations' : 'the system does not have exactly one solution')) }],
       solution: steps,
     };
   }
@@ -255,10 +281,17 @@
   // ---------- variation ----------
   const PAIRS = [['y', 'x'], ['x', 'p'], ['d', 't'], ['A', 'r'], ['w', 'n']];
   function modelChoice(rng, u, w, kind) {
-    const opts = [T`\(${w} = \frac{k}{${u}}\)`, T`\(${u} = \frac{k}{${w}}\)`, T`\(${u} = k${w}\)`, T`\(${w} = k${u}\)`];
+    // option 0 was w = k/u, which for inverse variation is the same model as u = k/w (two right options),
+    // so inverse questions use u = k/w² instead
+    const opts = [kind === 'inverse' ? T`\(${u} = \frac{k}{${w}^{2}}\)` : T`\(${w} = \frac{k}{${u}}\)`, T`\(${u} = \frac{k}{${w}}\)`, T`\(${u} = k${w}\)`, T`\(${w} = k${u}\)`];
+    // what each option says, as a residual in (U, W, k) that is 0 when the option holds
+    const rels = [kind === 'inverse' ? (U, W, k) => U - k / (W * W) : (U, W, k) => W - k / U, (U, W, k) => U - k / W, (U, W, k) => U - k * W, (U, W, k) => W - k * U];
     const correct = kind === 'direct' ? 2 : 1;
     const order = rng.shuffle([0, 1, 2, 3]);
-    return { label: 'a', ask: 'Choose the variation model (k is the constant of variation).', kind: 'choice', inline: true, options: order.map((i) => MX.rich(opts[i])), answer: order.indexOf(correct), points: 1 };
+    // "u varies directly as w" means u/w is the constant k; "inversely" means u·w is k
+    const samples = [[2, 3], [5, 0.5], [7, 11], [1.5, 4]].map(([W, k]) => ({ U: kind === 'direct' ? k * W : k / W, W, k }));
+    const verify = V.choiceData((rel) => samples.every(({ U, W, k }) => V.close(rel(U, W, k), 0, 1e-9)));
+    return { label: 'a', ask: 'Choose the variation model (k is the constant of variation).', kind: 'choice', inline: true, options: order.map((i) => MX.rich(opts[i])), answer: order.indexOf(correct), data: order.map((i) => rels[i]), points: 1, verify };
   }
   MX.register({
     id: 'variation', section: SEC, title: 'Direct & inverse variation', kind: 'skill',
@@ -278,8 +311,8 @@
             prompt: T`Suppose \(${u}\) varies directly as \(${w}\), and \(${u} = ${y1}\) when \(${w} = ${x1}\).`,
             parts: [
               modelChoice(rng, u, w, 'direct'),
-              { label: 'b', ask: 'Solve for the constant of variation.', kind: 'num', pre: 'k =', answer: String(k), show: 'k = ' + k, points: 1 },
-              { label: 'c', ask: T`Find the value of \(${w}\) when \(${u}\) is ${y2}.`, kind: 'num', pre: w + ' =', answer: String(x2), show: T`${w} = ${x2}`, points: 1 },
+              { label: 'b', ask: 'Solve for the constant of variation.', kind: 'num', pre: 'k =', answer: String(k), show: 'k = ' + k, points: 1, verify: V.solves(`${y1}=k*${x1}`, { v: 'k', lo: -1000, hi: 1000, n: 4000 }) },
+              { label: 'c', ask: T`Find the value of \(${w}\) when \(${u}\) is ${y2}.`, kind: 'num', pre: w + ' =', answer: String(x2), show: T`${w} = ${x2}`, points: 1, verify: V.solves(`${y2}/x=${y1}/${x1}`, { lo: -1000, hi: 1000, n: 4000 }) },
             ],
             solution: [T`Model: \(${u} = k${w}\)`, T`\(${y1} = k\cdot${x1}\), so \(k = ${k}\)`, T`\(${y2} = ${k}${w}\), so \(${H.box(T`${w} = ${x2}`)}\)`],
           };
@@ -296,8 +329,8 @@
             prompt: T`Suppose that \(${u}\) varies inversely as \(${w}\), and \(${u} = ${x1}\) when \(${w} = ${p1}\).`,
             parts: [
               modelChoice(rng, u, w, 'inverse'),
-              { label: 'b', ask: 'Find the constant of variation.', kind: 'num', pre: 'k =', answer: String(k), show: 'k = ' + k, points: 1 },
-              { label: 'c', ask: T`Find \(${u}\) when \(${w} = ${p2}\).`, kind: 'num', pre: u + ' =', answer: String(x2), show: T`${u} = ${x2}`, points: 2 },
+              { label: 'b', ask: 'Find the constant of variation.', kind: 'num', pre: 'k =', answer: String(k), show: 'k = ' + k, points: 1, verify: V.solves(`${x1}=k/${p1}`, { v: 'k', lo: -1000, hi: 1000, n: 4000 }) },
+              { label: 'c', ask: T`Find \(${u}\) when \(${w} = ${p2}\).`, kind: 'num', pre: u + ' =', answer: String(x2), show: T`${u} = ${x2}`, points: 2, verify: V.solves(`x*${p2}=${x1}*${p1}`, { lo: -1000, hi: 1000, n: 4000 }) },
             ],
             solution: [T`Model: \(${u} = \frac{k}{${w}}\)`, T`\(${x1} = \frac{k}{${p1}}\), so \(k = ${x1}\cdot${p1} = ${k}\)`, T`\(${u} = \frac{${k}}{${p2}} = ${H.box(String(x2))}\)`],
           };
@@ -311,8 +344,8 @@
           return {
             prompt: T`\(${u}\) varies directly as the square of \(${w}\). When \(${w} = ${x1}\), \(${u} = ${k * x1 * x1}\).`,
             parts: [
-              { label: 'a', ask: 'Find the constant of variation.', kind: 'num', pre: 'k =', answer: String(k), show: 'k = ' + k, points: 1 },
-              { label: 'b', ask: T`Find \(${u}\) when \(${w} = ${x2}\).`, kind: 'num', pre: u + ' =', answer: String(k * x2 * x2), show: T`${u} = ${k * x2 * x2}`, points: 2 },
+              { label: 'a', ask: 'Find the constant of variation.', kind: 'num', pre: 'k =', answer: String(k), show: 'k = ' + k, points: 1, verify: V.solves(`${k * x1 * x1}=k*${x1}^2`, { v: 'k', lo: -1000, hi: 1000, n: 4000 }) },
+              { label: 'b', ask: T`Find \(${u}\) when \(${w} = ${x2}\).`, kind: 'num', pre: u + ' =', answer: String(k * x2 * x2), show: T`${u} = ${k * x2 * x2}`, points: 2, verify: V.solves(`x/${x2}^2=${k * x1 * x1}/${x1}^2`, { lo: -1000, hi: 1000, n: 4000 }) },
             ],
             solution: [T`Model: \(${u} = k${w}^{2}\)`, T`\(${k * x1 * x1} = k\cdot${x1}^{2} = ${x1 * x1}k\), so \(k = ${k}\)`, T`\(${u} = ${k}\cdot${x2}^{2} = ${H.box(String(k * x2 * x2))}\)`],
           };

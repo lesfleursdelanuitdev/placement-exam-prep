@@ -170,7 +170,8 @@ No dependencies: no React, no Next.js, no npm packages at all. The page is plain
 
 ```
 node build.mjs            # bundle src/ into docs/index.html (and dist/artifact.html)
-node test/selftest.mjs    # generate every variant with many seeds and check the answer keys
+node test/selftest.mjs    # generate every variant with many seeds and check the answer keys (add a topic id or file name to test just that)
+node test/fuzz.mjs 400    # every variant with 400 fresh random seeds; prints a repro command for each failure
 node test/editor.mjs      # rebuild every answer key in the math box (stacked fractions, exponents, radicals) and re-grade it; replay keystrokes
 node test/security.mjs    # tampered saved progress must be cleaned before the page uses it
 node test/dump.mjs w-pyth # print sample problems + solutions for a topic (prefix match)
@@ -182,6 +183,7 @@ node test/catalog.mjs     # print the catalog above
 | `src/core.js` | namespace, seeded RNG, exact fractions, polynomial formatting |
 | `src/texmath.js` | tiny TeX-subset → HTML renderer (fractions, radicals, exponents, logs) with no fonts or libraries |
 | `src/parse.js` | parser for typed answers (including logs, e, ∞), evaluation, polynomial/rational forms |
+| `src/verify.js` | independent answer checks: each generated part's `verify` re-derives the answer from the problem as shown (root finding, substitution, equivalence, region sampling) |
 | `src/check.js` | graders for each answer type (`num`, `nums`, `expr`, `factor`, `eq`, `system`, `ineq`, `point(s)`, `sci`, `radpm`, `eqform`, `set`, `interval`, `choice`) |
 | `src/editor.js` | the WYSIWYG math answer box and its button bar; its value is the plain text the graders read |
 | `src/svg.js` | theme-aware SVG drawing kit (planes, number lines, mappings, illustrations) |
@@ -192,6 +194,14 @@ node test/catalog.mjs     # print the catalog above
 | `src/store.js` | saving progress (localStorage + optional Claude artifact db); every load is sanitized, since saved data is untrusted input |
 | `src/app.js` | home, exam, tutorial, flashcard and progress views |
 
+### How answer keys are kept correct
+
+The grader compares a student's answer with the stored key, so a generator that computes the key wrong would mark right answers wrong. Three layers stop that:
+
+1. **Every part has an independent verifier.** `verify` is built from the problem as the student sees it (the displayed equation, expression, story numbers or plotted data), never from the generator's worked answer, and it gets to the answer a different way: numeric root finding (which also catches extraneous roots, holes, no-solution and identity cases), substituting into the stated relationships, equivalence at sample points, or sampling an inequality. Multiple-choice options carry what they show, so the verifier confirms that exactly one option is right and that it's the marked one. Rounded answers are checked for correct rounding of the exact value.
+2. **The tests.** `test/selftest.mjs` requires a verifier on every part, runs it on the answer key, and also feeds it a deliberately broken key that it must reject. `test/fuzz.mjs` does the same with fresh random seeds. GitHub Actions runs the tests on every push and pull request, checks that `docs/index.html` matches the source, and runs a wide random-seed pass daily.
+3. **A safety net in the app.** Before a question is shown (exam or tutorial), `MX.sound` checks that the grader accepts its key and the verifier agrees. A question that fails is replaced by one from the next seed and a warning is logged, so a rare bad case never reaches a student. Questions that pass keep their seed, so saved exams rebuild unchanged.
+
 ### Adding a topic
 
 ```js
@@ -200,9 +210,9 @@ MX.register({
   sources: ['Exam 1 #9'],
   lesson: MX.T`<p>Explanation with inline math \(x^{2}\).</p>`,
   variants: {
-    basic: { name: 'Basic', gen(rng) { return { prompt, visual, parts: [{ kind: 'expr', answer: 'x+1', points: 3 }], solution: [...] }; } },
+    basic: { name: 'Basic', gen(rng) { return { prompt, visual, parts: [{ kind: 'expr', answer: 'x+1', points: 3, verify: MX.V.equiv('(x^2-1)/(x-1)') }], solution: [...] }; } },
   },
 });
 ```
 
-Add its deck to `src/flashcards.js`. Then run `node test/selftest.mjs` and `node test/editor.mjs`. The self-test fails if any generated answer key is rejected by its own checker, if an obvious wrong answer is accepted, or if a word problem lacks a visual. The editor test fails if an answer key stops grading as correct once it's built in the math box.
+Add its deck to `src/flashcards.js`. Then run `node test/selftest.mjs` and `node test/editor.mjs`. Every part needs a `verify` built from the displayed problem (see `src/verify.js` for the helpers: `solves`, `solvesFor`, `equiv`, `value`, `region`, `choiceRegion`, `choiceData`, `explicit`, `model`, `point`, `custom`). The self-test fails if any generated answer key is rejected by its own checker or by its verifier, if a verifier accepts a broken key, if an obvious wrong answer is accepted, or if a word problem lacks a visual. The editor test fails if an answer key stops grading as correct once it's built in the math box.
