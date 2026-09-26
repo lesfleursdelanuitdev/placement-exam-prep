@@ -9,7 +9,8 @@
 #   web/build.sh --quick    fewer seeds in the engine tests (and says so in BUILD); not for a release
 #   web/build.sh --no-image skips the container image (CI: no podman there)
 # Then the container image localhost/examprep:<release id> (step 5; deploy/install.sh installs it).
-# The database tests come with step 3 (later: guest-only for now).
+# The progress tests (test/progress.test.mjs) need a Postgres 17: a podman container of their own,
+# or EXAMPREP_TEST_PG=<superuser url> (CI's service).
 set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")"
 [[ $EUID -ne 0 ]] || { echo "run build.sh as yourself, without sudo" >&2; exit 1; }
@@ -40,7 +41,8 @@ cp -a .next/static release/.next/static
 [[ ! -d public ]] || cp -a public release/public
 cp deploy/healthcheck.mjs release/healthcheck.mjs     # the container's health check
 cp pammy-panel.json release/pammy-panel.json          # its privileges and roles, for the lfdln panel (install.sh)
-echo "--- the built server (CSP, nonces, fonts from this site, headers)"
+cp -a db migrations release/                          # the migrations and their runner: install.sh runs them in the image
+echo "--- the built server (CSP, nonces, fonts from this site, headers; signed-in progress on a throwaway Postgres)"
 EXAMPREP_RELEASE="$PWD/release" node --test --test-reporter=dot test/*.test.mjs
 echo "--- the pages in a browser (Playwright: desktop and 320 px)"
 EXAMPREP_RELEASE="$PWD/release" npx playwright test

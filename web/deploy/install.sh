@@ -2,7 +2,10 @@
 # Install a built release of the Next.js exam prep on this server (NEXTJS-PLAN.md, step 5):
 # the image web/build.sh made into svc-lfdln-apps's rootless store, the Quadlet unit, a restart,
 # the health check, then verify-examprep-next.sh. A failed start or verify puts the previous
-# release back. Guest-only: no database, no migrations, no secrets.
+# release back. Signed-in progress (NEXTJS-PLAN.md S3-5): the database's passwords (made by the lfdln
+# panel's appdb, /etc/lfdln-appdb/examprep_*.pass) become svc-lfdln-apps' podman secrets, and the
+# migrations run in the new image, as examprep_owner, before it starts. Migrations only go forward:
+# putting an older release back leaves guests' pages working and its progress answering 503.
 #   web/build.sh                      (as momolig: the tests, release/, the image)
 #   sudo web/deploy/install.sh        (installs release/'s image)
 # The first run also makes svc-lfdln-apps (lingering, its own subuid range) and
@@ -63,6 +66,21 @@ install -d -o "$SVC" -g "$SVC" -m 750 "$PROJ/logs"
 # ---------------------------------------------------------------- 2. the image, and the way back
 prev=$(as "$SVC" podman image inspect --format '{{.Id}}' localhost/examprep:prod 2>/dev/null || true)
 as "$BUILDER" podman save "$IMAGE" | as "$SVC" podman load -q >/dev/null || die "loading the image into $SVC's podman failed (nothing changed)"
+
+# ---------------------------------------------------------------- 2b. the database: secrets, then migrations
+APPDB_PASS=/etc/lfdln-appdb
+for r in examprep_app examprep_owner; do
+    [[ -s $APPDB_PASS/$r.pass ]] || die "no $APPDB_PASS/$r.pass: install the lfdln panel first (its appdb makes exam prep's database and roles)"
+done
+secret() { as "$SVC" podman secret create --replace "$1" - >/dev/null < "$2" || die "couldn't make the podman secret $1"; }
+secret examprep-db "$APPDB_PASS/examprep_app.pass"
+secret examprep-db-owner "$APPDB_PASS/examprep_owner.pass"
+say ok "secrets examprep-db, examprep-db-owner in $SVC's podman (from $APPDB_PASS)"
+# in the new image, before anything is switched: a refused migration changes nothing
+as "$SVC" podman run --rm --name examprep-migrate --network slirp4netns:allow_host_loopback=true --read-only \
+    --secret examprep-db-owner,mode=0400,uid=1000 --cap-drop=all --security-opt no-new-privileges \
+    "$IMAGE" node db/migrate.mjs | sed 's/^/     /' || die "the migrations failed (the running release is untouched)"
+say ok "examprep's tables are this release's (web/migrations)"
 [[ -z $prev ]] || as "$SVC" podman tag "$prev" localhost/examprep:previous
 as "$SVC" podman tag "$IMAGE" localhost/examprep:prod
 install -d -o root -g root -m 755 "$PROJ/releases/$ID"

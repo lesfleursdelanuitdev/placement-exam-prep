@@ -16,6 +16,8 @@ const SECURITY_HEADERS = [
 const nextConfig: NextConfig = {
   output: 'standalone', // the container runs .next/standalone/server.js (plan: Hosting)
   poweredByHeader: false,
+  // kept as a module in the standalone node_modules: db/migrate.mjs runs it in the image too (S3-5)
+  serverExternalPackages: ['postgres'],
   reactStrictMode: true,
   turbopack: { root: here },
   outputFileTracingRoot: here,

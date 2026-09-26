@@ -181,6 +181,55 @@ Until then the pages say nothing about accounts ("Saved in this browser.").
 | 5 | **On the server**, guest-only: `svc-lfdln-apps`, the container (no database), adopted as a service, a verify script. Tried on a test host (e.g. `examprep-next.lesfleursdelanuit.com`) first. The `examprep` database and roles on lfdln-appdb (`setup.sql`, `pg_hba`) come with step 3, later. | medium |
 | 6 | **The switch**: the host's route to the service (no open area while guest-only); verify; the plain page stops getting features (Q7); the site folder kept 14 days. | medium: a live site |
 
+### Step 3: design (2026-09-26, accounts live on lfdln)
+
+The panel's accounts and roles are live (roles plan steps 1-6; exam prep's route is "Open with
+accounts", `pammy-panel.json` read: guests practise, anyone signed in is Student). Step 3 is the
+server half only: **nothing on the pages changes** until step 4 makes them call it.
+
+- **S3-1 Who is asking.** nginx sends `X-Lfdln-Account` (the gate's account id, empty for a
+  guest), `X-Lfdln-Username`, `X-Lfdln-Role` (display only) and `X-Lfdln-Privileges` (expanded
+  atoms, space separated) and clears whatever the client sent. The app checks **atoms**, never
+  the role: reading progress needs `progress.read:own`, saving `progress.update:own`, deleting
+  `progress.delete:own` (`:any` covers `:own`, roles plan R6). A guest has none of them.
+- **S3-2 One document over the wire, tables in the database.** The page keeps one progress
+  document (`store.js`: `{v, exam, history, tut, flash, drafts, grapher, updated}`). The API takes
+  and gives that document; the server splits it into the Q1 tables and puts it back together.
+  So the page's sync stays as simple as the old account copy (`Store.connect`/`flushRemote`), and
+  "how is this student doing on factoring" is still a query.
+- **S3-3 The same cleaning.** The server cleans every document with `store.js`'s own
+  `sanitize`, taken unchanged from `src/` into a generated `web/engine/store.mjs` (as `mx.mjs`),
+  then checks sizes (body at most 1 MB).
+- **S3-4 The API** (`/api/progress`, JSON, `Cache-Control: no-store`):
+  `GET` the account's document (`{progress, importedAt}`, `progress: null` when nothing is kept);
+  `PUT` the whole document (`{progress, import?: true}`), replaced in one transaction; older than
+  what is kept (`updated`) is refused with 409 and the kept one, so a stale tab can't overwrite a
+  newer device; `import: true` sets `imported_at` (step 4's first sign-in); `DELETE` everything
+  kept for the account. Writes need the site's `Origin` and `Content-Type: application/json`.
+- **S3-5 The database is made by lfdln's appdb, the tables by exam prep.** As TutorStar's:
+  `deploy/lfdln/appdb` (panel repo) makes the roles `examprep_owner` and `examprep_app`, the
+  database `examprep` (owner `examprep_owner`, ICU `de-DE`, CONNECT for those two only), the
+  `pg_hba` line, and the passwords in `/etc/lfdln-appdb/examprep_{owner,app}.pass` (root 600). No
+  appdb restart: the passwords go in over the superuser's socket, not as container secrets.
+  Exam prep's `install.sh` copies them into `svc-lfdln-apps`' podman secrets and runs the
+  migrations (`web/migrations/`, a copy of the panel's runner) **inside the new image** as
+  `examprep_owner`, before the restart. `examprep_app`: SELECT/INSERT/UPDATE/DELETE on schema
+  `prep` only, `statement_timeout` 5 s.
+- **S3-6 The container** reaches the appdb at 10.0.2.2:5436 (`allow_host_loopback`, as
+  TutorStar); the app's password is a podman secret file (`/run/secrets/examprep-db`), never an
+  environment variable. `/api/health` also says the database answers and the schema version is
+  the one this release expects; the app refuses to serve progress on another.
+- **S3-7 Tests.** A throwaway Postgres 17 (podman, as the panel's `pg-harness.ts`; in CI a
+  service container): migrations, grants (the app role can't make or drop tables), the API with
+  forged and missing headers, guests refused, stale writes refused, round trip = `sanitize`'s own
+  output. A test nginx in front of the built server: a client's own `X-Lfdln-*` headers never
+  reach the app.
+- **S3-8 Later (step 4 and the panel).** The pages calling the API (import, database wins,
+  retry, sign-out clears) are step 4. The account-deleted call (accounts-plan Q1:
+  `POST /_lfdln/account-deleted`, HMAC) needs the gate's side first, which isn't built; exam
+  prep's endpoint comes with it. Until then an owner deleting an account leaves its rows, and
+  `DELETE /api/progress` is how a person clears their own.
+
 ### Step 1: as built (2026-09-26)
 
 - `web/engine/build.mjs` reads the file order from `build.mjs` itself and writes `web/engine/mx.mjs`

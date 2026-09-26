@@ -1,7 +1,8 @@
 # Placement Exam Prep (Next.js), the first G9 project: a rootless Quadlet container under
 # svc-lfdln-apps, on 127.0.0.1:4101 (NEXTJS-PLAN.md, Hosting). Installed by
 # web/deploy/install.sh; nginx reaches it through the lfdln panel's service route.
-# Guest-only: no database, so no allow_host_loopback, and no secrets.
+# Signed-in progress (step 3): the appdb at 10.0.2.2:5436 (slirp4netns, allow_host_loopback, as
+# TutorStar), its password a secret file, never an environment variable.
 [Unit]
 Description=Placement Exam Prep (Next.js, container)
 Documentation=https://github.com/lesfleursdelanuitdev/placement-exam-prep/blob/nextjs/NEXTJS-PLAN.md
@@ -12,6 +13,10 @@ Wants=network-online.target
 Image=localhost/examprep:prod
 ContainerName=examprep
 PublishPort=127.0.0.1:4101:4101
+Network=slirp4netns:allow_host_loopback=true
+# examprep_app's password, as /run/secrets/examprep-db (install.sh makes it from
+# /etc/lfdln-appdb/examprep_app.pass)
+Secret=examprep-db,mode=0400,uid=1000
 Environment=NODE_ENV=production
 Environment=PORT=4101
 Environment=HOSTNAME=0.0.0.0

@@ -74,6 +74,21 @@ if [[ -n $PORT ]]; then
     check "port $PORT listens only on 127.0.0.1 ($socks)" bash -c "[[ -n '$socks' ]] && [[ -z \$(echo '$socks' | tr ' ' '\n' | grep -v '^127\.0\.0\.1:$PORT\$' | grep .) ]]"
     h=$(health 2>/dev/null)
     check "/api/health: ok${release:+, release $release}" bash -c "[[ '$h' == *'\"ok\":true'* ]] && [[ -z '$release' || '$h' == *'\"release\":\"$release\"'* ]]"
+    # signed-in progress (NEXTJS-PLAN.md S3-6): the database answers with this release's schema
+    check "/api/health: the database answers, with this release's schema ($(sed -n 's/.*"db":"\([^"]*\)".*/\1/p' <<<"$h"))" bash -c "[[ '$h' == *'\"db\":\"ok\"'* ]]"
+fi
+# a guest (no account from nginx) gets no progress, and saves none
+code=$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' "$base/api/progress")
+[[ $code == 401 ]] && ok "/api/progress: a guest gets 401" || no "/api/progress for a guest: $code"
+if [[ -n $PORT && $EUID -eq 0 && -s /etc/lfdln-appdb/examprep_app.pass ]]; then
+    pw=$(cat /etc/lfdln-appdb/examprep_app.pass)
+    spod() { (cd / && runuser -u "$SVC" -- env XDG_RUNTIME_DIR="/run/user/$(id -u "$SVC")" podman "$@"); }
+    cpid=$(spod inspect --format '{{.State.Pid}}' "$UNIT" 2>/dev/null)
+    if [[ ! $cpid =~ ^[0-9]+$ ]]; then no "the database password (couldn't find the container)"
+    elif spod inspect "$UNIT" | grep -qF "$pw" || tr '\0' '\n' < "/proc/$cpid/environ" | grep -qF "$pw"; then
+        no "the database password is in the container's settings or environment"
+    else ok "the database password is a secret file, not in the container's settings or environment"; fi
+    unset pw
 fi
 
 # ---------------------------------------------------------------- the pages
@@ -117,6 +132,10 @@ pages() {   # <label> <curl args...> -- the base url is the last arg
 pages "direct ($base)" "$base"
 [[ -z $host ]] || pages "through nginx (https://$host)" --resolve "$host:443:127.0.0.1" "https://$host"
 if [[ -n $host ]]; then
+    # nginx clears a visitor's own X-Lfdln-* headers: claiming an account gets a guest's 401
+    code=$(curl -sS --max-time 10 --resolve "$host:443:127.0.0.1" -o /dev/null -w '%{http_code}' \
+        -H 'X-Lfdln-Account: 1' -H 'X-Lfdln-Username: forged' -H 'X-Lfdln-Privileges: progress.read:any progress.update:any' "https://$host/api/progress")
+    [[ $code == 401 ]] && ok "through nginx: a visitor's own X-Lfdln-* headers never reach the app (401)" || no "through nginx, forged X-Lfdln-* headers: $code"
     code=$(curl -sS --max-time 10 --resolve "$host:80:127.0.0.1" -o /dev/null -w '%{http_code} %{redirect_url}' "http://$host/exam")
     [[ $code == "301 https://$host/exam" || $code == "308 https://$host/exam" ]] && ok "http://$host goes to https" || no "http://$host/exam: $code"
 fi
