@@ -230,6 +230,70 @@ server half only: **nothing on the pages changes** until step 4 makes them call 
   prep's endpoint comes with it. Until then an owner deleting an account leaves its rows, and
   `DELETE /api/progress` is how a person clears their own.
 
+### Step 4: design (DECIDED 2026-09-26 by momolig: S4-3 both questions asked, 4b separate)
+
+Step 3's API is live (`/api/progress`, 401 for guests). Step 4 makes the pages use it. `src/store.js`
+stays as it is (it is a copy of the plain page's): its old account hooks are enough. `Store.ref.set()`
+is what `flushRemote()` calls after every save (900 ms later), and the `'remote'` event makes the
+app re-read everything (`ensureExam(); remount()`).
+
+- **S4-1 Who, on the page.** The layout reads the `X-Lfdln-*` headers (step 3's `whoOf`) and gives
+  the chrome `{ account, username, may: { read, update, delete } }`. A guest gets `null`. Nothing
+  about accounts shows unless the request came through the gate. The test server and the plain
+  page stay guest-only.
+- **S4-2 Whose progress the browser holds.** A new key `m098-prep-owner` holds the account id whose
+  progress is in `m098-prep-state-v1`. It is empty or missing for a guest's. It is decided before
+  `Store.init()` runs:
+
+  | This visit | Browser holds | Then |
+  |---|---|---|
+  | guest | an account's | cleared: progress, stopwatch, owner (Q2: signing out clears) |
+  | guest | a guest's | as today |
+  | account A | account B's | cleared, then A's from the server |
+  | account A | A's | shown at once (a cache), then the server's replaces it if the server's is newer; if the browser's is newer (saved while the server couldn't be reached), it is sent |
+  | account A | a guest's, nothing in it | A's from the server; first sign-in: marked imported |
+  | account A | a guest's, with progress | asked (S4-3) |
+
+- **S4-3 The question** (a dialog in the page's own style, once):
+  - **First sign-in** (the account has no `importedAt`): "Bring the progress in this browser into
+    your account?" **Bring it in** (PUT with `import: true`) or **Start fresh** (the account starts
+    empty, the browser's guest progress is dropped).
+  - **The account already has progress** (another device): "Your account already has progress.
+    This browser also has some from before you signed in." **Keep my account's** (default; the
+    browser's is dropped) or **Use this browser's instead** (it replaces the account's).
+  - Closing the dialog without choosing does nothing yet. It asks again on the next page.
+- **S4-4 Saving.** After the owner is settled, `Store.ref` becomes a small adapter.
+  - Its `set(doc)` PUTs the document.
+  - A **409** gives it the newer copy from the server. It takes that copy: the state, the browser
+    copy and a `'remote'` event.
+  - A **401 or 403** (signed out elsewhere, or the role changed) makes it throw
+    `{ code: 'revoked' }`. `store.js` then drops the ref and stays browser-only; a reload settles who
+    it is.
+  - A network error or **503** throws. `store.js` shows `'error'`, and the adapter tries again after
+    5 s, 15 s, 60 s, then every 5 min, and on the browser's `online` event.
+  - Saving while hidden is not needed: the browser copy is always written first, and S4-2's
+    "browser's is newer" row sends it on the next visit.
+- **S4-5 What the page says** (the drawer's foot and the Progress page):
+  - Guest: "Saved in this browser. **Sign in** to keep your progress on every device" (Q3). The link
+    is `/_pammy/login?next=<this page>`. There is also **Make an account** when registering is on
+    (the gate's `/_pammy/accounts`).
+  - Signed in: "Saved to your account, *username*." It shows "Not sent yet, it will be" while
+    retrying. There are **Your account** (`/_pammy/account`) and **Sign out** links.
+  - **Sign out** POSTs `/_pammy/logout`, clears the browser copy (Q2) and loads the page again as a
+    guest.
+  - **Reset all progress**, signed in, also DELETEs the server's copy (the confirm text says so).
+- **S4-6 Tests.**
+  - Playwright against the built server, with a test nginx (as step 3's) setting the headers from
+    a cookie the test chooses: every S4-2 row, both S4-3 questions and each answer, 409 from a
+    second "device", the server down then back (the retry sends it), sign-out clears, a guest after
+    an account sees nothing of it, and Reset deletes on the server.
+  - The existing guest tests stay as they are.
+- **S4-7 Not in step 4: telling exam prep an account was deleted (B8, accounts Q1).** It is mostly
+  the panel's work: a per-service secret, the gate's call with retries, and "waiting" on the People
+  page. Exam prep only needs a small `POST /_lfdln/account-deleted`. Until then, a person clears
+  their own progress with Reset, and an owner deleting an account leaves its rows. Suggested: its
+  own step, **4b**, right after.
+
 ### Step 3: as built (2026-09-26)
 
 - **Where things are.**
