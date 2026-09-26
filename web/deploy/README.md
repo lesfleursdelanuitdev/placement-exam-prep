@@ -59,3 +59,11 @@ curl -s http://127.0.0.1:4101/api/health    # {"ok":true,"release":"<id>"}
 sudo -u svc-lfdln-apps XDG_RUNTIME_DIR=/run/user/$(id -u svc-lfdln-apps) podman tag localhost/examprep:previous localhost/examprep:prod
 $U restart examprep.service
 ```
+
+## pammy-panel.json (the lfdln panel's roles plan, step 6)
+
+`web/pammy-panel.json` declares what exam prep lets people do (questions, tries at an exam,
+saved progress) and its two roles, Student and Teacher. `build.sh` puts it in `release/`;
+`install.sh` copies it to `/etc/lfdln-projects/examprep/pammy-panel.json` (root 644), where the
+panel's services helper reads it when someone presses **Read pammy-panel.json** on the exam prep
+route's Access page. Exam prep doesn't act on the privileges yet (guest-only): steps 3 and 4 do.

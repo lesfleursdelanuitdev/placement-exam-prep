@@ -68,6 +68,15 @@ as "$SVC" podman tag "$IMAGE" localhost/examprep:prod
 install -d -o root -g root -m 755 "$PROJ/releases/$ID"
 install -m 644 -o root -g root "$web/release/BUILD" "$PROJ/releases/$ID/BUILD"
 say ok "image $IMAGE in $SVC's podman, tagged prod${prev:+ (the one before: previous)}"
+# its privileges and roles (pammy-panel.json), where the lfdln panel's services helper reads
+# them for the Access page's Read again (the panel's docs/roles-plan.md step 6, S6-4)
+if [[ -f $web/release/pammy-panel.json ]]; then
+    install -d -o root -g root -m 755 /etc/lfdln-projects /etc/lfdln-projects/examprep
+    install -m 644 -o root -g root "$web/release/pammy-panel.json" /etc/lfdln-projects/examprep/pammy-panel.json
+    say ok "pammy-panel.json in /etc/lfdln-projects/examprep (the panel reads it on Read again)"
+else
+    say note "this release has no pammy-panel.json (built before it had one)"
+fi
 
 # ---------------------------------------------------------------- 3. the unit
 qdir=$SVC_HOME/.config/containers/systemd

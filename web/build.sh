@@ -39,6 +39,7 @@ cp -a .next/standalone/. release/
 cp -a .next/static release/.next/static
 [[ ! -d public ]] || cp -a public release/public
 cp deploy/healthcheck.mjs release/healthcheck.mjs     # the container's health check
+cp pammy-panel.json release/pammy-panel.json          # its privileges and roles, for the lfdln panel (install.sh)
 echo "--- the built server (CSP, nonces, fonts from this site, headers)"
 EXAMPREP_RELEASE="$PWD/release" node --test --test-reporter=dot test/*.test.mjs
 echo "--- the pages in a browser (Playwright: desktop and 320 px)"
