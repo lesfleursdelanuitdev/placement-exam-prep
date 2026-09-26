@@ -1,10 +1,9 @@
 # Placement Exam Prep on Next.js and Postgres
 
 Status: **decided 2026-09-25** by momolig: B1-B10, and every suggestion taken (Q1-Q8).
-**Step 1 built 2026-09-26** (see "Step 1: as built" below); next: step 2 (steps 1-4 can be built
-before the panel's accounts are live). Follows the standards of
-the lesfleursdelanuit.com control panel (repo `pammy-setup`, `panel/`), and needs its accounts
-feature: `panel/docs/accounts-plan.md`.
+**Guest-only for now** (decided 2026-09-26, below). **Step 1 built 2026-09-26** (see "Step 1: as
+built" below); next: step 2. Follows the standards of the lesfleursdelanuit.com control panel
+(repo `pammy-setup`, `panel/`), and, later, its accounts feature: `panel/docs/accounts-plan.md`.
 
 What this is for: today the app is one 1.1 MB page (`node build.mjs` → `docs/index.html`) whose
 "pages" are addresses after `#`, and progress lives only in the visitor's browser. It should be
@@ -25,6 +24,15 @@ account should have **their progress saved in a database** and follow them acros
 | B8 | A deleted account's data is deleted here too (accounts-plan A9/Q1). | momolig |
 | B9 | **Hosting: the first G9 project, set up by hand**, laid out the way platform plan G9 says so phase 8b can take it over. | momolig |
 | B10 | **Ported alongside** the other session's work on the plain page; its commits are merged in as they come. | momolig |
+
+## Guest-only for now (decided 2026-09-26)
+
+momolig: the lesfleursdelanuit.com panel is still being developed, so exam prep goes live
+**guest-only**: progress is kept in the browser only, as today. No sign-in, no Postgres, no
+identity headers. The signed-in half of B5, and B2, B4, B6 and B8, wait until the panel's
+accounts (`accounts-plan.md`) are live; steps 3 and 4 are **later**, not dropped. Step 5 deploys a
+guest-only container (no database, no open area), and step 6 switches the host with no open area.
+Until then the pages say nothing about accounts ("Saved in this browser.").
 
 ## What there is today (checked 2026-09-25, commit 2c28f8e)
 
@@ -66,7 +74,7 @@ account should have **their progress saved in a database** and follow them acros
 
 | Address | Made on | What |
 |---|---|---|
-| `/` | server | home: the three choices, progress snapshot (signed in: from the database) |
+| `/` | server | home: the three choices, progress snapshot (from the browser; signed in, later: from the database) |
 | `/exam` | server + client | overview: score, Start/Continue, each part |
 | `/exam/part-1` … `/part-3` | client (questions from the server-made exam) | one part per page |
 | `/exam/results` | server + client | after finishing |
@@ -77,10 +85,11 @@ account should have **their progress saved in a database** and follow them acros
 | `/flashcards`, `/flashcards/[topic]`, `/section/[name]`, `/all`, `/review` | server + client | decks; flipping and marks are client |
 | `/grapher`, `/grapher/draw` | client | the grapher |
 | `/progress` | server + client | history and per-topic accuracy |
-| `/account` | → the panel's `/_pammy/account` | sign in, register and account are the panel's pages (`?next=` back) |
+| `/account` | → the panel's `/_pammy/account` | **later** (with accounts): sign in, register and account are the panel's pages (`?next=` back) |
 
 - Lessons, examples and cards are the same for everyone (tutorials are fixed), so those pages are
-  **built once and cached**. A page that needs the person reads `X-Lfdln-Account` on the server.
+  **built once and cached**. A page that needs the person reads `X-Lfdln-Account` on the server
+  (later: while guest-only, the person's progress is only in the browser).
 - **Old `#/…` links keep working**: a tiny script on `/` sends `#/tutorials/x` to `/tutorials/x`.
 - Titles, focus on the heading and scroll memory per page, as the plain page has them now.
 
@@ -127,20 +136,20 @@ account should have **their progress saved in a database** and follow them acros
 - CSP `default-src 'none'`, scripts only from this site with a per-request nonce (Next.js
   `proxy.ts`), no inline scripts, `frame-ancestors 'none'`, HSTS, `no-referrer`. Fonts **served
   from this site** (next/font), so no Google Fonts request (Q5).
-- The identity headers are trusted only because the server listens on 127.0.0.1 and nginx clears
+- Later, with accounts: the identity headers are trusted only because the server listens on 127.0.0.1 and nginx clears
   them from the client's request (accounts-plan). A test sends a forged header through the real
   nginx and must be ignored.
-- Writes need `Origin` of the site and a signed-in account; a guest's writes never reach the
-  server.
+- Writes (later, step 3) need `Origin` of the site and a signed-in account; a guest's writes never
+  reach the server. Guest-only, nothing is written on the server at all.
 
 ### Hosting (B9: the first G9 project, by hand)
 
 - System user **`svc-lfdln-apps`** (lingering, rootless podman), the one G9 names for all projects.
 - `/srv/lfdln-projects/examprep/` with `releases/<id>/` (the last 3 kept) and `logs/`.
 - A **Quadlet container** `examprep.container`: `node:22` slim, the Next.js **standalone** build,
-  published on **127.0.0.1:4101** (Q4), 512 MB, one CPU, `slirp4netns:allow_host_loopback` to reach
-  :5436 at 10.0.2.2 (as TutorStar), health at `/api/health` (checks the database and the schema
-  version).
+  published on **127.0.0.1:4101** (Q4), 512 MB, one CPU, health at `/api/health`. Guest-only: no
+  database, so no `allow_host_loopback`; later, with step 3, it reaches :5436 at 10.0.2.2 (as
+  TutorStar) and the health check covers the database and the schema version.
 - **Build**: `build.sh` (as momolig, never sudo; refuses uncommitted changes): the engine tests,
   typecheck, unit tests, Playwright, `next build`, the image, `BUILD` with a 16-hex release id.
 - **Install**: `deploy/install.sh` (sudo): the image to `svc-lfdln-apps`, migrations as
@@ -148,7 +157,7 @@ account should have **their progress saved in a database** and follow them acros
   release.
 - The panel **adopts it as a service** (docs/adopt-plan.md: start, stop, restart, health), and the
   host `examprep.lesfleursdelanuit.com` switches **from the site folder to a route to 127.0.0.1:4101**
-  with an **"Open with accounts"** area on it.
+  (guest-only: no open area; the **"Open with accounts"** area comes with accounts).
 - **The way back**: the site folder stays for 14 days; switching the route back to it brings the
   plain page back (guests' progress is still in their browsers).
 
@@ -166,10 +175,10 @@ account should have **their progress saved in a database** and follow them acros
 |---|---|---|
 | 1 | **Engine as a module**: `web/engine/build.mjs`, the existing tests run against it too; a Node test makes a whole exam, every lesson and every card on the server. Next.js skeleton, Tailwind/shadcn, CSP, `build.sh`. | low |
 | 2 | **Pages**: every address in the table, server-made where it says; editor, grapher, stopwatch wrapped. Playwright: each page opens directly (not only by clicking), has its title, works at 320 px; the old `#/` links forward. Guests only, browser storage. | medium: the biggest step |
-| 3 | **Database**: the migrations, roles and grants on a local Postgres 17; `/api/progress/*`; the server-side cleaning; unit tests with a real Postgres (as `test/pg-harness.ts`). Signed-in tested with the header set by a test nginx. | medium |
-| 4 | **Import and sync**: first sign-in import, database wins, offline retry, sign-out clears; the deletion hook. | medium |
-| 5 | **On the server**: `svc-lfdln-apps`, the `examprep` database and roles on lfdln-appdb (`setup.sql`, `pg_hba`), the container, adopted as a service, a verify script. Tried on a test host (e.g. `examprep-next.lesfleursdelanuit.com`) first. Needs accounts-plan steps 1-6 live. | medium |
-| 6 | **The switch**: the host's route to the service with an open area; verify; the plain page stops getting features (Q7); the site folder kept 14 days. | medium: a live site |
+| 3 | **Later** (after the panel's accounts are live). **Database**: the migrations, roles and grants on a local Postgres 17; `/api/progress/*`; the server-side cleaning; unit tests with a real Postgres (as `test/pg-harness.ts`). Signed-in tested with the header set by a test nginx. | medium |
+| 4 | **Later**, with step 3. **Import and sync**: first sign-in import, database wins, offline retry, sign-out clears; the deletion hook. | medium |
+| 5 | **On the server**, guest-only: `svc-lfdln-apps`, the container (no database), adopted as a service, a verify script. Tried on a test host (e.g. `examprep-next.lesfleursdelanuit.com`) first. The `examprep` database and roles on lfdln-appdb (`setup.sql`, `pg_hba`) come with step 3, later. | medium |
+| 6 | **The switch**: the host's route to the service (no open area while guest-only); verify; the plain page stops getting features (Q7); the site folder kept 14 days. | medium: a live site |
 
 ### Step 1: as built (2026-09-26)
 
@@ -214,7 +223,8 @@ account should have **their progress saved in a database** and follow them acros
 - **Q2. Signing out clears the browser's copy** (a shared computer shows nothing of the last
   person). Suggested: yes; the guest starts fresh. **Decided: as suggested.**
 - **Q3. Guests' progress on a new device**: none (browser only), and the page says "Sign in to keep
-  your progress on every device". Suggested: yes. **Decided: as suggested.**
+  your progress on every device". Suggested: yes. **Decided: as suggested.** (Guest-only for now:
+  that line waits for accounts; until then the page says "Saved in this browser.")
 - **Q4. Port 4101** (G9's range 4100-4999, the first project). Suggested: yes. **Decided: as suggested.**
 - **Q5. Fonts served from this site** instead of Google Fonts (CSP, and no visitor data to Google).
   Suggested: yes. **Decided: as suggested.**
