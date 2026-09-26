@@ -1,7 +1,8 @@
 # Placement Exam Prep on Next.js and Postgres
 
-Status: **decided 2026-09-25** by momolig: B1-B10, and every suggestion taken (Q1-Q8). Nothing
-built yet; next: step 1 (steps 1-4 can be built before the panel's accounts are live). Follows the standards of
+Status: **decided 2026-09-25** by momolig: B1-B10, and every suggestion taken (Q1-Q8).
+**Step 1 built 2026-09-26** (see "Step 1: as built" below); next: step 2 (steps 1-4 can be built
+before the panel's accounts are live). Follows the standards of
 the lesfleursdelanuit.com control panel (repo `pammy-setup`, `panel/`), and needs its accounts
 feature: `panel/docs/accounts-plan.md`.
 
@@ -169,6 +170,41 @@ account should have **their progress saved in a database** and follow them acros
 | 4 | **Import and sync**: first sign-in import, database wins, offline retry, sign-out clears; the deletion hook. | medium |
 | 5 | **On the server**: `svc-lfdln-apps`, the `examprep` database and roles on lfdln-appdb (`setup.sql`, `pg_hba`), the container, adopted as a service, a verify script. Tried on a test host (e.g. `examprep-next.lesfleursdelanuit.com`) first. Needs accounts-plan steps 1-6 live. | medium |
 | 6 | **The switch**: the host's route to the service with an open area; verify; the plain page stops getting features (Q7); the site folder kept 14 days. | medium: a live site |
+
+### Step 1: as built (2026-09-26)
+
+- `web/engine/build.mjs` reads the file order from `build.mjs` itself and writes `web/engine/mx.mjs`
+  (generated, not committed): the engine files, the topics and the flashcards inside one function
+  that takes the global as `window`, so each copy of the engine (`createMX()`) has its own namespace
+  and nothing is put on the real global. A file `build.mjs` starts loading that isn't listed as
+  engine or browser stops the build. `store.js` stays out for now (the plan lists it with the
+  browser files); step 3 needs its `sanitize` on the server and can add it (it loads without a page).
+- **The exam model was in `app.js`**, not in the browser-free files: the topic order, `soundGen`,
+  `buildExam`, the worked examples and the practice problems. It is carried over as
+  `web/engine/model.mjs`, and `web/engine/test/model-parity.test.mjs` runs app.js's own functions
+  (pulled out of its source) beside it: same seed, same questions, so saved exams rebuild.
+- **The existing tests run against the module**: `web/engine/test/run-existing.mjs` runs the
+  `npm test` commands with a preload that hands them the generated module instead of `src/`
+  (and stops if `src/` changed since the module was built). `test/` is untouched. (The selftest's
+  filter by topic *file name* doesn't work that way, since the module is one file; by topic id does.)
+- `web/engine/test/server.test.mjs`: a whole exam (102 questions), every lesson with its six worked
+  examples and first practice problems, and all 424 flashcards, made and rendered in plain Node.
+- Next.js 16.3.6, React 19.3.0, TypeScript 7.0.2 (as the panel; Next.js set `allowJs`),
+  Tailwind 4.3.3, shadcn (new-york, `components/ui/button.tsx`), all pinned exactly.
+- CSP in `web/proxy.ts`: a nonce per request with `'strict-dynamic'`, `default-src 'none'`,
+  `style-src-attr 'unsafe-inline'` (the engine's HTML has a few style attributes), `font-src 'self'`,
+  `frame-ancestors 'none'`; HSTS, `no-referrer`, `nosniff` on every response (`next.config.ts`).
+  `web/test/server.test.mjs` starts the built server and checks them, the nonce on every script,
+  and that nothing (fonts included) comes from another site.
+- **A nonce means every page is made per request.** "Built once and cached" (Pages, above) can't
+  be the HTML; in step 2 it is the engine's output (lessons, examples, cards) that is made once
+  and kept, and the page around it is made per request.
+- Fonts: `next/font/google` fetches IBM Plex and STIX Two **when the app is built**, and the site
+  serves them; visitors never contact Google. The build machine needs to reach Google Fonts.
+- `web/build.sh` (not at the top, where `build.mjs` is): engine tests, typecheck, `next build`,
+  `web/release/` (standalone server + static files), the server tests, `BUILD` with a 16-hex id.
+  Playwright comes with step 2, the database tests with step 3, the image with step 5.
+- CI: `.github/workflows/web.yml` (its own file, so `test.yml` merges untouched).
 
 ## Questions
 

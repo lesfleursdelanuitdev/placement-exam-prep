@@ -1,0 +1,8 @@
+node_modules/
+.next/
+next-env.d.ts
+*.tsbuildinfo
+# made by engine/build.mjs from ../src (npm run engine)
+engine/mx.mjs
+# made by build.sh
+release/

@@ -1,0 +1,41 @@
+{
+  "name": "examprep-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Placement Exam Prep on Next.js (NEXTJS-PLAN.md): the pages, the server and, later, progress in Postgres",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "engine": "node engine/build.mjs",
+    "predev": "node engine/build.mjs",
+    "dev": "next dev --port 4101",
+    "prebuild": "node engine/build.mjs",
+    "build": "next build",
+    "start": "next start --port 4101",
+    "typecheck": "tsc --noEmit",
+    "test:engine": "node engine/test/run-existing.mjs",
+    "test:unit": "node --test engine/test/*.test.mjs",
+    "test:server": "node --test test/*.test.mjs"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "lucide-react": "1.46.0",
+    "next": "16.3.6",
+    "radix-ui": "1.6.7",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "tailwind-merge": "3.7.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "22.20.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "7.0.2"
+  }
+}
