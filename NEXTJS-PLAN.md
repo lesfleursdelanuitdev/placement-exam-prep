@@ -176,7 +176,7 @@ Until then the pages say nothing about accounts ("Saved in this browser.").
 |---|---|---|
 | 1 | **Engine as a module**: `web/engine/build.mjs`, the existing tests run against it too; a Node test makes a whole exam, every lesson and every card on the server. Next.js skeleton, Tailwind/shadcn, CSP, `build.sh`. | low |
 | 2 | **Pages**: every address in the table, server-made where it says; editor, grapher, stopwatch wrapped. Playwright: each page opens directly (not only by clicking), has its title, works at 320 px; the old `#/` links forward. Guests only, browser storage. | medium: the biggest step |
-| 3 | **Later** (after the panel's accounts are live). **Database**: the migrations, roles and grants on a local Postgres 17; `/api/progress/*`; the server-side cleaning; unit tests with a real Postgres (as `test/pg-harness.ts`). Signed-in tested with the header set by a test nginx. | medium |
+| 3 | **Built 2026-09-26** (see "Step 3: design" and "as built"). **Database**: the migrations, roles and grants on a local Postgres 17; `/api/progress/*`; the server-side cleaning; unit tests with a real Postgres (as `test/pg-harness.ts`). Signed-in tested with the header set by a test nginx. | medium |
 | 4 | **Later**, with step 3. **Import and sync**: first sign-in import, database wins, offline retry, sign-out clears; the deletion hook. | medium |
 | 5 | **On the server**, guest-only: `svc-lfdln-apps`, the container (no database), adopted as a service, a verify script. Tried on a test host (e.g. `examprep-next.lesfleursdelanuit.com`) first. The `examprep` database and roles on lfdln-appdb (`setup.sql`, `pg_hba`) come with step 3, later. | medium |
 | 6 | **The switch**: the host's route to the service (no open area while guest-only); verify; the plain page stops getting features (Q7); the site folder kept 14 days. | medium: a live site |
@@ -229,6 +229,44 @@ server half only: **nothing on the pages changes** until step 4 makes them call 
   `POST /_lfdln/account-deleted`, HMAC) needs the gate's side first, which isn't built; exam
   prep's endpoint comes with it. Until then an owner deleting an account leaves its rows, and
   `DELETE /api/progress` is how a person clears their own.
+
+### Step 3: as built (2026-09-26)
+
+- **Where things are.**
+  - The API is `app/api/progress/route.ts`, with its parts in `lib/progress/`:
+    `who.ts` (headers and privileges), `rows.ts` (document to rows and back),
+    `store.ts` (load, save, forget), `db.ts` (the pool and the schema check) and `schema.ts`.
+  - Migrations are in `migrations/0001-progress.sql`. Their runner is `db/migrate.mjs`, a
+    copy of the panel's runner for a single folder. `engine/store.mjs` and `store.d.mts` are
+    generated from `src/store.js`.
+- **The document and the rows.** `canonical()` is `sanitize()` minus a few things that
+  already read as missing on the page: flashcard decks with no marks, and questions with no
+  answer parts. The round-trip test compares against that form.
+- **postgres.js is kept as a module** (`serverExternalPackages`), so `db/migrate.mjs` runs
+  inside the image. The password file is read with a `turbopackIgnore` hint. Without it,
+  the build would have traced the whole project into the release.
+- **The health answer** now also reports `db` and `schema`, but `ok` never depends on
+  them: guests don't need the database.
+- **Installer.**
+  - `install.sh` makes the podman secrets `examprep-db` and `examprep-db-owner`.
+  - Podman 4.9's `--replace` refuses a secret that isn't there yet, so the first run
+    creates them and later runs replace them.
+  - It runs `node db/migrate.mjs` in the new image before tagging it `prod`. A refused
+    migration changes nothing.
+- **Tried here, from the image:**
+  - The migrations ran through host loopback (the second run was a no-op).
+  - The app read `/run/secrets/examprep-db` (mode 400, uid 1000), `/api/health` answered
+    `db: ok`, and a save came back as stored.
+- **Tests.**
+  - `test/progress.test.mjs` has 18 tests: the migrations; grants (the app role can't
+    create, drop, alter or truncate anything); guests get 401 and people without the
+    privilege get 403; round trips; replacing a whole document; store.js's cleaning;
+    stale saves getting 409; import; accounts kept apart; delete; Origin and JSON
+    checks; size limits; 8,000-answer documents; and concurrent saves.
+  - `test/appdb-examprep.sql` is a copy of the panel's `apps.sql`.
+- **Needs the panel first.** The lfdln install with `deploy/lfdln/appdb/apps.sql` makes the
+  database, the roles and `/etc/lfdln-appdb/examprep_*.pass`. `install.sh` stops if those
+  files are missing.
 
 ### Step 1: as built (2026-09-26)
 

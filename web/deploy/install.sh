@@ -72,7 +72,11 @@ APPDB_PASS=/etc/lfdln-appdb
 for r in examprep_app examprep_owner; do
     [[ -s $APPDB_PASS/$r.pass ]] || die "no $APPDB_PASS/$r.pass: install the lfdln panel first (its appdb makes exam prep's database and roles)"
 done
-secret() { as "$SVC" podman secret create --replace "$1" - >/dev/null < "$2" || die "couldn't make the podman secret $1"; }
+# (podman 4.9's --replace refuses a secret that isn't there yet: made the first time, replaced after)
+secret() {
+    local rep=(); as "$SVC" podman secret exists "$1" && rep=(--replace)
+    as "$SVC" podman secret create "${rep[@]}" "$1" - >/dev/null < "$2" || die "couldn't make the podman secret $1"
+}
 secret examprep-db "$APPDB_PASS/examprep_app.pass"
 secret examprep-db-owner "$APPDB_PASS/examprep_owner.pass"
 say ok "secrets examprep-db, examprep-db-owner in $SVC's podman (from $APPDB_PASS)"
