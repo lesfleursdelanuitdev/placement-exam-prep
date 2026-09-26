@@ -17,6 +17,8 @@ Network=slirp4netns:allow_host_loopback=true
 # examprep_app's password, as /run/secrets/examprep-db (install.sh makes it from
 # /etc/lfdln-appdb/examprep_app.pass)
 Secret=examprep-db,mode=0400,uid=1000
+# the lfdln panel's key for "this account was deleted" (step 4b)
+Secret=examprep-hook,mode=0400,uid=1000
 Environment=NODE_ENV=production
 Environment=PORT=4101
 Environment=HOSTNAME=0.0.0.0

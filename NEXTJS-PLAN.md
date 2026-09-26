@@ -294,6 +294,24 @@ app re-read everything (`ensureExam(); remount()`).
   their own progress with Reset, and an owner deleting an account leaves its rows. Suggested: its
   own step, **4b**, right after.
 
+### Step 4b: as built (2026-09-26): an account deleted in the panel
+
+- `POST /_lfdln/account-deleted` is in `app/%5Flfdln/account-deleted/route.ts`, because Next.js
+  keeps `_` folders out of routing. The checks are in `lib/progress/hook.ts`.
+  - Only the lfdln panel calls it, straight on 127.0.0.1:4101; nginx answers 404 for `/_lfdln/`
+    from outside.
+  - The call is signed with HMAC-SHA256 over `<ms>.<body>` (`X-Lfdln-Timestamp`,
+    `X-Lfdln-Signature: v1=<hex>`), and anything more than 5 minutes off is refused.
+  - It deletes everything kept for `account` (`forget`) and answers 200, also when nothing was
+    kept.
+  - It answers 503 when there is no key or no database, so the panel tries again.
+- **The key** is the panel's `/etc/lfdln-panel/hooks/examprep.key`. `install.sh` makes it the
+  podman secret `examprep-hook` (`/run/secrets/examprep-hook`), and stops if the lfdln panel
+  hasn't made the key yet.
+- **Checks.** `test/progress.test.mjs` covers a signed call, a wrong key, a stale timestamp, a
+  changed body, a bad account and GET. The verify script makes a signed call and an unsigned one.
+- The panel's side is in the panel repo's `docs/accounts-plan.md`, "Step 4b: as built".
+
 ### Step 4: as built (2026-09-26)
 
 - **Where things are.**

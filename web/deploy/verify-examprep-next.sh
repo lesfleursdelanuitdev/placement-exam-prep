@@ -90,6 +90,16 @@ if [[ -n $PORT && $EUID -eq 0 && -s /etc/lfdln-appdb/examprep_app.pass ]]; then
     else ok "the database password is a secret file, not in the container's settings or environment"; fi
     unset pw
 fi
+# step 4b: the panel's signed "account deleted" is taken (an account nobody has: nothing to delete),
+# and an unsigned one is refused
+if [[ -n $PORT && $EUID -eq 0 && -s /etc/lfdln-panel/hooks/examprep.key ]]; then
+    body='{"account":999999999999}'; ts=$(date +%s%3N)
+    sig=$(printf '%s.%s' "$ts" "$body" | openssl dgst -sha256 -hmac "$(tr -d '\n' < /etc/lfdln-panel/hooks/examprep.key)" -r | cut -d' ' -f1)
+    code=$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -H "X-Lfdln-Timestamp: $ts" -H "X-Lfdln-Signature: v1=$sig" --data "$body" "http://127.0.0.1:$PORT/_lfdln/account-deleted")
+    [[ $code == 200 ]] && ok "/_lfdln/account-deleted: the panel's signed call is taken" || no "/_lfdln/account-deleted, signed: $code"
+    code=$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -H "X-Lfdln-Timestamp: $ts" -H "X-Lfdln-Signature: v1=00" --data "$body" "http://127.0.0.1:$PORT/_lfdln/account-deleted")
+    [[ $code == 401 ]] && ok "/_lfdln/account-deleted: an unsigned call is refused (401)" || no "/_lfdln/account-deleted, unsigned: $code"
+fi
 
 # ---------------------------------------------------------------- the pages
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT

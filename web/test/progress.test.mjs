@@ -5,7 +5,9 @@
 import { test, before, after, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { createHmac, randomBytes } from 'node:crypto';
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { createServer } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -17,6 +19,10 @@ const release = process.env.EXAMPREP_RELEASE || fileURLToPath(new URL('../releas
 const STUDENT = 'pages.read questions.read attempts.create:own attempts.read:own attempts.update:own attempts.submit:own progress.read:own progress.update:own progress.delete:own';
 const GUEST = 'pages.read questions.read attempts.create:own attempts.read:own attempts.update:own attempts.submit:own';
 let pg, server, base, host;
+// the key the panel signs account deletions with (step 4b), as the podman secret file
+const HOOK_KEY = randomBytes(33).toString('base64url');
+const hookDir = mkdtempSync(join(tmpdir(), 'examprep-hook-'));
+writeFileSync(join(hookDir, 'key'), HOOK_KEY + '\n');
 
 const freePort = () => new Promise((res, rej) => {
   const s = createServer().listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => res(port)); }).on('error', rej);
@@ -30,7 +36,7 @@ before(async () => {
   base = `http://${host}`;
   server = spawn(process.execPath, ['server.js'], {
     cwd: release,
-    env: { ...process.env, ...pg.env, PORT: String(port), HOSTNAME: '127.0.0.1', NODE_ENV: 'production', NEXT_TELEMETRY_DISABLED: '1' },
+    env: { ...process.env, ...pg.env, EXAMPREP_HOOK_KEY_FILE: join(hookDir, 'key'), PORT: String(port), HOSTNAME: '127.0.0.1', NODE_ENV: 'production', NEXT_TELEMETRY_DISABLED: '1' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let log = '';
@@ -45,6 +51,7 @@ before(async () => {
 after(async () => {
   server?.kill();
   await pg?.stop();
+  rmSync(hookDir, { recursive: true, force: true });
 });
 
 // a request as nginx passes it on: who (or nobody), and a page of this site
@@ -268,5 +275,50 @@ describe('/api/progress', () => {
     const got = await call('GET', { account: '113' });
     assert.equal(got.json.progress.updated, 1790000061000);
     assert.deepEqual(got.json.progress.history, []);
+  });
+});
+
+// step 4b: the panel says an account was deleted (signed; straight to the server, no nginx)
+function deleted(account, { key = HOOK_KEY, ts = String(Date.now()), body = JSON.stringify({ account }), sig } = {}) {
+  const signature = sig ?? 'v1=' + createHmac('sha256', key).update(`${ts}.${body}`).digest('hex');
+  return fetch(base + '/_lfdln/account-deleted', { method: 'POST', headers: { 'content-type': 'application/json', 'x-lfdln-timestamp': ts, 'x-lfdln-signature': signature }, body })
+    .then(async (r) => ({ status: r.status, json: await r.json().catch(() => null) }));
+}
+
+describe('an account deleted in the panel (step 4b)', () => {
+  test('signed by the panel: everything kept for that account goes, and only it', async () => {
+    assert.equal((await call('PUT', { account: '401', body: { progress: doc() } })).status, 200);
+    assert.equal((await call('PUT', { account: '402', body: { progress: doc() } })).status, 200);
+    const r = await deleted(401);
+    assert.equal(r.status, 200);
+    assert.deepEqual(r.json, { ok: true, deleted: true });
+    assert.deepEqual((await call('GET', { account: '401' })).json, { progress: null, importedAt: null });
+    assert.notEqual((await call('GET', { account: '402' })).json.progress, null);
+    // told again (a retry): nothing left, still 200
+    assert.deepEqual((await deleted(401)).json, { ok: true, deleted: false });
+  });
+
+  test('not the panel: refused, and nothing is deleted', async () => {
+    assert.equal((await call('PUT', { account: '403', body: { progress: doc() } })).status, 200);
+    assert.equal((await deleted(403, { key: 'someone-else-s-key-that-is-long-enough' })).status, 401);
+    assert.equal((await deleted(403, { sig: '' })).status, 401);
+    assert.equal((await deleted(403, { ts: String(Date.now() - 10 * 60 * 1000) })).status, 401, 'ten minutes old');
+    assert.equal((await deleted(403, { ts: 'yesterday' })).status, 401);
+    // signed, but the body was changed on the way
+    const ts = String(Date.now());
+    const sig = 'v1=' + createHmac('sha256', HOOK_KEY).update(`${ts}.${JSON.stringify({ account: 999 })}`).digest('hex');
+    assert.equal((await deleted(403, { ts, sig })).status, 401);
+    assert.notEqual((await call('GET', { account: '403' })).json.progress, null);
+  });
+
+  test('signed, but not an account: 400', async () => {
+    assert.equal((await deleted(0)).status, 400);
+    assert.equal((await deleted(null, { body: '{"account":"7"}' })).status, 400);
+    assert.equal((await deleted(null, { body: 'not json' })).status, 400);
+  });
+
+  test('from outside, through a page address: nginx answers 404 for /_lfdln/ (the panel\'s renderer); here GET is not a thing', async () => {
+    const r = await fetch(base + '/_lfdln/account-deleted');
+    assert.equal(r.status, 405);
   });
 });

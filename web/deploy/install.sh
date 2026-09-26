@@ -80,7 +80,12 @@ secret() {
 }
 secret examprep-db "$APPDB_PASS/examprep_app.pass"
 secret examprep-db-owner "$APPDB_PASS/examprep_owner.pass"
-say ok "secrets examprep-db, examprep-db-owner in $SVC's podman (from $APPDB_PASS)"
+# the key the lfdln panel signs "this account was deleted" with (NEXTJS-PLAN.md step 4b): the panel's
+# installer makes it, root-only; the container reads it as a secret file
+HOOK_KEY=/etc/lfdln-panel/hooks/examprep.key
+[[ -s $HOOK_KEY ]] || die "no $HOOK_KEY: install the lfdln panel first (it makes the key it signs account deletions with)"
+secret examprep-hook "$HOOK_KEY"
+say ok "secrets examprep-db, examprep-db-owner (from $APPDB_PASS) and examprep-hook in $SVC's podman"
 # in the new image, before anything is switched: a refused migration changes nothing
 as "$SVC" podman run --rm --name examprep-migrate --network slirp4netns:allow_host_loopback=true --read-only \
     --secret examprep-db-owner,mode=0400,uid=1000 --cap-drop=all --security-opt no-new-privileges \
