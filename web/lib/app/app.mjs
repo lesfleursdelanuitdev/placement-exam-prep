@@ -9,7 +9,7 @@
 // app.js did. Changes to src/app.js upstream are carried over here by hand (PORTED.md).
 import { GEN_VERSION, PART3_SEC, WORKED_N, slotsOf, allVariants, examPartOf, sectionOf } from '../../engine/model.mjs';
 
-export function createApp({ MX, model, Store = null, win = null }) {
+export function createApp({ MX, model, Store = null, win = null, account = null }) {
   const d = win ? win.document : null;
   const { orderedTopics, bySection } = model;
 
@@ -950,9 +950,9 @@ export function createApp({ MX, model, Store = null, win = null }) {
     });
     rows.sort((x, y) => (x.pct == null ? 101 : x.pct) - (y.pct == null ? 101 : y.pct));
     const fc = flashCounts(allTopicIds());
-    // guest-only for now (NEXTJS-PLAN.md): progress lives in this browser
-    const status = 'Saved in this browser.';
-    let html = `<header class="page-h"><h1>Progress</h1><p>${esc(status)}</p></header>
+    // in this browser, and in the account when signed in (NEXTJS-PLAN.md step 4, account.mjs)
+    const status = account ? account.statusHtml() : 'Saved in this browser.';
+    let html = `<header class="page-h"><h1>Progress</h1><p id="save-status" class="save-status">${status}</p></header>
       <div class="stats">
         <div class="stat"><span class="stat-n">${hist.length}</span><span class="stat-l">exams finished</span></div>
         <div class="stat"><span class="stat-n">${hist.length ? best + '%' : '–'}</span><span class="stat-l">best score</span></div>
@@ -968,7 +968,7 @@ export function createApp({ MX, model, Store = null, win = null }) {
       rows.map((r) => `<tr><td>${esc(r.t.title)}</td><td class="num" data-l="Exam points">${r.pts ? r.pts[0] + ' / ' + r.pts[1] : '–'}</td><td data-l="Accuracy">${r.pct == null ? '<span class="muted">no data</span>' : `<span class="meter"><span style="width:${r.pct}%" class="${r.pct >= 80 ? 'good' : r.pct >= 50 ? 'mid' : 'low'}"></span></span> ${r.pct}%`}</td><td class="num" data-l="Practice">${r.c.solved}</td><td class="num" data-l="Cards">${r.f.total ? r.f.got + ' / ' + r.f.total : '–'}</td><td><a class="btn tut sm" href="${tutPath(r.t.id)}" data-act="tutorial" data-topic="${r.t.id}">Tutorial →</a></td></tr>`).join('') +
       `</tbody></table></div>
       <div class="danger"><button type="button" class="btn ghost" data-act="reset-ask">Reset all progress…</button>
-      <span id="reset-confirm" hidden>This erases every exam score, practice record and flashcard mark. <button type="button" class="btn danger-btn" data-act="reset-do">Erase everything</button> <button type="button" class="btn ghost" data-act="reset-cancel">Cancel</button></span></div>`;
+      <span id="reset-confirm" hidden>This erases every exam score, practice record and flashcard mark.${account ? esc(account.resetNote) : ''} <button type="button" class="btn danger-btn" data-act="reset-do">Erase everything</button> <button type="button" class="btn ghost" data-act="reset-cancel">Cancel</button></span></div>`;
     return html;
   }
   function renderProgress() { const el = byId('prog-page'); if (el) el.innerHTML = progressHTML(); }
@@ -1174,7 +1174,8 @@ export function createApp({ MX, model, Store = null, win = null }) {
   // A link to another page of this site: Next.js shows it without reloading. What the link
   // carries (data-act) is noted first, as app.js's buttons did: where "back" goes, which question
   // to scroll to, where a deck returns to.
-  const sameSite = (a) => a.origin === win.location.origin && !a.target && !a.hasAttribute('download');
+  // the gate's pages (/_pammy/: sign in, your account) and the API aren't the app's: loaded as pages
+  const sameSite = (a) => a.origin === win.location.origin && !a.target && !a.hasAttribute('download') && !/^\/(_pammy|api)\//.test(a.pathname);
   function followLink(a, e) {
     const act = a.dataset.act;
     let path = a.pathname;

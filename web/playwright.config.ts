@@ -11,6 +11,8 @@ const base = process.env.E2E_BASE_URL;
 
 export default defineConfig({
   testDir: 'test/e2e',
+  // a throwaway Postgres and a server on it, for the signed-in tests (accounts.spec.ts)
+  globalSetup: './test/e2e/accounts-server.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0,

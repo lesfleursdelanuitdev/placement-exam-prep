@@ -1,5 +1,6 @@
 import type { Engine, Topic, Question } from '../../engine/mx.mjs';
 import type { Model } from '../../engine/model.mjs';
+import type { Account } from './account.mjs';
 
 export type DeckSpec = { topic: string } | { section: string } | { all: 1 };
 export type DeckMode = 'all' | 'learning';
@@ -53,4 +54,4 @@ export interface BrowserApp extends SharedApp {
 }
 
 export function createApp(env: { MX: Engine; model: Model }): SharedApp;
-export function createApp(env: { MX: Engine; model: Model; Store: unknown; win: Window }): BrowserApp;
+export function createApp(env: { MX: Engine; model: Model; Store: unknown; win: Window; account?: Account | null }): BrowserApp;

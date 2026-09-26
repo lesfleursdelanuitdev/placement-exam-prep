@@ -49,3 +49,18 @@
 @media (max-width: 420px) {
   .part-nav .btn { white-space: normal; height: auto; min-height: 36px; padding-block: 6px; text-align: left; }
 }
+
+/* signed in or not (NEXTJS-PLAN.md step 4, lib/app/account.mjs) */
+.acct-link { margin-left: 12px; font-size: 14px; color: var(--accent); text-decoration: none; white-space: nowrap; max-width: 14ch; overflow: hidden; text-overflow: ellipsis; }
+.acct-link:hover { text-decoration: underline; }
+@media (max-width: 900px) { .acct-link { display: none; } }
+.linkish { border: 0; background: none; padding: 0; font: inherit; color: var(--accent); cursor: pointer; text-decoration: underline; }
+.drawer-foot .acct-links, .save-status .acct-links { display: inline-flex; flex-wrap: wrap; gap: 4px 14px; }
+.drawer-foot p { margin: 0 0 6px; }
+.drawer-foot a { color: var(--accent); }
+.save-status .acct-who { color: var(--ink); }
+.acct-dialog { max-width: min(30rem, calc(100vw - 32px)); border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); color: var(--ink); padding: 20px; box-shadow: var(--shadow); }
+.acct-dialog::backdrop { background: rgb(0 0 0 / 0.45); }
+.acct-dialog h2 { margin: 0 0 8px; font-size: 1.2rem; }
+.acct-dialog p { margin: 0 0 16px; line-height: 1.5; }
+.acct-dialog-buttons { display: flex; flex-wrap: wrap; gap: 10px; }

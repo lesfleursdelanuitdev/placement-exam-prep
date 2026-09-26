@@ -1,7 +1,9 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+import type { AccountSnapshot } from '@/lib/app/account.mjs';
 
 import { loadApp } from '@/lib/app/runtime.mjs';
 
@@ -23,10 +25,14 @@ export function Chrome() {
   const pathname = usePathname();
   const router = useRouter();
   const swHost = useRef<HTMLDivElement>(null);
+  // what the page says about saving: guest, or signed in (account.mjs, NEXTJS-PLAN.md S4-5)
+  const [saving, setSaving] = useState<AccountSnapshot | null>(null);
   useEffect(() => {
     let live = true;
+    let off: (() => void) | undefined;
     loadApp().then((app) => {
       if (!live) return;
+      off = app.account.subscribe(setSaving);
       app.attach({ push: (href) => router.push(href), replace: (href) => router.replace(href) });
       // the stopwatch puts itself at the end of <body>; keep it in its place here instead
       const sw = document.getElementById('stopwatch');
@@ -34,6 +40,7 @@ export function Chrome() {
     });
     return () => {
       live = false;
+      off?.();
     };
   }, [router]);
   const current = sectionOf(pathname);
@@ -49,6 +56,11 @@ export function Chrome() {
           {SECTIONS.map((s) => <a key={s.key} href={s.href} aria-current={here(s.key)}>{s.label}</a>)}
         </nav>
         <div id="score-chip" className="chip" aria-live="polite" />
+        {saving && (saving.username || saving.links.length > 0) && (
+          <a className="acct-link" href={saving.username ? '/progress' : saving.links[0]!.href} title={saving.text}>
+            {saving.username ?? saving.links[0]!.text}
+          </a>
+        )}
       </header>
       <div id="scrim" className="scrim" data-act="menu-close" aria-hidden="true" />
       <aside id="drawer" className="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" inert>
@@ -60,7 +72,16 @@ export function Chrome() {
           {SECTIONS.map((s) => <a key={s.key} href={s.href} aria-current={here(s.key)}><svg viewBox="0 0 24 24" aria-hidden="true">{s.icon}</svg><span>{s.label}</span></a>)}
         </nav>
         <div id="drawer-exam" className="drawer-exam" />
-        <p className="drawer-foot">Your work saves as you go.</p>
+        <div className="drawer-foot">
+          {saving?.username && <p className="acct-who">Signed in as <b>{saving.username}</b></p>}
+          <p>{saving?.text ?? 'Your work saves as you go.'}</p>
+          {saving && (saving.links.length > 0 || saving.signOut) && (
+            <p className="acct-links">
+              {saving.links.map((l) => <a key={l.href} href={l.href}>{l.text}</a>)}
+              {saving.signOut && <button type="button" className="linkish" data-act="sign-out">Sign out</button>}
+            </p>
+          )}
+        </div>
       </aside>
       <div ref={swHost} id="sw-host" />
     </>

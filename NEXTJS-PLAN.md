@@ -177,7 +177,7 @@ Until then the pages say nothing about accounts ("Saved in this browser.").
 | 1 | **Engine as a module**: `web/engine/build.mjs`, the existing tests run against it too; a Node test makes a whole exam, every lesson and every card on the server. Next.js skeleton, Tailwind/shadcn, CSP, `build.sh`. | low |
 | 2 | **Pages**: every address in the table, server-made where it says; editor, grapher, stopwatch wrapped. Playwright: each page opens directly (not only by clicking), has its title, works at 320 px; the old `#/` links forward. Guests only, browser storage. | medium: the biggest step |
 | 3 | **Built 2026-09-26** (see "Step 3: design" and "as built"). **Database**: the migrations, roles and grants on a local Postgres 17; `/api/progress/*`; the server-side cleaning; unit tests with a real Postgres (as `test/pg-harness.ts`). Signed-in tested with the header set by a test nginx. | medium |
-| 4 | **Later**, with step 3. **Import and sync**: first sign-in import, database wins, offline retry, sign-out clears; the deletion hook. | medium |
+| 4 | **Built 2026-09-26** (see "Step 4: design" and "as built"; the deletion hook is 4b). **Import and sync**: first sign-in import, database wins, offline retry, sign-out clears; the deletion hook. | medium |
 | 5 | **On the server**, guest-only: `svc-lfdln-apps`, the container (no database), adopted as a service, a verify script. Tried on a test host (e.g. `examprep-next.lesfleursdelanuit.com`) first. The `examprep` database and roles on lfdln-appdb (`setup.sql`, `pg_hba`) come with step 3, later. | medium |
 | 6 | **The switch**: the host's route to the service (no open area while guest-only); verify; the plain page stops getting features (Q7); the site folder kept 14 days. | medium: a live site |
 
@@ -293,6 +293,44 @@ app re-read everything (`ensureExam(); remount()`).
   page. Exam prep only needs a small `POST /_lfdln/account-deleted`. Until then, a person clears
   their own progress with Reset, and an owner deleting an account leaves its rows. Suggested: its
   own step, **4b**, right after.
+
+### Step 4: as built (2026-09-26)
+
+- **Where things are.**
+  - `web/lib/app/account.mjs` holds all of it: `settleOwner` (S4-2, run before `store.js` and the
+    stopwatch read the browser), and `createAccount`, which covers opening, the questions, the
+    `Store.ref` adapter, retries, sign-out and the status words.
+  - `runtime.mjs` wires it in. `app.mjs` has three small changes: the `account` option (the
+    Progress page's `#save-status` and Reset's warning), and links under `/_pammy/` and `/api/`
+    load as whole pages, not through the router.
+  - `store.js` is unchanged.
+- **Who, on the page.**
+  - The layout puts `data-account`, `data-username` and `data-del` on `<body>` only for someone
+    who may read and update their progress.
+  - It adds `data-gate` when the gate is in front. It tells guests too: their `X-Lfdln-Role` is
+    "Not signed in".
+  - Only with `data-gate` does a guest's page ask `/_pammy/accounts` (for Make an account) and show
+    Sign in. The test server and the plain page never ask, so nothing there changes.
+- **The owner key** `m098-prep-owner` is `{ a: account, base: the server's updated last in step
+  with }`. Offline work goes up on the next visit only when the server's copy is still `base`.
+- **Saves are stamped newer than `base`** (the adapter raises `updated` to `base + 1` when this
+  device's clock is behind). Without that, a device whose clock was behind another's had every
+  save refused with 409, and kept taking the server's copy. There is a test for it.
+- **Deviations from the design.**
+  - Reset, signed in, is a PUT of an empty document rather than DELETE. The account stays marked
+    imported, so no question comes after it. The warning says it goes from the account too.
+  - The desktop bar also shows the username, linking to Progress, or "Sign in" for a guest behind
+    the gate. It is hidden at phone width, where the menu's foot has the same links.
+- **Tests.**
+  - `test/e2e/accounts.spec.ts` has 19 tests at 1280 px and 320 px, against a server that
+    `accounts-server.ts` (Playwright's global setup) starts on a throwaway Postgres. They cover:
+    every S4-2 row, both questions and each answer, closing the question, the server away and
+    back, the next visit, 409, a clock behind, sign-out, a guest after an account, Reset, the menu
+    and the bar.
+  - The gate's `/_pammy/accounts` and `/_pammy/logout` are stubbed.
+  - Six runs in a row passed.
+- **Left for the panel.** The gate's built-in sign-in page is headed "This folder is private",
+  which is odd for a route like exam prep's.
 
 ### Step 3: as built (2026-09-26)
 
