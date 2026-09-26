@@ -43,7 +43,12 @@ if [[ -n $PORT && $EUID -eq 0 ]]; then
         bash -c "systemctl --user -M '$SVC@' list-dependencies default.target --plain 2>/dev/null | grep -qw '$UNIT.service'"
     check "$SVC lingers (the service runs with nobody signed in)" test -e "/var/lib/systemd/linger/$SVC"
     uid=$(id -u "$SVC")
-    check "the container runs as $SVC, not root" bash -c "pgrep -u $uid -f 'node server.js' >/dev/null && ! pgrep -u 0 -f 'node server.js' >/dev/null"
+    # rootless: the container's node user is a uid from $SVC's subuid range, never root or a real user
+    spid=$(cd / && runuser -u "$SVC" -- env XDG_RUNTIME_DIR=/run/user/$uid podman inspect --format '{{.State.Pid}}' "$UNIT" 2>/dev/null)
+    suid=$( [[ $spid =~ ^[0-9]+$ ]] && ps -o uid= -p "$spid" | tr -d ' ')
+    sub=$(awk -F: -v u="$SVC" '$1==u {print $2, $2+$3-1}' /etc/subuid)
+    check "the container runs as a uid from $SVC's subuid range (${suid:-?}), not root" \
+        bash -c "[[ -n '$suid' && -n '$sub' ]] && read lo hi <<< '$sub' && (( $suid >= lo && $suid <= hi ))"
     if (( kill )); then
         started=$(uctl show -p ActiveEnterTimestampMonotonic --value "$UNIT.service")
         cid=$(cd / && runuser -u "$SVC" -- env XDG_RUNTIME_DIR=/run/user/$uid podman inspect --format '{{.State.Pid}}' "$UNIT" 2>/dev/null)
