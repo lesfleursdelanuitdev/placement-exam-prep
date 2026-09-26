@@ -99,3 +99,13 @@ test('nothing is loaded from another site; the fonts come from this one', async 
   assert.equal(f.headers.get('content-type'), 'font/woff2');
   checkSecurityHeaders(f, fonts[0].pathname);
 });
+
+test('/api/health answers for the container and the panel: ok, the release, never cached', async () => {
+  const { r, text } = await get('/api/health');
+  assert.equal(r.status, 200);
+  assert.equal(r.headers.get('cache-control'), 'no-store');
+  const body = JSON.parse(text);
+  assert.equal(body.ok, true);
+  assert.match(body.release, /^([0-9a-f]{16}|unbuilt)$/);
+  checkSecurityHeaders(r, '/api/health');
+});

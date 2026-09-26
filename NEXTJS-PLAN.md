@@ -2,7 +2,8 @@
 
 Status: **decided 2026-09-25** by momolig: B1-B10, and every suggestion taken (Q1-Q8).
 **Guest-only for now** (decided 2026-09-26, below). **Steps 1 and 2 built 2026-09-26** (see "Step 1:
-as built" and "Step 2: as built" below); next: step 5 (guest-only; steps 3-4 later). Follows the standards of the lesfleursdelanuit.com control panel
+as built" and "Step 2: as built" below). **Step 5 built 2026-09-26, not yet on the server** (see
+"Step 5: as built": it waits for momolig's sudo and a small lfdln panel change). Steps 3-4 later. Follows the standards of the lesfleursdelanuit.com control panel
 (repo `pammy-setup`, `panel/`), and, later, its accounts feature: `panel/docs/accounts-plan.md`.
 
 What this is for: today the app is one 1.1 MB page (`node build.mjs` → `docs/index.html`) whose
@@ -263,6 +264,42 @@ Until then the pages say nothing about accounts ("Saved in this browser.").
   from the same seed. `engine/test/ported.test.mjs` fails when `src/app.js` or `src/shell.html`
   change upstream, until the change is carried over (PORTED.md). `build.sh` and CI run Playwright
   last.
+
+### Step 5: as built (2026-09-26, not yet on the server)
+
+- **What's built, all in `web/deploy/`**:
+  - `Containerfile`: node 22 slim, pinned by digest, from `release/`. The code is owned by root, and the server runs as `node`.
+  - `examprep.container`: the Quadlet unit, on 127.0.0.1:4101. The root filesystem is read-only, with Next.js's cache and `/tmp` in memory. It drops all capabilities, sets no-new-privileges, and limits memory to 512 MB, one CPU and 256 processes. The health check is `node /app/healthcheck.mjs`, which asks `/api/health` and kills the container on failure. `Restart=always`.
+  - `install.sh` (sudo), described below.
+  - `verify-examprep-next.sh` and `check-browser.mjs`: the checks listed below.
+  - `README.md`: the runbook.
+- **`/api/health`** is new. It returns `{ok, release}`, with the release read from `BUILD` in the image, and is never cached. `build.sh` now ends by building `localhost/examprep:<release id>`; `--no-image` skips that.
+- **What `install.sh` does** (sudo, from the account that ran `build.sh`):
+  - The first time only, it makes `svc-lfdln-apps`: a system user with no login and lingering, and the next free subuid/subgid range after every existing one. It also makes `/srv/lfdln-projects/examprep/{releases,logs}`.
+  - It loads the image into that user's podman, tags it `prod`, and tags the one before `previous`.
+  - It installs the unit, restarts it, and waits for `/api/health` to name this release. Then it runs verify.
+  - Any failure puts `previous` back. It keeps the last 3 releases' `BUILD` files and images.
+  - It touches no nginx, no panel and no other service.
+- **What verify checks:**
+  - As root: the unit is active and default.target wants it; the user lingers; the server runs as `svc-lfdln-apps`, not root; and it **restarts on its own** (the server process is killed, and it must answer again with a new start time).
+  - Port 4101 listens only on 127.0.0.1, and `/api/health` names the expected release.
+  - All 18 pages return 200 with a nonce CSP and `default-src 'none'`, HSTS, nosniff and no-referrer, and no X-Powered-By. No `src`/`href` goes to another site, and nothing mentions Google Fonts.
+  - Every font the home page names comes from this site as `font/woff2`, and `/no-such-page` is the 404 page.
+  - In Chromium: the old `#/` links forward, six pages send no request to other sites, and there are no console or CSP errors.
+  - `--host <name>` runs the page checks again through nginx over https, plus the http→https redirect.
+  - Playwright takes `E2E_BASE_URL=` to run the whole suite against a running server.
+- **Tried here, as momolig:**
+  - The image under the unit's own podman options: healthy, running as uid 1000.
+  - Verify against it: 6/6, the browser checks included. Playwright against it: 62 passed.
+  - The same unit under momolig's own systemd: the killed server was back in 3 s (NRestarts 1), default.target wants it, and it listened on 127.0.0.1 only. The test unit and container were removed afterwards.
+- **Waiting on the lfdln panel (not done here; `pammy-setup` is being revised).**
+  - A service route can only point at a service the panel has **adopted**. Adopting reads `KNOWN` in `panel/packages/services/src/known.ts`, a code change. It needs an entry `examprep` with user `svc-lfdln-apps` and one part `web` (unit `examprep`, port 4101, health `/api/health`, controls on, requires nothing), then an lfdln panel install (its step 6b adopts it).
+  - That install must not carry the unfinished accounts work, so it should be built from what lfdln runs now plus that one change.
+  - Then, on the panel's Hosts page: host `examprep-next`, with a route at `/` to the service examprep/web.
+  - `examprep.lesfleursdelanuit.com` stays on its site folder until step 6.
+- **Interpreted:**
+  - The deploy files live in `web/deploy/` rather than a top-level `deploy/`, so the other session's part of the repo stays untouched.
+  - The releases kept are images tagged by release id in `svc-lfdln-apps`'s podman, plus `releases/<id>/BUILD`, rather than copies of `release/`.
 
 ## Questions
 

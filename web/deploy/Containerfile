@@ -1,0 +1,12 @@
+# Placement Exam Prep, the Next.js standalone server (NEXTJS-PLAN.md, Hosting). Built by
+# web/build.sh from release/ (build context), never by hand: the image is tagged with the
+# release id that release/BUILD ends with. Guest-only: no database, no secrets.
+# node 22 slim, pinned by digest (22.23.0, bookworm); bump it on purpose, in a commit.
+FROM docker.io/library/node:22-bookworm-slim@sha256:d9f850096136edbc402debdd8729579a288aac64574ada0ff4db26b6ae58b0b2
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=4101 HOSTNAME=0.0.0.0
+WORKDIR /app
+# root owns the code; the server runs as `node` (uid 1000 in the image) and can't change it
+COPY --chown=root:root . /app/
+USER node
+EXPOSE 4101
+CMD ["node", "server.js"]

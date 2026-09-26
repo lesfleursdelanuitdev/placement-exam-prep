@@ -7,13 +7,15 @@
 #   web/build.sh            refuses uncommitted changes
 #   web/build.sh --dirty    builds them anyway, and says so in BUILD
 #   web/build.sh --quick    fewer seeds in the engine tests (and says so in BUILD); not for a release
-# Later steps add the container image (step 5) and, later, the database tests (step 3).
+#   web/build.sh --no-image skips the container image (CI: no podman there)
+# Then the container image localhost/examprep:<release id> (step 5; deploy/install.sh installs it).
+# The database tests come with step 3 (later: guest-only for now).
 set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")"
 [[ $EUID -ne 0 ]] || { echo "run build.sh as yourself, without sudo" >&2; exit 1; }
 node -e 'const [a,b]=process.versions.node.split(".").map(Number); if (a<22||(a===22&&b<18)) {console.error("needs node >= 22.18"); process.exit(1)}'
-dirty=0 quick=0
-for a in "$@"; do case $a in --dirty) dirty=1 ;; --quick) quick=1 ;; *) echo "unknown option $a" >&2; exit 1 ;; esac; done
+dirty=0 quick=0 image=1
+for a in "$@"; do case $a in --dirty) dirty=1 ;; --quick) quick=1 ;; --no-image) image=0 ;; *) echo "unknown option $a" >&2; exit 1 ;; esac; done
 
 # BUILD leads back to its source: the commit, checked before the tests, not after
 commit=$(git rev-parse --short=12 HEAD)
@@ -36,6 +38,7 @@ rm -rf release && mkdir release
 cp -a .next/standalone/. release/
 cp -a .next/static release/.next/static
 [[ ! -d public ]] || cp -a public release/public
+cp deploy/healthcheck.mjs release/healthcheck.mjs     # the container's health check
 echo "--- the built server (CSP, nonces, fonts from this site, headers)"
 EXAMPREP_RELEASE="$PWD/release" node --test --test-reporter=dot test/*.test.mjs
 echo "--- the pages in a browser (Playwright: desktop and 320 px)"
@@ -44,4 +47,12 @@ EXAMPREP_RELEASE="$PWD/release" npx playwright test
 note="from commit $commit"; (( quick )) && note="$note, QUICK engine tests"
 { echo "built $(date -u +%FT%TZ) by $(id -un) $note (next $(node -p 'require("next/package.json").version'))"
   (cd release && find . -type f ! -name BUILD -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -c1-16); } > release/BUILD
-echo "ok: release/ ($(du -sh release | cut -f1), $(tail -1 release/BUILD))"
+id=$(tail -1 release/BUILD)
+
+# the container image (step 5), tagged with the release id; deploy/install.sh installs it
+if (( image )); then
+  echo "--- the image (deploy/Containerfile, from release/)"
+  podman build --pull=never -q -f deploy/Containerfile -t "localhost/examprep:$id" release >/dev/null
+  echo "ok: image localhost/examprep:$id"
+fi
+echo "ok: release/ ($(du -sh release | cut -f1), $id)"

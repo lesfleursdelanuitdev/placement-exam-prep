@@ -1,0 +1,38 @@
+# Placement Exam Prep (Next.js), the first G9 project: a rootless Quadlet container under
+# svc-lfdln-apps, on 127.0.0.1:4101 (NEXTJS-PLAN.md, Hosting). Installed by
+# web/deploy/install.sh; nginx reaches it through the lfdln panel's service route.
+# Guest-only: no database, so no allow_host_loopback, and no secrets.
+[Unit]
+Description=Placement Exam Prep (Next.js, container)
+Documentation=https://github.com/lesfleursdelanuitdev/placement-exam-prep/blob/nextjs/NEXTJS-PLAN.md
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=localhost/examprep:prod
+ContainerName=examprep
+PublishPort=127.0.0.1:4101:4101
+Environment=NODE_ENV=production
+Environment=PORT=4101
+Environment=HOSTNAME=0.0.0.0
+Environment=NEXT_TELEMETRY_DISABLED=1
+# the code can't be changed from inside; Next.js's cache and /tmp are in memory
+ReadOnly=true
+Tmpfs=/tmp:rw,size=64m,mode=1777
+Tmpfs=/app/.next/cache:rw,size=128m,mode=1777
+DropCapability=all
+NoNewPrivileges=true
+PodmanArgs=--memory=512m --cpus=1 --pids-limit=256
+HealthCmd=node /app/healthcheck.mjs
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=20s
+HealthOnFailure=kill
+
+[Service]
+Restart=always
+RestartSec=2
+TimeoutStartSec=120
+
+[Install]
+WantedBy=default.target
