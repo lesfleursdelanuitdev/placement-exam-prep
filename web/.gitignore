@@ -2,7 +2,12 @@ node_modules/
 .next/
 next-env.d.ts
 *.tsbuildinfo
-# made by engine/build.mjs from ../src (npm run engine)
+# made by engine/build.mjs from ../src (npm run engine): the module, the browser files, the styles
 engine/mx.mjs
+engine/browser.mjs
+engine/styles.css
 # made by build.sh
 release/
+# Playwright's output
+test-results/
+playwright-report/

@@ -43,16 +43,20 @@ function checkSecurityHeaders(r, path) {
   assert.equal(r.headers.get('x-powered-by'), null, path + ': no X-Powered-By');
 }
 
-test('the home page is made on the server, from the engine', async () => {
+test('the pages are made on the server, from the engine', async () => {
   const { r, text } = await get('/');
   assert.equal(r.status, 200);
   const html = text.replace(/<!-- -->/g, '');
   assert.ok(html.includes('<title>Placement Exam Prep</title>'), 'the title');
-  assert.ok(/\d+ topics in \d+ sections, \d+ questions per exam, \d+ flashcards/.test(html), 'the counts from the engine');
-  assert.ok(/Question 1 · [^<]+<\/h2><div[^>]*>[^<]*<span class="m">/.test(html), 'a question rendered by the engine');
+  assert.ok(/\d+ topics, grouped by section/.test(html) && /\d+ cards: one deck for every topic/.test(html), 'the counts from the engine');
+  const lesson = (await get('/tutorials/w-motion')).text;
+  assert.ok(lesson.includes('<title>Distance, rate &amp; time · Lesson · Placement Exam Prep</title>'), 'a lesson\'s title');
+  assert.ok(/<section class="lesson">[\s\S]*<span class="m">/.test(lesson), 'a lesson with math rendered by the engine');
+  const examples = (await get('/tutorials/w-motion/examples')).text;
+  assert.equal(examples.match(/<article class="card worked/g)?.length, 6, 'six worked examples');
 });
 
-for (const path of ['/', '/no-such-page']) {
+for (const path of ['/', '/exam/part-1', '/tutorials/w-motion', '/flashcards/all', '/grapher/draw', '/no-such-page']) {
   test(`${path}: a strict CSP, and a nonce on every script`, async () => {
     const { r, text } = await get(path);
     const csp = r.headers.get('content-security-policy');

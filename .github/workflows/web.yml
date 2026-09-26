@@ -1,7 +1,8 @@
 name: Next.js app (web/)
 
 # The Next.js port (NEXTJS-PLAN.md): the engine module and the plain page's tests against it,
-# the exam model against app.js, typecheck, and the production build with its server tests.
+# the exam model against app.js, typecheck, and the production build with its server tests and
+# the pages in a browser (Playwright).
 # A file of its own, so test.yml (the plain page's) merges from upstream untouched.
 on:
   push:
@@ -41,3 +42,7 @@ jobs:
           rm -rf release && mkdir release
           cp -a .next/standalone/. release/ && cp -a .next/static release/.next/static
           node --test test/*.test.mjs
+      - name: Playwright's browser
+        run: npx playwright install --with-deps chromium
+      - name: The pages in a browser
+        run: npx playwright test

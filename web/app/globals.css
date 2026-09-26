@@ -1,44 +1,28 @@
-@import 'tailwindcss';
+/* Tailwind's theme and utilities, without its reset (preflight): the page keeps the plain page's
+   look from styles.css (imported before this file), and new parts can use utilities. */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
 
-/* The plain page's look (src/styles.css): its colors, in light and dark, as Tailwind/shadcn tokens.
-   The fonts come from next/font in layout.tsx (served from this site). */
-:root {
-  --desk: #e8ecf0;
-  --paper: #fcfdfd;
-  --ink: #17212c;
-  --muted: #566272;
-  --faint: #8792a0;
-  --rule: #d7dee6;
-  --grid: #dbe2ea;
-  --accent: #1f4fbf;
-  --accent-2: #163c93;
-  --accent-soft: #e3eafa;
-  --ok: #16774a;
-  --ok-soft: #e0f1e7;
-  --bad: #bf3a2c;
-  --bad-soft: #fae5e2;
-  --warn: #875800;
-  --warn-soft: #fbeed2;
-  --hl: #fff0a0;
-  --how: #6a3fb5;
-  --how-soft: #efe8fb;
+/* the fonts are next/font's (served from this site): point styles.css's font variables at them */
+:root:root {
+  --f-ui: var(--font-plex-sans), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --f-cond: var(--font-plex-cond), 'Arial Narrow', var(--font-plex-sans), system-ui, sans-serif;
+  --f-math: var(--font-stix), 'Cambria Math', Cambria, 'Times New Roman', serif;
+  --f-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --on-accent: #ffffff;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    color-scheme: dark;
-    --desk: #0c1116; --paper: #141b23; --ink: #e4e9ef; --muted: #9aa6b4; --faint: #6b7686; --rule: #26303b; --grid: #19212a;
-    --accent: #8aa8ff; --accent-2: #b6c8ff; --accent-soft: #1b2845; --ok: #5bd294; --ok-soft: #12301e; --bad: #ff8a7a; --bad-soft: #3a1a17;
-    --warn: #efbf5a; --warn-soft: #36290e; --hl: #4a4213; --how: #c3a6ff; --how-soft: #2a1f45; --on-accent: #0c1116;
-  }
+  :root:root:not([data-theme='light']) { --on-accent: #0c1116; }
 }
-:root[data-theme='dark'] {
-  color-scheme: dark;
-  --desk: #0c1116; --paper: #141b23; --ink: #e4e9ef; --muted: #9aa6b4; --faint: #6b7686; --rule: #26303b; --grid: #19212a;
-  --accent: #8aa8ff; --accent-2: #b6c8ff; --accent-soft: #1b2845; --ok: #5bd294; --ok-soft: #12301e; --bad: #ff8a7a; --bad-soft: #3a1a17;
-  --warn: #efbf5a; --warn-soft: #36290e; --hl: #4a4213; --how: #c3a6ff; --how-soft: #2a1f45; --on-accent: #0c1116;
-}
+:root:root[data-theme='dark'] { --on-accent: #0c1116; }
 
+/* navigation is links now where the plain page had buttons: they look the same (no underline,
+   the text color of the button they replace; zero specificity, so styles.css's rules win) */
+:where(a.btn, a.tile, a.chip-b, a.dj, a.brand, .tabs a, .dnav a, .tut-tabs a) { text-decoration: none; color: inherit; }
+:where(a.brand) { color: var(--ink); }
+
+/* styles.css's colors as Tailwind/shadcn tokens, for new parts */
 @theme inline {
   --color-background: var(--desk);
   --color-foreground: var(--ink);
@@ -54,21 +38,14 @@
   --color-ok: var(--ok);
   --color-bad: var(--bad);
   --color-warn: var(--warn);
-  --font-sans: var(--font-plex-sans), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-cond: var(--font-plex-cond), 'Arial Narrow', system-ui, sans-serif;
-  --font-math: var(--font-stix), 'Cambria Math', Cambria, 'Times New Roman', serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sans: var(--f-ui);
+  --font-cond: var(--f-cond);
+  --font-math: var(--f-math);
+  --font-mono: var(--f-mono);
 }
 
-@layer base {
-  html { -webkit-text-size-adjust: 100%; }
-  body {
-    background-color: var(--desk);
-    background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-    background-size: 24px 24px;
-    color: var(--ink);
-    font: 400 15px/1.55 var(--font-sans);
-  }
-  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  h1, h2, h3 { text-wrap: balance; }
+/* narrow phones: the part links' labels ("Part III: Linear equations & inequalities →") are wider
+   than a 320 px screen on one line, so they wrap (a fix of this port's; the plain page overflows) */
+@media (max-width: 420px) {
+  .part-nav .btn { white-space: normal; height: auto; min-height: 36px; padding-block: 6px; text-align: left; }
 }

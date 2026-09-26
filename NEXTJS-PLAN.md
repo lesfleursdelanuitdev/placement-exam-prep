@@ -1,8 +1,8 @@
 # Placement Exam Prep on Next.js and Postgres
 
 Status: **decided 2026-09-25** by momolig: B1-B10, and every suggestion taken (Q1-Q8).
-**Guest-only for now** (decided 2026-09-26, below). **Step 1 built 2026-09-26** (see "Step 1: as
-built" below); next: step 2. Follows the standards of the lesfleursdelanuit.com control panel
+**Guest-only for now** (decided 2026-09-26, below). **Steps 1 and 2 built 2026-09-26** (see "Step 1:
+as built" and "Step 2: as built" below); next: step 5 (guest-only; steps 3-4 later). Follows the standards of the lesfleursdelanuit.com control panel
 (repo `pammy-setup`, `panel/`), and, later, its accounts feature: `panel/docs/accounts-plan.md`.
 
 What this is for: today the app is one 1.1 MB page (`node build.mjs` → `docs/index.html`) whose
@@ -214,6 +214,55 @@ Until then the pages say nothing about accounts ("Saved in this browser.").
   `web/release/` (standalone server + static files), the server tests, `BUILD` with a 16-hex id.
   Playwright comes with step 2, the database tests with step 3, the image with step 5.
 - CI: `.github/workflows/web.yml` (its own file, so `test.yml` merges untouched).
+
+### Step 2: as built (2026-09-26)
+
+- **app.js is carried over as `web/lib/app/app.mjs`**: the same views, markup and classes, close to
+  app.js line for line so upstream changes carry over by diff (B10), typed by `app.d.mts`.
+  `createApp({ MX, model })` gives the HTML makers on the server; in the browser
+  (`createApp({ ..., Store, win })`) it also drives the page (checking, drafts, decks, the menu), as
+  app.js did. React owns the frame (`app/layout.tsx`, `components/chrome.tsx`: the bar, the phone
+  menu, the stopwatch's place) and each page's container (`components/view.tsx`); inside, the HTML
+  is the app's. The plan said "rewritten as React pages and components": the pages are Next.js
+  pages, but the views stay HTML-making functions shared by the server and the browser, since the
+  cards, answer boxes and grapher are DOM code that is wrapped anyway.
+- **styles.css is kept as it is**, not rewritten in Tailwind: `engine/build.mjs` makes
+  `web/engine/styles.css` from it (generated; the menus' `button` rules also match the links that
+  replace them), and Tailwind's theme and utilities come after it without its reset, so the look
+  is the plain page's and upstream style changes carry over by themselves. The fonts are pointed at
+  next/font's. One fix of our own (`app/globals.css`): at 320 px the part links wrap (with the Plex
+  font, "Part III: Linear equations & inequalities →" is wider than the screen on the plain page too).
+- **Navigation is links.** The app follows links to this site through Next.js's router (no reload);
+  what a link carries (`data-act`) is noted first, as app.js's buttons did: where "back" goes,
+  which question to scroll to, where a deck returns to. Scroll memory and focus on the heading as
+  before. The grapher's two modes and the "still learning" deck of all cards change the address
+  without a new page (`history.replaceState`, which Next.js follows).
+- **Made on the server**: every page's HTML, without the student's progress (it is in their
+  browser, guest-only): lessons and worked examples in full (made once and kept,
+  `lib/app/server.ts`), the tutorial and flashcard lists without counts, home without the exam's
+  numbers, a deck with its first card. The browser fills in the rest. The exam pages come from the
+  server as their frame; **the browser makes the questions from the exam's seed, as today**, since
+  the seed is only in the browser ("questions from the server-made exam" waits for step 3).
+- **The browser files are wrapped, unchanged**: `engine/build.mjs` also writes `web/engine/browser.mjs`
+  (editor, store, grapher, stopwatch, generated), run on the window by `installBrowser(window)` once
+  the engine is `window.MX`. `lib/app/runtime.mjs` loads all of it after the page is on screen
+  (about 1 MB of script), once per page load. `MX.App` is kept, as app.js had it.
+- **Guest progress**: `store.js` as it is, the same keys (`m098-prep-state-v1`, `m098-stopwatch-v1`)
+  and format, so the switch keeps every student's progress (same host, same browser storage).
+- **Addresses**: as the table (not `/account`: later). An unknown topic, deck, part or grapher mode
+  goes to its list, as the plain page did; any other unknown address is a 404 page (the plain page
+  went home). Old `#/…` links are forwarded from `/`. Each page's title comes from the server; the
+  browser adds the exam's number ("Practice Exam No. 3").
+- **Tests**: Playwright (`web/test/e2e`, `playwright.config.ts`), against the built release, at
+  1280 px and 320 px: every address opens directly with its title and heading, without errors (a
+  CSP refusal is one) or sideways scrolling; every topic's lesson, examples and practice and every
+  deck from the server; the old `#/` links; moving by links without reloads, back to the question,
+  the browser's back and forward, the phone menu, decks, the grapher's addresses; guest progress
+  (answers, drafts, practice, marks, finishing, save and finish later, the stopwatch, reset) and
+  **progress saved by the plain page opening here and the other way round**, with the same exam
+  from the same seed. `engine/test/ported.test.mjs` fails when `src/app.js` or `src/shell.html`
+  change upstream, until the change is carried over (PORTED.md). `build.sh` and CI run Playwright
+  last.
 
 ## Questions
 
