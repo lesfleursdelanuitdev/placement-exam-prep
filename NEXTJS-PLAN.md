@@ -1,6 +1,9 @@
 # Placement Exam Prep on Next.js and Postgres
 
 Status: **decided 2026-09-25** by momolig: B1-B10, and every suggestion taken (Q1-Q8).
+**All steps done by 2026-09-27**: examprep.lesfleursdelanuit.com is the Next.js service with
+accounts, and `nextjs` is the branch to work on (see "Step 6: as built"). The status lines below
+are kept as they were written.
 **Guest-only for now** (decided 2026-09-26, below). **Steps 1 and 2 built 2026-09-26** (see "Step 1:
 as built" and "Step 2: as built" below). **Step 5 built 2026-09-26, not yet on the server** (see
 "Step 5: as built": it waits for momolig's sudo and a small lfdln panel change). Steps 3-4 later. Follows the standards of the lesfleursdelanuit.com control panel
@@ -179,7 +182,7 @@ Until then the pages say nothing about accounts ("Saved in this browser.").
 | 3 | **Built 2026-09-26** (see "Step 3: design" and "as built"). **Database**: the migrations, roles and grants on a local Postgres 17; `/api/progress/*`; the server-side cleaning; unit tests with a real Postgres (as `test/pg-harness.ts`). Signed-in tested with the header set by a test nginx. | medium |
 | 4 | **Built 2026-09-26** (see "Step 4: design" and "as built"; the deletion hook is 4b). **Import and sync**: first sign-in import, database wins, offline retry, sign-out clears; the deletion hook. | medium |
 | 5 | **On the server**, guest-only: `svc-lfdln-apps`, the container (no database), adopted as a service, a verify script. Tried on a test host (e.g. `examprep-next.lesfleursdelanuit.com`) first. The `examprep` database and roles on lfdln-appdb (`setup.sql`, `pg_hba`) come with step 3, later. | medium |
-| 6 | **The switch**: the host's route to the service (no open area while guest-only); verify; the plain page stops getting features (Q7); the site folder kept 14 days. | medium: a live site |
+| 6 | **Done 2026-09-26/27** (see "Step 6: as built"; the old folder goes from 2026-10-10). **The switch**: the host's route to the service (no open area while guest-only); verify; the plain page stops getting features (Q7); the site folder kept 14 days. | medium: a live site |
 
 ### Step 3: design (2026-09-26, accounts live on lfdln)
 
@@ -293,6 +296,45 @@ app re-read everything (`ensureExam(); remount()`).
   page. Exam prep only needs a small `POST /_lfdln/account-deleted`. Until then, a person clears
   their own progress with Reset, and an owner deleting an account leaves its rows. Suggested: its
   own step, **4b**, right after.
+
+### Step 6: as built (2026-09-26 and 2026-09-27)
+
+- **The switch (2026-09-26).** momolig pointed the route `/` of `examprep.lesfleursdelanuit.com`
+  from its site folder to the service examprep/web on the lfdln panel's Hosts page, after the test
+  host `examprep-test` worked. `/api/health` answered 200. The browser key `m098-prep-state-v1` is
+  the same, so guests kept their progress on the same address. Accounts came on the same day
+  (steps 3, 4 and 4b).
+- **`nextjs` is the branch to work on (Q7, 2026-09-27).** `claude/modest-gates-7cgiii` has nothing
+  `nextjs` doesn't carry (it is an ancestor of `nextjs`). The plain page gets no more features:
+  `src/` changes still reach the pages through `web/engine/build.mjs`, and `ported.test.mjs` still
+  fails on any change to `src/app.js` or `shell.html` until it is ported.
+  - `web.yml` also runs on `main`, so `nextjs` can become `main` on GitHub (commands below).
+  - The old checkout `~/apps/placement-exam-prep` has a `CLAUDE.md` saying so, for a session opened
+    there.
+- **The old deploy script is retired.** `~/lesfleursdelanuit-setup/deploy-examprep.sh` now refuses
+  and points at `web/deploy/install.sh`. `--old-page` still copies the old page into the kept folder.
+- **Deploying from now on:** `cd web && ./build.sh && sudo ./deploy/install.sh`.
+- **GitHub (momolig runs these; not done yet).** Suggested: `main` made from `nextjs`, the default
+  branch set to it, and the old branch locked (kept, not deleted):
+  ```bash
+  cd ~/apps/placement-exam-prep-nextjs
+  git -c credential.helper= -c "credential.helper=!gh auth git-credential" push origin nextjs:main
+  gh api -X PATCH repos/lesfleursdelanuitdev/placement-exam-prep -f default_branch=main
+  gh api -X PUT repos/lesfleursdelanuitdev/placement-exam-prep/branches/claude%2Fmodest-gates-7cgiii/protection \
+    --input - <<'JSON'
+  {"required_status_checks":null,"enforce_admins":true,"required_pull_request_reviews":null,"restrictions":null,"lock_branch":true,"allow_deletions":false}
+  JSON
+  ```
+  After that, work on `main` (`git switch -c main --track origin/main` in the worktree) and delete
+  `nextjs` on GitHub once nothing points at it.
+- **The old site folder is kept until 2026-10-10** as the way back (route `/` back to the folder
+  on the Hosts page). Removing it is **not settled**: the folder was taken in with
+  `lfdln-panel adopt-folders`, so it is *adopted*, and the panel refuses to delete adopted folders
+  (`POST /api/site-folders/:id/delete`: "was on the server before the panel"). From 2026-10-10 it
+  needs either a small panel change (let an adopted folder with no routes be trashed) or, by hand,
+  the `site_folders` row removed and then
+  `sudo mv /var/www/lesfleursdelanuit-sub/examprep /var/www/lesfleursdelanuit-sub/.old-examprep-20261010`.
+  The Hosts page shows whether any route still points at it.
 
 ### Step 4b: as built (2026-09-26): an account deleted in the panel
 

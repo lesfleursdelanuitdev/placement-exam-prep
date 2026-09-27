@@ -1,5 +1,11 @@
 # Placement Exam Prep
 
+> **Where this runs now (2026-09-27).** https://examprep.lesfleursdelanuit.com/ is the Next.js
+> version in `web/` (real pages, and progress saved to an account when you're signed in). This is
+> the branch to work on; the one-page `docs/index.html` gets no new features. Deploy with
+> `cd web && ./build.sh && sudo ./deploy/install.sh` (`web/deploy/README.md`); the plan is
+> `NEXTJS-PLAN.md`.
+
 A study app for an algebra placement exam. It started from three sample final exams for an intermediate algebra course and has grown to cover absolute value, piecewise functions, quadratics and transformations, and a full chapter's worth of linear equations and inequalities. It generates an unlimited supply of full-length practice exams, grades answers instantly, and has a tutorial and a flashcard deck for every topic. Progress is saved.
 
 **Open it:** `docs/index.html` is a single self-contained page. Open it in a browser, or turn on GitHub Pages for this repo (Settings → Pages → deploy from branch, folder `/docs`).

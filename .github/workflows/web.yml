@@ -6,7 +6,7 @@ name: Next.js app (web/)
 # A file of its own, so test.yml (the plain page's) merges from upstream untouched.
 on:
   push:
-    branches: [nextjs]
+    branches: [main, nextjs]
   pull_request:
   workflow_dispatch:
 
